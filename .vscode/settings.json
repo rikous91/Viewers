@@ -32,5 +32,6 @@
   "workbench.colorCustomizations": {},
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
-  }
+  },
+  "svn.ignoreMissingSvnWarning": true
 }
