@@ -85,8 +85,8 @@ export default function PanelMeasurementTable({
 
     if (trackedMeasurements.length <= 0) {
       uiNotificationService.show({
-        title: 'No Measurements',
-        message: 'No Measurements are added to the current Study.',
+        title: 'Nessuna misurazione',
+        message: 'Nessuna misurazione è stata aggiunta allo studio corrente.',
         type: 'info',
         duration: 3000,
       });
@@ -217,7 +217,7 @@ export default function PanelMeasurementTable({
         data-cy={'measurements-panel'}
       >
         <MeasurementTable
-          title={t('Measurements')}
+          title={t('Misurazioni')}
           servicesManager={servicesManager}
           data={displayMeasurements}
           onClick={jumpToImage}
@@ -275,7 +275,7 @@ function _mapMeasurementToDisplay(measurement, index, types) {
   } = measurement;
 
   const firstSite = findingSites?.[0];
-  const label = baseLabel || finding?.text || firstSite?.text || '(empty)';
+  const label = baseLabel || finding?.text || firstSite?.text || '(nessuna)';
   let displayText = baseDisplayText || [];
   if (findingSites) {
     const siteText = [];

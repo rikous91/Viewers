@@ -1,18 +1,18 @@
 {
-  "Active": "Active",
-  "Add new segmentation": "Add new segmentation",
-  "Add segment": "Add segment",
-  "Add segmentation": "Add segmentation",
-  "Delete": "Delete",
+  "Active": "Attivo",
+  "Add new segmentation": "Aggiungi nuova segmentazione",
+  "Add segment": "Aggiungi segmento",
+  "Add segmentation": "Aggiungi segmentazione",
+  "Delete": "Elimina",
   "Display inactive segmentations": "Display inactive segmentations",
   "Export DICOM SEG": "Export DICOM SEG",
   "Download DICOM SEG": "Download DICOM SEG",
   "Download DICOM RTSTRUCT": "Download DICOM RTSTRUCT",
   "Fill": "Fill",
   "Inactive segmentations": "Inactive segmentations",
-  "Opacity": "Opacity",
+  "Opacity": "Opacità",
   "Outline": "Outline",
-  "Rename": "Rename",
-  "Segmentation": "Segmentation",
-  "Size": "Size"
+  "Rename": "Rinomina",
+  "Segmentation": "Segmentazione",
+  "Size": "Dimensione"
 }

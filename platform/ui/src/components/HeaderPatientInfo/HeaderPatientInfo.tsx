@@ -116,7 +116,7 @@ function HeaderPatientInfo({ servicesManager, appConfig }: withAppTypes) {
         ) : (
           <div className="text-primary-active self-center text-[13px]">
             {' '}
-            {isMixedPatients ? 'Multiple Patients' : 'Patient'}
+            {isMixedPatients ? 'Info pazienti' : 'Info paziente'}
           </div>
         )}
       </div>

@@ -16,8 +16,8 @@ const Viewer = () => {
           <LegacySidePanel
             side="left"
             iconName="group-layers"
-            iconLabel="Studies"
-            componentLabel="Studies"
+            iconLabel="Studi"
+            componentLabel="Studi"
             defaultIsOpen={true}
           >
             <StudyBrowser />
@@ -30,7 +30,7 @@ const Viewer = () => {
             side="right"
             iconName="list-bullets"
             iconLabel="Measure"
-            componentLabel="Measurements"
+            componentLabel="Misurazioni"
             defaultIsOpen={false}
           >
             <div className="flex justify-center p-2 text-white">panel placeholder</div>

@@ -84,8 +84,8 @@ const commandsModule = ({
 
       if (!displaySet.isReconstructable) {
         uiNotificationService.show({
-          title: 'Segmentation',
-          message: 'Segmentation is not supported for non-reconstructible displaysets yet',
+          title: 'Segmentazione',
+          message: 'La segmentazione non è ancora supportata per i displayset non ricostruibili.',
           type: 'error',
         });
         return;
@@ -98,7 +98,7 @@ const commandsModule = ({
           const currentSegmentations = segmentationService.getSegmentations();
           const segmentationId = await segmentationService.createSegmentationForDisplaySet(
             displaySetInstanceUID,
-            { label: `Segmentation ${currentSegmentations.length + 1}` }
+            { label: `Segmentazione ${currentSegmentations.length + 1}` }
           );
 
           const toolGroupId = viewport.viewportOptions.toolGroupId;

@@ -58,9 +58,9 @@ function PanelStudyBrowserTracking({
     } catch (error) {
       console.warn(error);
       uiNotificationService.show({
-        title: 'Thumbnail Double Click',
+        title: 'Doppio click serie',
         message:
-          'The selected display sets could not be added to the viewport due to a mismatch in the Hanging Protocol rules.',
+          "Il display set selezionato non può essere aggiunto alla viewport a causa di un'incongruenza con le regole dell'Hanging Protocol",
         type: 'info',
         duration: 3000,
       });
@@ -403,7 +403,7 @@ function PanelStudyBrowserTracking({
       onClickUntrack={displaySetInstanceUID => {
         onClickUntrack(displaySetInstanceUID);
       }}
-      onClickThumbnail={() => {}}
+      onClickThumbnail={() => { }}
       onDoubleClickThumbnail={onDoubleClickThumbnailHandler}
       activeDisplaySetInstanceUIDs={activeViewportDisplaySetInstanceUIDs}
     />
@@ -663,19 +663,19 @@ function _createStudyBrowserTabs(
   const tabs = [
     {
       name: 'primary',
-      label: 'Primary',
+      label: 'Studio attuale',
       studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
     {
       name: 'recent',
-      label: 'Recent',
+      label: 'Storico locale',
       studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
-    {
-      name: 'all',
-      label: 'All',
-      studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
-    },
+    // {
+    //   name: 'all',
+    //   label: 'All',
+    //   studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    // },
   ];
 
   return tabs;

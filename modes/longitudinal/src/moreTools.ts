@@ -35,7 +35,7 @@ const moreTools = [
         createButton({
           id: 'Reset',
           icon: 'tool-reset',
-          label: 'Reset View',
+          label: 'Reset',
           tooltip: 'Reset View',
           commands: 'resetViewport',
           evaluate: 'evaluate.action',
@@ -43,7 +43,7 @@ const moreTools = [
         createButton({
           id: 'rotate-right',
           icon: 'tool-rotate-right',
-          label: 'Rotate Right',
+          label: 'Ruota a destra',
           tooltip: 'Rotate +90',
           commands: 'rotateViewportCW',
           evaluate: 'evaluate.action',
@@ -51,7 +51,7 @@ const moreTools = [
         createButton({
           id: 'flipHorizontal',
           icon: 'tool-flip-horizontal',
-          label: 'Flip Horizontal',
+          label: 'Inverti orizzontalmente',
           tooltip: 'Flip Horizontally',
           commands: 'flipViewportHorizontal',
           evaluate: ['evaluate.viewportProperties.toggle', 'evaluate.not3D'],
@@ -59,7 +59,7 @@ const moreTools = [
         createButton({
           id: 'ImageSliceSync',
           icon: 'link',
-          label: 'Image Slice Sync',
+          label: 'Collega serie',
           tooltip: 'Enable position synchronization on stack viewports',
           commands: {
             commandName: 'toggleSynchronizer',
@@ -78,7 +78,7 @@ const moreTools = [
         createButton({
           id: 'ReferenceLines',
           icon: 'tool-referenceLines',
-          label: 'Reference Lines',
+          label: 'Linee di riferimento',
           tooltip: 'Show Reference Lines',
           commands: 'toggleEnabledDisabledToolbar',
           listeners: {
@@ -98,7 +98,7 @@ const moreTools = [
         createButton({
           id: 'StackScroll',
           icon: 'tool-stack-scroll',
-          label: 'Stack Scroll',
+          label: 'Scorrimento con mouse',
           tooltip: 'Stack Scroll',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -106,7 +106,7 @@ const moreTools = [
         createButton({
           id: 'invert',
           icon: 'tool-invert',
-          label: 'Invert',
+          label: 'Inverti',
           tooltip: 'Invert Colors',
           commands: 'invertViewport',
           evaluate: 'evaluate.viewportProperties.toggle',
@@ -114,7 +114,7 @@ const moreTools = [
         createButton({
           id: 'Probe',
           icon: 'tool-probe',
-          label: 'Probe',
+          label: 'Sonda',
           tooltip: 'Probe',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -130,7 +130,7 @@ const moreTools = [
         createButton({
           id: 'Angle',
           icon: 'tool-angle',
-          label: 'Angle',
+          label: 'Angolo',
           tooltip: 'Angle',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -138,7 +138,7 @@ const moreTools = [
         createButton({
           id: 'CobbAngle',
           icon: 'tool-angle',
-          label: 'Cobb Angle',
+          label: 'Angolo di Cobb',
           tooltip: 'Cobb Angle',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -146,7 +146,7 @@ const moreTools = [
         createButton({
           id: 'Magnify',
           icon: 'tool-magnify',
-          label: 'Zoom-in',
+          label: "Lente d'ingrandimento",
           tooltip: 'Zoom-in',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -154,7 +154,7 @@ const moreTools = [
         createButton({
           id: 'CalibrationLine',
           icon: 'tool-calibration',
-          label: 'Calibration',
+          label: 'Calibrazione',
           tooltip: 'Calibration Line',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -169,7 +169,7 @@ const moreTools = [
         createButton({
           id: 'AdvancedMagnify',
           icon: 'icon-tool-loupe',
-          label: 'Magnify Probe',
+          label: "Sonda con lente d'ingrandimento",
           tooltip: 'Magnify Probe',
           commands: 'toggleActiveDisabledToolbar',
           evaluate: 'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',
@@ -177,7 +177,7 @@ const moreTools = [
         createButton({
           id: 'UltrasoundDirectionalTool',
           icon: 'icon-tool-ultrasound-bidirectional',
-          label: 'Ultrasound Directional',
+          label: 'Ultrasuono direzionale',
           tooltip: 'Ultrasound Directional',
           commands: setToolActiveToolbar,
           evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],

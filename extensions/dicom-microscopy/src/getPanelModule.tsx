@@ -24,8 +24,8 @@ export default function getPanelModule({
       <MicroscopyPanel
         viewports={viewports}
         activeViewportId={activeViewportId}
-        onSaveComplete={() => {}}
-        onRejectComplete={() => {}}
+        onSaveComplete={() => { }}
+        onRejectComplete={() => { }}
         commandsManager={commandsManager}
         servicesManager={servicesManager}
         extensionManager={extensionManager}
@@ -38,8 +38,8 @@ export default function getPanelModule({
       name: 'measure',
       iconName: 'tab-linear',
       iconLabel: 'Measure',
-      label: 'Measurements',
-      secondaryLabel: 'Measurements',
+      label: 'Misurazioni',
+      secondaryLabel: 'Misurazioni',
       component: wrappedMeasurementPanel,
     },
   ];

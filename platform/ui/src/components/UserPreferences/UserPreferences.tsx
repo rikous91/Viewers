@@ -81,22 +81,6 @@ const UserPreferences = ({
 
   return (
     <>
-      <Section title={t('General')}>
-        <div className="flex w-72 flex-row items-center justify-center">
-          <Typography
-            variant="subtitle"
-            className="mr-5 h-full text-right"
-          >
-            {t('Language')}
-          </Typography>
-          <Select
-            isClearable={false}
-            onChange={onLanguageChangeHandler}
-            options={availableLanguages}
-            value={state.language}
-          />
-        </div>
-      </Section>
       <Section title={t('Hotkeys')}>
         <HotkeysPreferences
           disabled={disabled}
@@ -134,7 +118,7 @@ const UserPreferences = ({
   );
 };
 
-const noop = () => {};
+const noop = () => { };
 
 UserPreferences.propTypes = {
   disabled: PropTypes.bool,

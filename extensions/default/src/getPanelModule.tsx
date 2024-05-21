@@ -22,7 +22,7 @@ function getPanelModule({ commandsManager, extensionManager, servicesManager }) 
     {
       name: 'seriesList',
       iconName: 'tab-studies',
-      iconLabel: 'Studies',
+      iconLabel: 'Studi',
       label: i18n.t('SidePanel:Studies'),
       component: WrappedPanelStudyBrowser.bind(null, {
         commandsManager,

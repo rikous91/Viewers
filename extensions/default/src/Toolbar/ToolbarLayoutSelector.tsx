@@ -171,7 +171,7 @@ function LayoutSelector({
         DropdownContent !== null && (
           <div className="flex ">
             <div className="bg-secondary-dark flex flex-col gap-2.5 p-2">
-              <div className="text-aqua-pale text-xs">Common</div>
+              <div className="text-aqua-pale text-xs">Standard</div>
 
               <div className="flex gap-4">
                 {commonPresets.map((preset, index) => (
@@ -187,7 +187,7 @@ function LayoutSelector({
 
               <div className="h-[2px] bg-black"></div>
 
-              <div className="text-aqua-pale text-xs">Advanced</div>
+              <div className="text-aqua-pale text-xs">Avanzato</div>
 
               <div className="flex flex-col gap-2.5">
                 {advancedPresets.map((preset, index) => (
@@ -205,14 +205,14 @@ function LayoutSelector({
             </div>
 
             <div className="bg-primary-dark flex flex-col gap-2.5 border-l-2 border-solid border-black  p-2">
-              <div className="text-aqua-pale text-xs">Custom</div>
+              <div className="text-aqua-pale text-xs">Personalizzato</div>
               <DropdownContent
                 rows={rows}
                 columns={columns}
                 onSelection={onSelection}
               />
               <p className="text-aqua-pale text-xs leading-tight">
-                Hover to select <br></br>rows and columns <br></br> Click to apply
+                Seleziona un preset di<br></br>righe e colonne <br></br> Clicca per applicare
               </p>
             </div>
           </div>
@@ -234,7 +234,7 @@ LayoutSelector.propTypes = {
 LayoutSelector.defaultProps = {
   columns: 4,
   rows: 3,
-  onLayoutChange: () => {},
+  onLayoutChange: () => { },
 };
 
 export default ToolbarLayoutSelectorWithServices;
