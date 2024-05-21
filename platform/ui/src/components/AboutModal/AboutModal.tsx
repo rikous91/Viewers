@@ -75,63 +75,25 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
   );
   return (
     <div>
-      {renderRowTitle(t('Important links'))}
-      <div className="mb-8 flex">
-        <Link
-          href="https://community.ohif.org/"
-          showIcon={true}
-        >
-            {t('Visit the forum')}
-        </Link>
-        <span className="ml-4">
-          <Link
-            href="https://github.com/OHIF/Viewers/issues/new/choose"
-            showIcon={true}
-          >
-            {t('Report an issue')}
-          </Link>
-        </span>
-        <span className="ml-4">
-          <Link
-            href="https://ohif.org/"
-            showIcon={true}
-          >
-          {t('More details')}
-          </Link>
-        </span>
-      </div>
-
-      {renderRowTitle(t('Version information'))}
       <div className="flex flex-col">
-        <Row
-          title={t('Repository URL')}
-          value="https://github.com/OHIF/Viewers/"
-          link="https://github.com/OHIF/Viewers/"
+        <img
+          style={{ width: '130px', marginBottom: '20px' }}
+          src="assets/logo_nolex.png"
+          alt="logo-nolex"
         />
         <Row
-          title={t('Data citation')}
-          value="https://github.com/OHIF/Viewers/blob/master/DATACITATION.md"
-          link="https://github.com/OHIF/Viewers/blob/master/DATACITATION.md"
+          title={t('URL')}
+          value="https://nolex.it"
+          link="https://nolex.it"
         />
-        {/* <Row
-          title={t('Last master commits')}
-          value="https://github.com/OHIF/Viewers/"
-          link="https://github.com/OHIF/Viewers/"
-        /> */}
         <Row
-          title={t('Version number')}
+          title={t('Versione')}
           value={versionNumber}
         />
         {buildNumber && (
           <Row
             title={t('Build number')}
             value={buildNumber}
-          />
-        )}
-        {commitHash && (
-          <Row
-            title={t('Commit hash')}
-            value={commitHash}
           />
         )}
         <Row

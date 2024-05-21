@@ -185,7 +185,7 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }: wi
           />
         )}
         <MeasurementTable
-          title="Measurements"
+          title="Misurazioni"
           data={displayMeasurementsWithoutFindings}
           servicesManager={servicesManager}
           onClick={jumpToImage}
@@ -269,7 +269,7 @@ function _mapMeasurementToDisplay(measurement, types, displaySetService) {
   } = measurement;
 
   const firstSite = findingSites?.[0];
-  const label = baseLabel || finding?.text || firstSite?.text || '(empty)';
+  const label = baseLabel || finding?.text || firstSite?.text || '(Nessuna descrizione)';
   let displayText = baseDisplayText || [];
   if (findingSites) {
     const siteText = [];

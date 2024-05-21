@@ -51,22 +51,22 @@ function ViewerHeader({
 
   const menuOptions = [
     {
-      title: t('Header:About'),
+      title: t('Header:Info versione'),
       icon: 'info',
       onClick: () =>
         show({
           content: AboutModal,
-          title: t('AboutModal:About OHIF Viewer'),
+          title: t('AboutModal:Info versione'),
           contentProps: { versionNumber, commitHash },
           containerDimensions: 'max-w-4xl max-h-4xl',
         }),
     },
     {
-      title: t('Header:Preferences'),
+      title: t('Header:Scorciatoie da tastiera'),
       icon: 'settings',
       onClick: () =>
         show({
-          title: t('UserPreferencesModal:User preferences'),
+          title: t('UserPreferencesModal:Scorciatoie da tastiera'),
           content: UserPreferences,
           containerDimensions: 'w-[70%] max-w-[900px]',
           contentProps: {

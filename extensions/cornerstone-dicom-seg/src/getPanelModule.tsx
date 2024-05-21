@@ -64,14 +64,14 @@ const getPanelModule = ({
       name: 'panelSegmentation',
       iconName: 'tab-segmentation',
       iconLabel: 'Segmentation',
-      label: 'Segmentation',
+      label: 'Segmentazione',
       component: wrappedPanelSegmentation,
     },
     {
       name: 'panelSegmentationWithTools',
       iconName: 'tab-segmentation',
       iconLabel: 'Segmentation',
-      label: 'Segmentation',
+      label: 'Segmentazione',
       component: wrappedPanelSegmentationWithTools,
     },
   ];

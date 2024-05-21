@@ -1,7 +1,7 @@
 export const fourUp = {
   id: 'fourUp',
   locked: true,
-  name: '3D four up',
+  name: 'Volume 3D a destra',
   icon: 'layout-advanced-3d-four-up',
   isPreset: true,
   createdDate: '2023-03-15T10:29:44.894Z',

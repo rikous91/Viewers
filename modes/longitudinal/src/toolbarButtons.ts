@@ -23,7 +23,7 @@ const toolbarButtons: Button[] = [
       primary: createButton({
         id: 'Length',
         icon: 'tool-length',
-        label: 'Length',
+        label: 'Lunghezza',
         tooltip: 'Length Tool',
         commands: setToolActiveToolbar,
         evaluate: 'evaluate.cornerstoneTool',
@@ -36,7 +36,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'Length',
           icon: 'tool-length',
-          label: 'Length',
+          label: 'Lunghezza',
           tooltip: 'Length Tool',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -44,7 +44,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'Bidirectional',
           icon: 'tool-bidirectional',
-          label: 'Bidirectional',
+          label: 'Bidirezionale',
           tooltip: 'Bidirectional Tool',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -52,7 +52,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'ArrowAnnotate',
           icon: 'tool-annotate',
-          label: 'Annotation',
+          label: 'Annotazione',
           tooltip: 'Arrow Annotate',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -60,7 +60,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'EllipticalROI',
           icon: 'tool-ellipse',
-          label: 'Ellipse',
+          label: 'Ellisse',
           tooltip: 'Ellipse ROI',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -68,7 +68,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'RectangleROI',
           icon: 'tool-rectangle',
-          label: 'Rectangle',
+          label: 'Rettangolo',
           tooltip: 'Rectangle ROI',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -76,7 +76,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'CircleROI',
           icon: 'tool-circle',
-          label: 'Circle',
+          label: 'Cerchio',
           tooltip: 'Circle Tool',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -84,7 +84,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'PlanarFreehandROI',
           icon: 'icon-tool-freehand-roi',
-          label: 'Freehand ROI',
+          label: 'ROI mano libera',
           tooltip: 'Freehand ROI',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -92,7 +92,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'SplineROI',
           icon: 'icon-tool-spline-roi',
-          label: 'Spline ROI',
+          label: 'ROI Spline',
           tooltip: 'Spline ROI',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -100,7 +100,7 @@ const toolbarButtons: Button[] = [
         createButton({
           id: 'LivewireContour',
           icon: 'icon-tool-livewire',
-          label: 'Livewire tool',
+          label: 'Strumento Livewire',
           tooltip: 'Livewire tool',
           commands: setToolActiveToolbar,
           evaluate: 'evaluate.cornerstoneTool',
@@ -136,7 +136,7 @@ const toolbarButtons: Button[] = [
     props: {
       type: 'tool',
       icon: 'tool-move',
-      label: 'Pan',
+      label: 'Sposta',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',
     },
@@ -147,7 +147,7 @@ const toolbarButtons: Button[] = [
     props: {
       type: 'tool',
       icon: 'tool-3d-rotate',
-      label: '3D Rotate',
+      label: 'Rotazione 3D',
       commands: setToolActiveToolbar,
       evaluate: {
         name: 'evaluate.cornerstoneTool',
@@ -160,7 +160,7 @@ const toolbarButtons: Button[] = [
     uiType: 'ohif.radioGroup',
     props: {
       icon: 'tool-capture',
-      label: 'Capture',
+      label: 'Cattura',
       commands: 'showDownloadViewportModal',
       evaluate: 'evaluate.action',
     },
@@ -180,7 +180,7 @@ const toolbarButtons: Button[] = [
     props: {
       type: 'tool',
       icon: 'tool-crosshair',
-      label: 'Crosshairs',
+      label: 'Crosshair',
       commands: {
         commandName: 'setToolActiveToolbar',
         commandOptions: {
@@ -189,7 +189,7 @@ const toolbarButtons: Button[] = [
       },
       evaluate: {
         name: 'evaluate.cornerstoneTool',
-        disabledText: 'Select an MPR viewport to enable this tool',
+        disabledText: 'Seleziona una viewport MPR per abilitare questo strumento.',
       },
     },
   },

@@ -47,7 +47,7 @@ function getPanelModule({ commandsManager, extensionManager, servicesManager }) 
       name: 'petSUV',
       iconName: 'tab-patient-info',
       iconLabel: 'Patient Info',
-      label: 'Patient Info',
+      label: 'Info paziente',
       component: wrappedPanelPetSuv,
     },
     {
@@ -60,8 +60,8 @@ function getPanelModule({ commandsManager, extensionManager, servicesManager }) 
     {
       name: 'tmtvExport',
       iconName: 'tab-segmentation',
-      iconLabel: 'Segmentation',
-      label: 'Segmentation Export',
+      iconLabel: 'Segmentazione',
+      label: 'Esporta segmentazione',
       component: wrappedROIThresholdExport,
     },
   ];
