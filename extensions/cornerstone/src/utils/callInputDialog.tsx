@@ -24,8 +24,8 @@ function callInputDialog(
   const dialogId = 'dialog-enter-annotation';
   const label = data ? (isArrowAnnotateInputDialog ? data.text : data.label) : '';
   const {
-    dialogTitle = 'Annotation',
-    inputLabel = 'Enter your annotation',
+    dialogTitle = 'Annotazione',
+    inputLabel = 'Inserisci la tua annotazione',
     validateFunc = value => true,
   } = dialogConfig;
 
@@ -58,8 +58,8 @@ function callInputDialog(
         noCloseButton: true,
         onClose: () => uiDialogService.dismiss({ id: dialogId }),
         actions: [
-          { id: 'cancel', text: 'Cancel', type: ButtonEnums.type.secondary },
-          { id: 'save', text: 'Save', type: ButtonEnums.type.primary },
+          { id: 'cancel', text: 'Annulla', type: ButtonEnums.type.secondary },
+          { id: 'save', text: 'Salva', type: ButtonEnums.type.primary },
         ],
         onSubmit: onSubmitHandler,
         body: ({ value, setValue }) => {

@@ -198,7 +198,7 @@ export class SelectTree extends Component<PropType> {
               data-cy="input-annotation"
               type="text"
               className={`border-primary-main border-primary-main appearance-none rounded border bg-black bg-black py-2 pr-3 text-sm leading-tight shadow transition duration-300 hover:border-gray-500 focus:border-gray-500 focus:outline-none focus:outline-none ${inputLeftPadding}`}
-              placeholder={this.props.items.length > 0 ? 'Search labels' : 'Enter label'}
+              placeholder={this.props.items.length > 0 ? 'Cerca etichette' : 'Inserisci etichetta'}
               autoFocus={this.props.autoFocus}
               onChange={this.searchLocations}
               value={this.state.searchTerm ? this.state.searchTerm : ''}
@@ -215,7 +215,7 @@ export class SelectTree extends Component<PropType> {
               type={ButtonEnums.type.primary}
               onClick={this.onSubmitHandler}
             >
-              Save
+              Salva
             </Button>
           </div>
         )}

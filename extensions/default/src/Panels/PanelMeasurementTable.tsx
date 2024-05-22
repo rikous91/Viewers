@@ -162,7 +162,7 @@ export default function PanelMeasurementTable({
       showOverlay: true,
       content: Dialog,
       contentProps: {
-        title: 'Annotation',
+        title: 'Annotazione',
         noCloseButton: true,
         value: { label: measurement.label || '' },
         body: ({ value, setValue }) => {
@@ -191,8 +191,8 @@ export default function PanelMeasurementTable({
           );
         },
         actions: [
-          { id: 'cancel', text: 'Cancel', type: ButtonEnums.type.secondary },
-          { id: 'save', text: 'Save', type: ButtonEnums.type.primary },
+          { id: 'cancel', text: 'Annulla', type: ButtonEnums.type.secondary },
+          { id: 'save', text: 'Salva', type: ButtonEnums.type.primary },
         ],
         onSubmit: onSubmitHandler,
       },
@@ -229,11 +229,11 @@ export default function PanelMeasurementTable({
           t={t}
           actions={[
             {
-              label: 'Export',
+              label: 'Esporta',
               onClick: exportReport,
             },
             {
-              label: 'Create Report',
+              label: 'Crea Report',
               onClick: createReport,
             },
           ]}

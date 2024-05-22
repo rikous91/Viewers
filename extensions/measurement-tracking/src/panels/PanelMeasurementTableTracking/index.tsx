@@ -207,11 +207,11 @@ function PanelMeasurementTableTracking({ servicesManager, extensionManager }: wi
             t={t}
             actions={[
               {
-                label: 'Export',
+                label: 'Esporta',
                 onClick: exportReport,
               },
               {
-                label: 'Create Report',
+                label: 'Crea Report',
                 onClick: () => {
                   sendTrackedMeasurementsEvent('SAVE_REPORT', {
                     viewportId: viewportGrid.activeViewportId,

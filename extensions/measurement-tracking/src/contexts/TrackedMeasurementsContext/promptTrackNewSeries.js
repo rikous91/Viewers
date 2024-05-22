@@ -54,22 +54,26 @@ function _askShouldAddMeasurements(uiViewportDialogService, viewportId) {
         value: RESPONSE.ADD_SERIES,
       },
     ];
-    const onSubmit = result => {
-      uiViewportDialogService.hide();
-      resolve(result);
-    };
+    // const onSubmit = result => {
+    //   uiViewportDialogService.hide();
+    //   resolve(result);
+    // };
 
-    uiViewportDialogService.show({
-      viewportId,
-      type: 'info',
-      message,
-      actions,
-      onSubmit,
-      onOutsideClick: () => {
-        uiViewportDialogService.hide();
-        resolve(RESPONSE.CANCEL);
-      },
-    });
+    // uiViewportDialogService.show({
+    //   viewportId,
+    //   type: 'info',
+    //   message,
+    //   actions,
+    //   onSubmit,
+    //   onOutsideClick: () => {
+    //     uiViewportDialogService.hide();
+    //     resolve(RESPONSE.CANCEL);
+    //   },
+    // });
+    // Seleziono automaticamente l'opzione per tracciare le misurazioni della serie
+    uiViewportDialogService.hide();
+    resolve(RESPONSE.ADD_SERIES);
+    //
   });
 }
 

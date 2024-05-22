@@ -32,8 +32,8 @@ function callColorPickerDialog(uiDialogService, rgbaColor, callback) {
         noCloseButton: true,
         onClose: () => uiDialogService.dismiss({ id: dialogId }),
         actions: [
-          { id: 'cancel', text: 'Cancel', type: 'primary' },
-          { id: 'save', text: 'Save', type: 'secondary' },
+          { id: 'cancel', text: 'Annulla', type: 'primary' },
+          { id: 'save', text: 'Salva', type: 'secondary' },
         ],
         onSubmit: onSubmitHandler,
         body: ({ value, setValue }) => {

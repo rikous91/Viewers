@@ -58,6 +58,10 @@ function _askTrackMeasurements(
       resolve(result);
     };
 
+    onSubmit(RESPONSE.SET_STUDY_AND_SERIES);
+
+    return;
+
     UIViewportDialogService.show({
       viewportId,
       type: 'info',
