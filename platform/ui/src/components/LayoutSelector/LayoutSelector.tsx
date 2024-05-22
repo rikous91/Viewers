@@ -19,7 +19,7 @@ function LayoutSelector({ onSelection, rows, columns }) {
         display: 'grid',
         gridTemplateColumns: gridSize.repeat(columns),
         gridTemplateRows: gridSize.repeat(rows),
-        backgroundColor: '#090c29', // primary-dark
+        backgroundColor: '#1c1c1c', // primary-dark
       }}
     >
       {Array.apply(null, Array(rows * columns))
@@ -49,7 +49,7 @@ function LayoutSelector({ onSelection, rows, columns }) {
 }
 
 LayoutSelector.defaultProps = {
-  onSelection: () => {},
+  onSelection: () => { },
   columns: 4,
   rows: 3,
 };

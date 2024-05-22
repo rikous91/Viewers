@@ -32,3 +32,198 @@ body {
   user-select: none;
   opacity: 0.5;
 }
+
+/*CUSTOM*/
+
+.text-primary-active {
+  color: #fff;
+}
+.text-primary-light {
+  color: #fff;
+}
+
+.text-primary-dark {
+  color: #b71c1c;
+}
+.text-primary-main {
+  color: #b71c1c;
+}
+.bg-primary-main {
+  background-color: #b71c1c;
+}
+.bg-primary-light {
+  background-color: #fff;
+}
+
+.bg-primary-active {
+  background-color: #702e2e;
+}
+
+.bg-secondary-main {
+  background-color: #b71c1c;
+}
+
+.bg-customblue-40 {
+  background-color: #b71c1c;
+}
+
+.\!text-primary-active {
+  color: #b71c1c !important;
+}
+
+.\!text-primary-light {
+  color: #f96f6f !important;
+}
+
+.text-aqua-pale {
+  color: #f96f6f;
+}
+
+.hover\:border-primary-dark:hover {
+  border-color: #b71c1c !important;
+}
+
+.group\/secondary:hover .group-hover\/secondary\:text-primary-light {
+  color: #f96f6f !important;
+}
+
+.group\/button:hover .group-hover\/button\:border-primary-dark {
+  border-color: #b71c1c !important;
+}
+
+.group:hover .group-hover\:border-primary-light\/70 {
+  border-color: #b7b7b7b3 !important;
+}
+
+.group:hover .group-hover\:bg-secondary-main {
+  background-color: #484848 !important;
+}
+
+.focus\:\!bg-primary-light:focus {
+  background-color: #b71c1c !important;
+}
+
+.focus\:border-inputfield-focus:focus {
+  border-color: #e65a5a !important;
+}
+
+.hover\:text-primary-active:hover {
+  color: #ea3f20 !important;
+}
+
+.hover\:bg-primary-dark:hover {
+  background-color: #b71c1c !important;
+}
+
+.hover\:bg-primary-dark.\!text-primary-active:hover {
+  color: #fff !important;
+}
+
+.hover\:bg-secondary-light\/60:hover {
+  background-color: rgb(153 58 58 / 60%) !important;
+}
+
+.hover\:border-blue-300:hover {
+  border-color: #fff !important;
+}
+
+.bg-customblue-30 {
+  background-color: #b71c1c !important;
+}
+
+.hover\:bg-customblue-50:hover {
+  background-color: #7a0909 !important;
+}
+
+.hover\:\!text-primary-light:hover {
+  filter: grayscale(1);
+}
+
+.hover\:\!bg-primary-dark[data-cy='MoreTools-split-button-primary']:hover {
+  background-color: #b71c1c !important;
+}
+
+.hover\:\!bg-primary-dark:hover {
+  background-color: #b71c1c !important;
+}
+
+.hover\:\!bg-primary-dark.text-common-bright:hover {
+  background-color: #b71c1c !important;
+}
+
+.hover\:\!bg-primary-dark.\!text-common-bright:hover {
+  background-color: #b71c1c !important;
+}
+
+.hover\:bg-secondary-main:hover {
+  background-color: #b71c1c !important;
+}
+
+.border-primary-light {
+  border-color: #b71c1c;
+}
+
+.border-primary-dark {
+  border-color: #161616;
+}
+
+.border-secondary-main {
+  border-color: #6b1616;
+}
+
+.border-secondary-dark {
+  border-color: #b71c1c;
+}
+
+.border-primary-active {
+  border-color: #b71c1c;
+}
+
+.border-secondary-light {
+  border-color: #313131;
+}
+
+.border-inputfield-main {
+  border-color: #993a3a;
+}
+
+.rounded,
+.rounded-md {
+  border-radius: 2px !important;
+}
+
+.border-2 {
+  border-width: 1px;
+}
+
+.bg-primary-dark {
+  background-color: #2e2e2e;
+}
+
+.bg-secondary-dark {
+  background-color: #111;
+}
+
+.text-blue-300 {
+  color: #fff;
+}
+
+.tooltip.tooltip-bottom .tooltip-box::before {
+  background-color: #b71c1c;
+}
+
+.ohif-scrollbar {
+  scrollbar-color: #391c17 transparent !important;
+}
+
+[stroke='#348CFD'] {
+  stroke: #b71c1c;
+}
+
+[fill='#263A71'] {
+  fill: #b71c1c;
+}
+
+.bg-\[\#04225b\] {
+  background-color: #342121;
+}
