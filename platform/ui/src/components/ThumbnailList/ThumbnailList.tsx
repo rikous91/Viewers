@@ -72,7 +72,7 @@ const ThumbnailList = ({
                   messages={messages}
                   isTracked={isTracked}
                   isActive={isActive}
-                  onClick={() => onThumbnailClick(displaySetInstanceUID)}
+                  onClick={() => onThumbnailDoubleClick(displaySetInstanceUID)}
                   onDoubleClick={() => onThumbnailDoubleClick(displaySetInstanceUID)}
                   onClickUntrack={() => onClickUntrack(displaySetInstanceUID)}
                 />
