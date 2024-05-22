@@ -108,7 +108,7 @@ ViewportPane.propTypes = {
   onDoubleClick: PropTypes.func,
 };
 
-const noop = () => {};
+const noop = () => { };
 
 ViewportPane.defaultProps = {
   onInteraction: noop,

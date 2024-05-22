@@ -28,7 +28,7 @@ function LayoutPreset({
 }
 
 LayoutPreset.defaultProps = {
-  onSelection: () => {},
+  onSelection: () => { },
 };
 
 LayoutPreset.propTypes = {
