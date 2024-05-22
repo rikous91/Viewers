@@ -53,29 +53,35 @@ function _askTrackMeasurements(uiViewportDialogService, viewportId) {
         value: RESPONSE.SET_STUDY_AND_SERIES,
       },
     ];
-    const onSubmit = result => {
-      uiViewportDialogService.hide();
-      resolve(result);
-    };
 
-    uiViewportDialogService.show({
-      viewportId,
-      id: 'measurement-tracking-prompt-begin-tracking',
-      type: 'info',
-      message,
-      actions,
-      onSubmit,
-      onOutsideClick: () => {
-        uiViewportDialogService.hide();
-        resolve(RESPONSE.CANCEL);
-      },
-      onKeyPress: event => {
-        if (event.key === 'Enter') {
-          const action = actions.find(action => action.id === 'prompt-begin-tracking-yes');
-          onSubmit(action.value);
-        }
-      },
-    });
+    // const onSubmit = result => {
+    //   uiViewportDialogService.hide();
+    //   resolve(result);
+    // };
+
+    // uiViewportDialogService.show({
+    //   viewportId,
+    //   id: 'measurement-tracking-prompt-begin-tracking',
+    //   type: 'info',
+    //   message,
+    //   actions,
+    //   onSubmit,
+    //   onOutsideClick: () => {
+    //     uiViewportDialogService.hide();
+    //     resolve(RESPONSE.CANCEL);
+    //   },
+    //   onKeyPress: event => {
+    //     if (event.key === 'Enter') {
+    //       const action = actions.find(action => action.id === 'prompt-begin-tracking-yes');
+    //       onSubmit(action.value);
+    //     }
+    //   },
+    // });
+
+    // Seleziono automaticamente l'opzione per tracciare le misurazioni della serie
+    uiViewportDialogService.hide();
+    resolve(RESPONSE.SET_STUDY_AND_SERIES);
+    //
   });
 }
 

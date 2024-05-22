@@ -93,7 +93,7 @@ class LabellingFlow extends Component<PropType> {
         columns={1}
         onSelected={this.selectTreeSelectCalback}
         closePopup={this.closePopup}
-        selectTreeFirstTitle="Annotation"
+        selectTreeFirstTitle="Annotazione"
         exclusive={this.props.exclusive}
         label={this.state.label}
       />

@@ -21,7 +21,7 @@ const findingsContextMenu = {
         },
         {
           // customizationType is implicit here in the configuration setup
-          label: 'Delete Measurement',
+          label: 'Elimina misurazione',
           commands: [
             {
               commandName: 'deleteMeasurement',
@@ -29,7 +29,7 @@ const findingsContextMenu = {
           ],
         },
         {
-          label: 'Add Label',
+          label: 'Aggiungi etichetta',
           commands: [
             {
               commandName: 'setMeasurementLabel',
