@@ -87,6 +87,7 @@ const InvestigationalUseDialog = ({ dialogConfiguration }) => {
           type={ButtonEnums.type.primary}
           onClick={handleConfirmAndHide}
           className="bg-primary-main"
+          dataCY="confirm-and-hide-button"
         >
           Confirm and Hide
         </Button>
