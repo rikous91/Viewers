@@ -13,7 +13,7 @@ function ViewportPane({
   isActive,
   onDrop,
   onDoubleClick,
-  onInteraction,
+  onInteraction = () => { },
   acceptDropsFor,
 }) {
   let dropElement = null;
