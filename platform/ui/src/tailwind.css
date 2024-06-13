@@ -224,6 +224,10 @@ body {
   fill: #b71c1c;
 }
 
+[fill='#5ACCE6'] {
+  fill: #993a3a;
+}
+
 .bg-\[\#04225b\] {
   background-color: #342121;
 }
