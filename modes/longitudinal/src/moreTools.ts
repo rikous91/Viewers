@@ -137,7 +137,7 @@ const moreTools = [
         }),
         createButton({
           id: 'CobbAngle',
-          icon: 'tool-angle',
+          icon: 'icon-tool-cobb-angle',
           label: 'Angolo di Cobb',
           tooltip: 'Cobb Angle',
           commands: setToolActiveToolbar,
@@ -181,6 +181,14 @@ const moreTools = [
           tooltip: 'Ultrasound Directional',
           commands: setToolActiveToolbar,
           evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
+        }),
+        createButton({
+          id: 'WindowLevelRegion',
+          icon: 'icon-tool-window-region',
+          label: 'Window Level Region',
+          tooltip: 'Window Level Region',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
         }),
       ],
     },
