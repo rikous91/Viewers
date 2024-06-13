@@ -14,7 +14,7 @@ const HotkeysPreferences = ({
   disabled = false,
   hotkeyDefinitions,
   errors: controlledErrors,
-  onChange = () => {},
+  onChange = () => { },
   hotkeysModule,
 }) => {
   const { t } = useTranslation('UserPreferencesModal');
@@ -79,7 +79,7 @@ const HotkeysPreferences = ({
                             !isFirst && 'hidden'
                           )}
                         >
-                          {t('Function')}
+                          {t('Funzione')}
                         </Typography>
                         <Typography
                           variant="subtitle"
@@ -99,7 +99,7 @@ const HotkeysPreferences = ({
                             !isFirst && 'hidden'
                           )}
                         >
-                          {t('Shortcut')}
+                          {t('Tasto')}
                         </Typography>
                         <div className={classNames('flex w-32 flex-col', isFirst && 'mt-5')}>
                           <HotkeyField

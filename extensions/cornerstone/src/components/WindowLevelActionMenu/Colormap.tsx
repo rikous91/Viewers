@@ -110,7 +110,7 @@ export function Colormap({
       )}
       <div className="all-in-one-menu-item flex w-full justify-center">
         <SwitchButton
-          label="Preview in viewport"
+          label="Anteprima live"
           checked={showPreview}
           onChange={checked => {
             setShowPreview(checked);

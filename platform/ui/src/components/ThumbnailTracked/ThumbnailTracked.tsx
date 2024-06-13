@@ -55,7 +55,9 @@ function ThumbnailTracked({
                 <div className="flex flex-1 flex-col">
                   <span>
                     <span className="text-white">
-                      {isTracked ? t('Series is tracked') : t('Series is untracked')}
+                      {isTracked
+                        ? t('Ci sono misurazioni effettuate in questa serie')
+                        : t('Non ci sono ancora misurazioni effettuate in questa serie')}
                     </span>
                   </span>
                 </div>

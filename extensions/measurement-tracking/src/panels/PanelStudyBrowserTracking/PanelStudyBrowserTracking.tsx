@@ -352,24 +352,22 @@ function PanelStudyBrowserTracking({
       showOverlay: true,
       content: Dialog,
       contentProps: {
-        title: 'Untrack Series',
+        title: 'Elimina misurazioni serie',
         body: () => (
           <div className="bg-primary-dark p-4 text-white">
-            <p>Are you sure you want to untrack this series?</p>
-            <p className="mt-2">
-              This action cannot be undone and will delete all your existing measurements.
-            </p>
+            <p>Sicuro di voler rimuovere le misurazioni legate a questa serie?</p>
+            <p className="mt-2">Questa azione è irreversibile.</p>
           </div>
         ),
         actions: [
           {
             id: 'cancel',
-            text: 'Cancel',
+            text: 'Annulla',
             type: ButtonEnums.type.secondary,
           },
           {
             id: 'yes',
-            text: 'Yes',
+            text: 'Sì',
             type: ButtonEnums.type.primary,
             classes: ['untrack-yes-button'],
           },
