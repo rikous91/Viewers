@@ -15,9 +15,9 @@ const UserPreferences = ({
   disabled = false,
   hotkeyDefinitions,
   hotkeyDefaults,
-  onCancel = () => {},
-  onSubmit = () => {},
-  onReset = () => {},
+  onCancel = () => { },
+  onSubmit = () => { },
+  onReset = () => { },
   hotkeysModule,
 }) => {
   const { t } = useTranslation('UserPreferencesModal');
@@ -81,7 +81,7 @@ const UserPreferences = ({
 
   return (
     <>
-      <Section title={t('Hotkeys')}>
+      <Section title={t('Tasti di scelta rapida')}>
         <HotkeysPreferences
           disabled={disabled}
           hotkeyDefinitions={state.hotkeyDefinitions}
@@ -96,21 +96,21 @@ const UserPreferences = ({
           onClick={onResetHandler}
           disabled={disabled}
         >
-          {t('Reset to defaults')}
+          {t('Ripristina predefiniti')}
         </Button>
         <div className="flex flex-row">
           <Button
             type={ButtonEnums.type.secondary}
             onClick={onCancelHandler}
           >
-            {t('Cancel')}
+            {t('Annulla')}
           </Button>
           <Button
             disabled={state.isDisabled}
             className="ml-2"
             onClick={onSubmitHandler}
           >
-            {t('Save')}
+            {t('Salva')}
           </Button>
         </div>
       </div>

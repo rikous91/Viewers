@@ -196,6 +196,10 @@ body {
   border-width: 1px;
 }
 
+.bg-indigo-dark {
+  background-color: rgb(17 17 17);
+}
+
 .bg-primary-dark {
   background-color: #2e2e2e;
 }
@@ -224,10 +228,11 @@ body {
   fill: #b71c1c;
 }
 
-[fill='#5ACCE6'] {
+[fill='#5ACCE6'],
+[stroke='#5ACCE6'] {
+  stroke: #993a3a;
   fill: #993a3a;
 }
-
 .bg-\[\#04225b\] {
   background-color: #342121;
 }
