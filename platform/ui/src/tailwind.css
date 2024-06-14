@@ -135,6 +135,10 @@ body {
   background-color: #7a0909 !important;
 }
 
+.hover\:bg-primary-light:hover {
+  background-color: #fff !important;
+}
+
 .hover\:\!text-primary-light:hover {
   filter: grayscale(1);
 }
@@ -208,6 +212,10 @@ body {
   background-color: #111;
 }
 
+.bg-tertiary-dark {
+  background-color: #1a1a1a;
+}
+
 .text-blue-300 {
   color: #fff;
 }
@@ -217,7 +225,7 @@ body {
 }
 
 .ohif-scrollbar {
-  scrollbar-color: #391c17 transparent !important;
+  scrollbar-color: #0c0c0c transparent !important;
 }
 
 [stroke='#348CFD'] {
