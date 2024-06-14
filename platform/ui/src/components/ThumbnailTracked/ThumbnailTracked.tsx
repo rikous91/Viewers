@@ -32,13 +32,13 @@ function ThumbnailTracked({
 
   return (
     <div
-      className={classnames('flex flex-1 cursor-pointer flex-row px-3 outline-none', className)}
+      className={classnames('pe-3 flex flex-1 cursor-pointer flex-row outline-none', className)}
       id={`thumbnail-${displaySetInstanceUID}`}
     >
       <div className="flex-2 flex flex-col items-center">
         <div
           className={classnames(
-            'relative mb-2 flex cursor-pointer flex-col items-center justify-start p-2',
+            'relative my-1 flex cursor-pointer flex-col items-center justify-start p-2',
             isTracked && 'rounded-sm hover:bg-gray-900'
           )}
         >
@@ -66,6 +66,7 @@ function ThumbnailTracked({
           >
             <Icon
               name={trackedIcon}
+              style={{ width: '12px' }}
               className="text-primary-light mb-2 w-4"
             />
           </Tooltip>
@@ -74,6 +75,7 @@ function ThumbnailTracked({
           <div onClick={onClickUntrack}>
             <Icon
               name="cancel"
+              style={{ width: '12px' }}
               className="text-primary-active w-4"
             />
           </div>

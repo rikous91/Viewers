@@ -52,8 +52,9 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        'group mb-8 flex flex-1 cursor-pointer select-none flex-col px-3 outline-none'
+        'group mb-3 mr-1 flex flex-1 cursor-pointer select-none flex-col p-1 outline-none'
       )}
+      style={{ borderBottom: '1px solid #404040' }}
       id={`thumbnail-${displaySetInstanceUID}`}
       data-cy={`study-browser-thumbnail`}
       onClick={onClick}
@@ -63,6 +64,35 @@ const Thumbnail = ({
       tabIndex="0"
     >
       <div ref={drag}>
+        <div className="flex flex-1 flex-row items-center pt-2 text-base text-blue-300">
+          <div className="mr-4">
+            <span className="text-primary-main font-bold">{'S: '}</span>
+            {seriesNumber}
+          </div>
+          <div className="flex flex-1 flex-row items-center">
+            <Icon
+              name={countIcon || 'group-layers'}
+              className="mr-2 w-3"
+            />
+            {` ${numInstances}`}
+          </div>
+          <DisplaySetMessageListTooltip
+            messages={messages}
+            id={`display-set-tooltip-${displaySetInstanceUID}`}
+          />
+          <div
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '93px',
+              position: 'relative',
+            }}
+            className="break-all text-base text-white"
+          >
+            {description}
+          </div>
+        </div>
         <div
           className={classnames(
             'flex h-32 flex-1 items-center justify-center overflow-hidden rounded-md bg-black text-base text-white',
@@ -82,24 +112,6 @@ const Thumbnail = ({
             <div>{imageAltText}</div>
           )}
         </div>
-        <div className="flex flex-1 flex-row items-center pt-2 text-base text-blue-300">
-          <div className="mr-4">
-            <span className="text-primary-main font-bold">{'S: '}</span>
-            {seriesNumber}
-          </div>
-          <div className="flex flex-1 flex-row items-center">
-            <Icon
-              name={countIcon || 'group-layers'}
-              className="mr-2 w-3"
-            />
-            {` ${numInstances}`}
-          </div>
-          <DisplaySetMessageListTooltip
-            messages={messages}
-            id={`display-set-tooltip-${displaySetInstanceUID}`}
-          />
-        </div>
-        <div className="break-all text-base text-white">{description}</div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 {
-  "name": "OHIF Viewer",
+  "name": "Nolex Viewer",
   "short_name": "Viewer",
-  "description": "OHIF Viewer",
+  "description": "Nolex Viewer",
   "dir": "auto",
   "lang": "en-US",
   "orientation": "any",
