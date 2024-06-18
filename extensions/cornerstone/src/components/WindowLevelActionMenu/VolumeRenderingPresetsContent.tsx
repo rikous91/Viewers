@@ -46,7 +46,7 @@ export function VolumeRenderingPresetsContent({
             <InputFilterText
               value={searchValue}
               onDebounceChange={handleSearchChange}
-              placeholder={'Search all'}
+              placeholder={'Cerca un preset'}
             />
           </div>
         </div>
@@ -86,7 +86,7 @@ export function VolumeRenderingPresetsContent({
             onClick={onClose}
           >
             {' '}
-            Cancel{' '}
+            Annulla{' '}
           </Button>
         </div>
       </footer>

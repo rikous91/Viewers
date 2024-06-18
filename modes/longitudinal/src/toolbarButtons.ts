@@ -58,6 +58,30 @@ const toolbarButtons: Button[] = [
           evaluate: 'evaluate.cornerstoneTool',
         }),
         createButton({
+          id: 'Angle',
+          icon: 'tool-angle',
+          label: 'Angolo',
+          tooltip: 'Angle',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'CobbAngle',
+          icon: 'icon-tool-cobb-angle',
+          label: 'Angolo di Cobb',
+          tooltip: 'Cobb Angle',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'UltrasoundDirectionalTool',
+          icon: 'icon-tool-ultrasound-bidirectional',
+          label: 'Ultrasuono direzionale',
+          tooltip: 'Ultrasound Directional',
+          commands: setToolActiveToolbar,
+          evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
+        }),
+        createButton({
           id: 'EllipticalROI',
           icon: 'tool-ellipse',
           label: 'Ellisse',
@@ -139,6 +163,18 @@ const toolbarButtons: Button[] = [
       label: 'Sposta',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  //Inversione
+  {
+    id: 'invert',
+    uiType: 'ohif.radioGroup',
+    props: {
+      type: 'tool',
+      icon: 'tool-invert',
+      label: 'Inverti colori',
+      commands: 'invertViewport',
+      evaluate: 'evaluate.viewportProperties.toggle',
     },
   },
   {
