@@ -23,7 +23,7 @@ export function getToolbarModule({ servicesManager }: withAppTypes) {
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Not available on the current viewport',
+            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
           };
         }
 
@@ -33,7 +33,7 @@ export function getToolbarModule({ servicesManager }: withAppTypes) {
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Not available on the current viewport',
+            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
           };
         }
 

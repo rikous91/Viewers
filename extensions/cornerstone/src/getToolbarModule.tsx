@@ -35,7 +35,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Not available on the current viewport',
+            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
           };
         }
 
@@ -181,7 +181,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Not available on the current viewport',
+            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
           };
         }
       },
@@ -201,7 +201,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Not available on the current viewport',
+            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
           };
         }
       },
@@ -257,7 +257,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Not available on the current viewport',
+            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
           };
         }
 
@@ -291,7 +291,7 @@ function _evaluateToggle({
     return {
       disabled: true,
       className: '!text-common-bright ohif-disabled',
-      disabledText: disabledText ?? 'Not available on the current viewport',
+      disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
     };
   }
 
