@@ -1,7 +1,7 @@
 // TODO: torn, can either bake this here; or have to create a whole new button type
 // Only ways that you can pass in a custom React component for render :l
-import { ToolbarService } from '@ohif/core';
-import type { Button } from '@ohif/core/types';
+import { ToolbarService, ViewportGridService } from '@ohif/core';
+import type { Button, RunCommand } from '@ohif/core/types';
 
 const { createButton } = ToolbarService;
 
@@ -11,6 +11,13 @@ export const setToolActiveToolbar = {
     toolGroupIds: ['default', 'mpr', 'SRToolGroup', 'volume3d'],
   },
 };
+
+const ReferenceLinesListeners: RunCommand = [
+  {
+    commandName: 'setSourceViewportForReferenceLinesTool',
+    context: 'CORNERSTONE',
+  },
+];
 
 const toolbarButtons: Button[] = [
   {
@@ -30,7 +37,7 @@ const toolbarButtons: Button[] = [
       }),
       secondary: {
         icon: 'chevron-down',
-        tooltip: 'More Measure Tools',
+        tooltip: 'Altri strumenti di misurazione',
       },
       items: [
         createButton({
@@ -133,6 +140,100 @@ const toolbarButtons: Button[] = [
     },
   },
   {
+    id: 'TransformTools',
+    uiType: 'ohif.splitButton',
+    props: {
+      groupId: 'TransformTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'rotate-right',
+        icon: 'tool-rotate-right',
+        label: 'Ruota a destra',
+        tooltip: 'Rotate +90',
+        commands: 'rotateViewportCW',
+        evaluate: 'evaluate.action',
+      }),
+      secondary: {
+        icon: 'chevron-down',
+        tooltip: 'Altri strumenti di trasformazione',
+      },
+      items: [
+        createButton({
+          id: 'rotate-right',
+          icon: 'tool-rotate-right',
+          label: 'Ruota a destra',
+          tooltip: 'Rotate +90',
+          commands: 'rotateViewportCW',
+          evaluate: 'evaluate.action',
+        }),
+        createButton({
+          id: 'rotate-left',
+          icon: 'tool-rotate-right',
+          label: 'Ruota a sinistra',
+          tooltip: 'Rotate -90',
+          commands: 'rotateViewportCCW',
+          evaluate: 'evaluate.action',
+        }),
+        createButton({
+          id: 'flipHorizontal',
+          icon: 'tool-flip-horizontal',
+          label: 'Rifletti orizzontalmente',
+          tooltip: 'Rifletti orizzontalmente',
+          commands: 'flipViewportHorizontal',
+          evaluate: ['evaluate.viewportProperties.toggle', 'evaluate.not3D'],
+        }),
+        createButton({
+          id: 'flipVertical',
+          icon: 'tool-flip-horizontal',
+          label: 'Rifletti verticalmente',
+          tooltip: 'Rifletti verticalmente',
+          commands: 'flipViewportVertical',
+          evaluate: ['evaluate.viewportProperties.toggle', 'evaluate.not3D'],
+        }),
+      ],
+    },
+  },
+  {
+    id: 'ZoomTools',
+    uiType: 'ohif.splitButton',
+    props: {
+      groupId: 'ZoomTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'Zoom',
+        icon: 'tool-zoom',
+        label: 'Zoom',
+        tooltip: 'Zoom',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      secondary: {
+        icon: 'chevron-down',
+        tooltip: 'Altri strumenti zoom',
+      },
+      items: [
+        createButton({
+          id: 'Zoom',
+          icon: 'tool-zoom',
+          label: 'Zoom',
+          tooltip: 'Zoom',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+        createButton({
+          id: 'fitViewportToWindow',
+          icon: 'tool-zoom',
+          label: 'Riadatta alla viewport',
+          tooltip: 'Riadatta alla viewport',
+          commands: 'fitViewportToWindow',
+          evaluate: 'evaluate.action',
+        }),
+      ],
+    },
+  },
+  {
     id: 'Zoom',
     uiType: 'ohif.radioGroup',
     props: {
@@ -175,6 +276,70 @@ const toolbarButtons: Button[] = [
       label: 'Inverti colori',
       commands: 'invertViewport',
       evaluate: 'evaluate.viewportProperties.toggle',
+    },
+  },
+  //Sonda
+  {
+    id: 'Probe',
+    uiType: 'ohif.radioGroup',
+    props: {
+      type: 'tool',
+      icon: 'tool-probe',
+      label: 'Sonda',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  //Cine
+  {
+    id: 'Cine',
+    uiType: 'ohif.radioGroup',
+    props: {
+      type: 'tool',
+      icon: 'tool-cine',
+      label: 'Cine',
+      commands: 'toggleCine',
+      evaluate: ['evaluate.cine', 'evaluate.not3D'],
+    },
+  },
+  //Magnify
+  {
+    id: 'Magnify',
+    uiType: 'ohif.radioGroup',
+    props: {
+      type: 'tool',
+      icon: 'tool-magnify',
+      label: "Lente d'ingrandimento",
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  //Linee riferimento
+  {
+    id: 'ReferenceLines',
+    uiType: 'ohif.radioGroup',
+    props: {
+      type: 'tool',
+      icon: 'tool-referenceLines',
+      label: 'Linee di riferimento',
+      commands: 'toggleEnabledDisabledToolbar',
+      listeners: {
+        [ViewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED]: ReferenceLinesListeners,
+        [ViewportGridService.EVENTS.VIEWPORTS_READY]: ReferenceLinesListeners,
+      },
+      evaluate: 'evaluate.cornerstoneTool.toggle',
+    },
+  },
+  //Scorrimento con mouse
+  {
+    id: 'StackScroll',
+    uiType: 'ohif.radioGroup',
+    props: {
+      type: 'tool',
+      icon: 'tool-stack-scroll',
+      label: 'Scprrimento con mouse',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
     },
   },
   {
