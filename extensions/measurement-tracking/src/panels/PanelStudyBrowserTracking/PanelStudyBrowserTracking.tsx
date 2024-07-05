@@ -6,7 +6,7 @@ import { utils } from '@ohif/core';
 import { StudyBrowser, useImageViewer, useViewportGrid, Dialog, ButtonEnums } from '@ohif/ui';
 import { useTrackedMeasurements } from '../../getContextModule';
 
-const { formatDate } = utils;
+const { formatDate, createStudyBrowserTabs } = utils;
 
 /**
  *
@@ -25,6 +25,7 @@ function PanelStudyBrowserTracking({
     hangingProtocolService,
     uiNotificationService,
     measurementService,
+    studyPrefetcherService,
   } = servicesManager.services;
   const navigate = useNavigate();
 
@@ -43,6 +44,7 @@ function PanelStudyBrowserTracking({
   ]);
   const [studyDisplayList, setStudyDisplayList] = useState([]);
   const [displaySets, setDisplaySets] = useState([]);
+  const [displaySetsLoadingState, setDisplaySetsLoadingState] = useState({});
   const [thumbnailImageSrcMap, setThumbnailImageSrcMap] = useState({});
   const [jumpToDisplaySet, setJumpToDisplaySet] = useState(null);
 
@@ -162,6 +164,7 @@ function PanelStudyBrowserTracking({
 
     const mappedDisplaySets = _mapDisplaySets(
       currentDisplaySets,
+      displaySetsLoadingState,
       thumbnailImageSrcMap,
       trackedSeries,
       viewports,
@@ -176,11 +179,29 @@ function PanelStudyBrowserTracking({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     displaySetService.activeDisplaySets,
+    displaySetsLoadingState,
     trackedSeries,
     viewports,
     dataSource,
     thumbnailImageSrcMap,
   ]);
+
+  // -- displaySetsLoadingState
+  useEffect(() => {
+    const { unsubscribe } = studyPrefetcherService.subscribe(
+      studyPrefetcherService.EVENTS.DISPLAYSET_LOAD_PROGRESS,
+      updatedDisplaySetLoadingState => {
+        const { displaySetInstanceUID, loadingProgress } = updatedDisplaySetLoadingState;
+
+        setDisplaySetsLoadingState(prevState => ({
+          ...prevState,
+          [displaySetInstanceUID]: loadingProgress,
+        }));
+      }
+    );
+
+    return () => unsubscribe();
+  }, [studyPrefetcherService]);
 
   // ~~ subscriptions --> displaySets
   useEffect(() => {
@@ -233,6 +254,7 @@ function PanelStudyBrowserTracking({
       changedDisplaySets => {
         const mappedDisplaySets = _mapDisplaySets(
           changedDisplaySets,
+          displaySetsLoadingState,
           thumbnailImageSrcMap,
           trackedSeries,
           viewports,
@@ -252,6 +274,7 @@ function PanelStudyBrowserTracking({
       () => {
         const mappedDisplaySets = _mapDisplaySets(
           displaySetService.getActiveDisplaySets(),
+          displaySetsLoadingState,
           thumbnailImageSrcMap,
           trackedSeries,
           viewports,
@@ -270,14 +293,16 @@ function PanelStudyBrowserTracking({
       SubscriptionDisplaySetsChanged.unsubscribe();
       SubscriptionDisplaySetMetaDataInvalidated.unsubscribe();
     };
-  }, [thumbnailImageSrcMap, trackedSeries, viewports, dataSource, displaySetService]);
+  }, [
+    displaySetsLoadingState,
+    thumbnailImageSrcMap,
+    trackedSeries,
+    viewports,
+    dataSource,
+    displaySetService,
+  ]);
 
-  const tabs = _createStudyBrowserTabs(
-    StudyInstanceUIDs,
-    studyDisplayList,
-    displaySets,
-    hangingProtocolService
-  );
+  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, displaySets);
 
   // TODO: Should not fire this on "close"
   function _handleStudyClick(StudyInstanceUID) {
@@ -457,6 +482,7 @@ function _mapDataSourceStudies(studies) {
 
 function _mapDisplaySets(
   displaySets,
+  displaySetLoadingState,
   thumbnailImageSrcMap,
   trackedSeriesInstanceUIDs,
   viewports, // TODO: make array of `displaySetInstanceUIDs`?
@@ -479,6 +505,7 @@ function _mapDisplaySets(
         componentType === 'thumbnailTracked' ? thumbnailDisplaySets : thumbnailNoImageDisplaySets;
 
       const { displaySetInstanceUID } = ds;
+      const loadingProgress = displaySetLoadingState?.[displaySetInstanceUID];
 
       const thumbnailProps = {
         displaySetInstanceUID,
@@ -487,6 +514,7 @@ function _mapDisplaySets(
         modality: ds.Modality,
         seriesDate: formatDate(ds.SeriesDate),
         numInstances: ds.numImageFrames,
+        loadingProgress,
         countIcon: ds.countIcon,
         messages: ds.messages,
         StudyInstanceUID: ds.StudyInstanceUID,

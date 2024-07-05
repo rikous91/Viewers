@@ -17,6 +17,7 @@ const Thumbnail = ({
   description,
   seriesNumber,
   numInstances,
+  loadingProgress,
   countIcon,
   messages,
   dragData = {},
@@ -112,6 +113,33 @@ const Thumbnail = ({
             <div>{imageAltText}</div>
           )}
         </div>
+        <div className="flex flex-1 flex-row items-center pt-2 text-base text-blue-300">
+          <div className="mr-4">
+            <span className="text-primary-main font-bold">{'S: '}</span>
+            {seriesNumber}
+          </div>
+          <div className="flex flex-1 flex-row items-center">
+            <Icon
+              name={countIcon || 'group-layers'}
+              className="mr-2 w-3"
+            />
+            {` ${numInstances}`}
+          </div>
+          <div className="mr-2 flex last:mr-0">
+            {loadingProgress && loadingProgress < 1 && <>{Math.round(loadingProgress * 100)}%</>}
+            {loadingProgress && loadingProgress === 1 && (
+              <Icon
+                name={'database'}
+                className="w-3"
+              />
+            )}
+          </div>
+          <DisplaySetMessageListTooltip
+            messages={messages}
+            id={`display-set-tooltip-${displaySetInstanceUID}`}
+          />
+        </div>
+        <div className="break-all text-base text-white">{description}</div>
       </div>
     </div>
   );
@@ -136,6 +164,7 @@ Thumbnail.propTypes = {
   description: PropTypes.string.isRequired,
   seriesNumber: StringNumber.isRequired,
   numInstances: PropTypes.number.isRequired,
+  loadingProgress: PropTypes.number,
   messages: PropTypes.object,
   isActive: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
