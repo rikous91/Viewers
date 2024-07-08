@@ -63,7 +63,6 @@ window.config = {
         omitQuotationForMultipartRequest: true,
       },
     },
-
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
       sourceName: 'ohif2',
