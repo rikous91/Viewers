@@ -58,6 +58,7 @@ const Thumbnail = ({
       style={{ borderBottom: '1px solid #404040' }}
       id={`thumbnail-${displaySetInstanceUID}`}
       data-cy={`study-browser-thumbnail`}
+      data-series={seriesNumber}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       onTouchEnd={handleTouchEnd}
