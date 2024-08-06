@@ -3,6 +3,107 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.9.0-beta.73](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.72...v3.9.0-beta.73) (2024-08-02)
+
+
+### Features
+
+* **ui:** Created design and added core components for ui-next ([#4324](https://github.com/OHIF/Viewers/issues/4324)) ([9036418](https://github.com/OHIF/Viewers/commit/90364189b865514cc471786d2f91c270517e98fc))
+
+
+
+
+
+# [3.9.0-beta.72](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.71...v3.9.0-beta.72) (2024-07-31)
+
+
+### Bug Fixes
+
+* customization types ([#4321](https://github.com/OHIF/Viewers/issues/4321)) ([72bef63](https://github.com/OHIF/Viewers/commit/72bef63ef6e63395ba18ff91a39294913966e9db))
+
+
+
+
+
+# [3.9.0-beta.71](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.70...v3.9.0-beta.71) (2024-07-30)
+
+
+### Bug Fixes
+
+* ip SSRF improper categorization ([#4319](https://github.com/OHIF/Viewers/issues/4319)) ([aa0e5a5](https://github.com/OHIF/Viewers/commit/aa0e5a59379453bb8e6a4f286447576744ea6bf5))
+
+
+
+
+
+# [3.9.0-beta.70](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.69...v3.9.0-beta.70) (2024-07-30)
+
+
+### Bug Fixes
+
+* **ui:** remove border-border class ([#4317](https://github.com/OHIF/Viewers/issues/4317)) ([d402ded](https://github.com/OHIF/Viewers/commit/d402ded8c36631f8009b7b15b2f1c7a02cd09f6c))
+
+
+
+
+
+# [3.9.0-beta.69](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.68...v3.9.0-beta.69) (2024-07-27)
+
+**Note:** Version bump only for package ohif-monorepo-root
+
+
+
+
+
+# [3.9.0-beta.68](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.67...v3.9.0-beta.68) (2024-07-26)
+
+
+### Bug Fixes
+
+* **dicom:** Update multiframe DICOM JSON parsing for correct image ID generation ([#4307](https://github.com/OHIF/Viewers/issues/4307)) ([16b7aa4](https://github.com/OHIF/Viewers/commit/16b7aa4f6538b81e5915e47b9209d74575895dfe))
+
+
+
+
+
+# [3.9.0-beta.67](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.66...v3.9.0-beta.67) (2024-07-26)
+
+**Note:** Version bump only for package ohif-monorepo-root
+
+
+
+
+
+# [3.9.0-beta.66](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.65...v3.9.0-beta.66) (2024-07-24)
+
+
+### Features
+
+* **pmap:** added support for parametric map ([#4284](https://github.com/OHIF/Viewers/issues/4284)) ([fc0064f](https://github.com/OHIF/Viewers/commit/fc0064fd9d8cdc8fde81b81f0e71fd5d077ca22b))
+
+
+
+
+
+# [3.9.0-beta.65](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.64...v3.9.0-beta.65) (2024-07-23)
+
+
+### Features
+
+* **SR:** text structured report (TEXT, CODE, NUM, PNAME, DATE, TIME and DATETIME) ([#4287](https://github.com/OHIF/Viewers/issues/4287)) ([246ebab](https://github.com/OHIF/Viewers/commit/246ebab6ebf5431a704a1861a5804045b9644ba4))
+
+
+
+
+
+# [3.9.0-beta.64](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.63...v3.9.0-beta.64) (2024-07-19)
+
+**Note:** Version bump only for package ohif-monorepo-root
+
+
+
+
+
 # [3.9.0-beta.63](https://github.com/OHIF/Viewers/compare/v3.9.0-beta.62...v3.9.0-beta.63) (2024-07-10)
 
 **Note:** Version bump only for package ohif-monorepo-root
