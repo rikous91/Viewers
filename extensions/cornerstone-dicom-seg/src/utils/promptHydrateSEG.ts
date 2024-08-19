@@ -41,7 +41,7 @@ function promptHydrateSEG({
 
 function _askHydrate(uiViewportDialogService, viewportId) {
   return new Promise(function (resolve, reject) {
-    const message = 'Do you want to open this Segmentation?';
+    const message = 'Vuoi aprire questa segmentazione?';
     const actions = [
       {
         id: 'no-hydrate',
@@ -52,7 +52,7 @@ function _askHydrate(uiViewportDialogService, viewportId) {
       {
         id: 'yes-hydrate',
         type: ButtonEnums.type.primary,
-        text: 'Yes',
+        text: 'Sì',
         value: RESPONSE.HYDRATE_SEG,
       },
     ];
