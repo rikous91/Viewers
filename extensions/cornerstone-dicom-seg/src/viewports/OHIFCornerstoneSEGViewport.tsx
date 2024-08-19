@@ -315,7 +315,7 @@ function OHIFCornerstoneSEGViewport(props: withAppTypes) {
   if (
     !referencedDisplaySetRef.current ||
     referencedDisplaySet.displaySetInstanceUID !==
-      referencedDisplaySetRef.current.displaySet.displaySetInstanceUID
+    referencedDisplaySetRef.current.displaySet.displaySetInstanceUID
   ) {
     return null;
   }
@@ -352,7 +352,7 @@ function OHIFCornerstoneSEGViewport(props: withAppTypes) {
             className="h-full w-full"
             totalNumbers={processingProgress.totalSegments}
             percentComplete={processingProgress.percentComplete}
-            loadingText="Loading SEG..."
+            loadingText="Caricamento della segmentazione..."
           />
         )}
         {getCornerstoneViewport()}

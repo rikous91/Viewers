@@ -12,7 +12,12 @@
  * @returns tabs - The prop object expected by the StudyBrowser component
  */
 
-export function createStudyBrowserTabs(primaryStudyInstanceUIDs, studyDisplayList, displaySets, recentTimeframeMS = 31536000000) {
+export function createStudyBrowserTabs(
+  primaryStudyInstanceUIDs,
+  studyDisplayList,
+  displaySets,
+  recentTimeframeMS = 31536000000
+) {
   const primaryStudies = [];
   const allStudies = [];
 
@@ -37,14 +42,14 @@ export function createStudyBrowserTabs(primaryStudyInstanceUIDs, studyDisplayLis
   const recentStudies =
     primaryStudiesTimestamps.length > 0
       ? allStudies.filter(study => {
-          const oldestPrimaryTimeStamp = Math.min(...primaryStudiesTimestamps);
+        const oldestPrimaryTimeStamp = Math.min(...primaryStudiesTimestamps);
 
-          if (!study.date) {
-            return false;
-          }
-          const studyTimeStamp = new Date(study.date).getTime();
-          return oldestPrimaryTimeStamp - studyTimeStamp < recentTimeframeMS;
-        })
+        if (!study.date) {
+          return false;
+        }
+        const studyTimeStamp = new Date(study.date).getTime();
+        return oldestPrimaryTimeStamp - studyTimeStamp < recentTimeframeMS;
+      })
       : [];
 
   // Newest first
@@ -57,17 +62,17 @@ export function createStudyBrowserTabs(primaryStudyInstanceUIDs, studyDisplayLis
   const tabs = [
     {
       name: 'primary',
-      label: 'Primary',
+      label: 'Questo studio',
       studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
     {
       name: 'recent',
-      label: 'Recent',
+      label: 'Storico',
       studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
     {
       name: 'all',
-      label: 'All',
+      label: 'Tutti',
       studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
   ];
