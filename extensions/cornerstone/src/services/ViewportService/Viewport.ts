@@ -344,6 +344,7 @@ class ViewportInfo {
         };
       }
       const blendMode = getCornerstoneBlendMode(option.blendMode);
+      console.log(blendMode);
 
       displaySetOptions.push({
         voi: option.voi,
