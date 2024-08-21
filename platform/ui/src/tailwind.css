@@ -244,3 +244,61 @@ body {
 .bg-\[\#04225b\] {
   background-color: #342121;
 }
+
+.spessore-div {
+  padding: 0 8px;
+  label,
+  fieldset {
+    font-size: 0.9rem;
+  }
+  fieldset {
+    margin-top: 6px;
+  }
+}
+
+.range-container {
+  position: relative;
+  width: 100%;
+  height: 11px;
+  border: 1px solid;
+  border-radius: 2px;
+  input[type='range'] {
+    width: 100%;
+    -webkit-appearance: none;
+    background: transparent;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  span {
+    top: 8px;
+    position: relative;
+    font-size: 0.9rem;
+  }
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #007bff;
+  cursor: pointer;
+}
+
+.range-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 10px;
+  background: #007bff;
+  z-index: -1;
+  transition: width 0.2s;
+}
+
+.right-viewport-scrollbar {
+  [stroke='#348CFD'] {
+    stroke: #fff;
+  }
+}

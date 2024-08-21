@@ -1,7 +1,7 @@
 /** @type {AppTypes.Config} */
 
 window.config = {
-  routerBasename: '/',
+  routerBasename: '/nuovo-visualizzatore',
   // whiteLabeling: {},
   extensions: [],
   modes: [],

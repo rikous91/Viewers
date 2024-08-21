@@ -114,6 +114,7 @@ function modeFactory({ modeConfiguration }) {
         'Crosshairs',
         'WindowLevel',
         'invert',
+        'polygon',
         'Probe',
         'Cine',
         'Magnify',

@@ -14,6 +14,7 @@ import { VolumeRenderingOptions } from './VolumeRenderingOptions';
 import { ViewportPreset } from '../../types/ViewportPresets';
 import { VolumeViewport3D } from '@cornerstonejs/core';
 import { utilities } from '@cornerstonejs/core';
+import { CrosshairsTool } from '@cornerstonejs/tools';
 
 export type WindowLevelActionMenuProps = {
   viewportId: string;
@@ -62,7 +63,67 @@ export function WindowLevelActionMenu({
 
   const [vpHeight, setVpHeight] = useState(element?.clientHeight);
   const [menuKey, setMenuKey] = useState(0);
+  const [isMPR, setIsMPR] = useState(false);
   const [is3DVolume, setIs3DVolume] = useState(false);
+  const [rangeValue, setRangeValue] = useState(0);
+  const [selectedRenderingMethod, setSelectedRenderingMethod] = useState('mip');
+
+  let _selectedRenderingMethod;
+
+  const ManageSpessore = event => {
+    const value = Number(event.target.value);
+    setRangeValue(value);
+    setTimeout(() => {
+      document.getElementById('rangeInput').value = value;
+    }, 0);
+    if (!_selectedRenderingMethod) {
+      _selectedRenderingMethod = selectedRenderingMethod;
+    }
+
+    const slabThicknessBlendMode = _selectedRenderingMethod === 'mip' ? 1 : 2;
+
+    const customToolProps = {
+      configuration: {
+        slabThicknessBlendMode: slabThicknessBlendMode, // Sovrascrive il valore predefinito
+      },
+    };
+    // Crea un'istanza di CrosshairsTool
+    const crosshairsTool = new CrosshairsTool({}, customToolProps);
+    const { cornerstoneViewportService } = servicesManager.services;
+    const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+    crosshairsTool.setSlabThickness(viewport, value); // Utilizza il valore passato
+    if (event.target.nextElementSibling) {
+      event.target.nextElementSibling.style.width = `${value}%`;
+    }
+    if (event.target.parentElement.parentElement.querySelector('span')) {
+      event.target.parentElement.parentElement.querySelector('span').textContent = value;
+    }
+    viewport.render();
+  };
+
+  const handleRadioChange = event => {
+    window.setTimeout(() => {
+      event.target.checked = true;
+      _selectedRenderingMethod = event.target.value; //lo cambia in tempo reale
+      setSelectedRenderingMethod(event.target.value); //memorizza lo stato quando passo da una viewport ad un'altra o dopo riattivazione
+      //Passo live da mip/minip o viceversa
+      const spessoreAttuale =
+        event.target.parentElement.parentElement.parentElement.querySelector('.spessore-div span')
+          .textContent || 0;
+      const slabThicknessBlendMode = _selectedRenderingMethod === 'mip' ? 1 : 2;
+
+      const customToolProps = {
+        configuration: {
+          slabThicknessBlendMode: slabThicknessBlendMode, // Sovrascrive il valore predefinito
+        },
+      };
+      const crosshairsTool = new CrosshairsTool({}, customToolProps);
+      const { cornerstoneViewportService } = servicesManager.services;
+      const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+      crosshairsTool.setSlabThickness(viewport, spessoreAttuale); // Utilizza il valore passato
+      viewport.render();
+    }, 0);
+  };
 
   const onSetColorbar = useCallback(() => {
     setViewportColorbar(viewportId, displaySets, commandsManager, servicesManager, {
@@ -101,6 +162,11 @@ export function WindowLevelActionMenu({
     } else {
       setIs3DVolume(false);
     }
+    if (viewport && viewport.type === 'orthographic') {
+      setIsMPR(true);
+    } else {
+      setIsMPR(false);
+    }
   }, [
     displaySets,
     viewportId,
@@ -114,7 +180,7 @@ export function WindowLevelActionMenu({
 
   return (
     <AllInOneMenu.IconMenu
-      icon="viewport-window-level"
+      icon={isMPR ? 'settings-bars' : 'viewport-window-level'}
       verticalDirection={verticalDirection}
       horizontalDirection={horizontalDirection}
       iconClassName={classNames(
@@ -168,6 +234,54 @@ export function WindowLevelActionMenu({
               presets={presets}
             />
           </AllInOneMenu.SubMenu>
+        )}
+
+        {isMPR && (
+          <div className="spessore-div">
+            <label htmlFor="rangeInput">
+              Spessore: <span>{rangeValue}</span>
+            </label>
+            <div className="range-container">
+              <input
+                type="range"
+                id="rangeInput"
+                min="0"
+                max="100"
+                step="1"
+                value={rangeValue} // Uso il valore dallo stato
+                onChange={ManageSpessore}
+              />
+              <div
+                className="range-fill"
+                style={{ width: `${rangeValue}%` }}
+              ></div>
+            </div>
+            <fieldset>
+              <div>
+                <input
+                  type="radio"
+                  id="mip"
+                  name="renderingMethod"
+                  value="mip"
+                  checked={selectedRenderingMethod === 'mip'} // Controllo se è selezionato
+                  onClick={handleRadioChange}
+                />
+                <label htmlFor="mip">MIP</label>
+              </div>
+
+              <div>
+                <input
+                  type="radio"
+                  id="minip"
+                  name="renderingMethod"
+                  value="minip"
+                  checked={selectedRenderingMethod === 'minip'} // Controllo se è selezionato
+                  onClick={handleRadioChange}
+                />
+                <label htmlFor="minip">MinIP</label>
+              </div>
+            </fieldset>
+          </div>
         )}
 
         {volumeRenderingPresets && is3DVolume && (
