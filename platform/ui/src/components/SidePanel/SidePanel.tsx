@@ -23,7 +23,7 @@ const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
 
 const baseClasses =
-  'transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col';
+  'transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col nolex-panel';
 
 const classesMap = {
   open: {
@@ -182,6 +182,10 @@ const SidePanel = ({
   const updatePanelOpen = useCallback(
     (panelOpen: boolean) => {
       setPanelOpen(panelOpen);
+      // Lancio un evento personalizzato che intercetto dalle estensioni js. Ogni volta che il pannello si apre/chiude viene distrutto/ricreato il componente e perdo tutto.
+      //Di conseguenza ricreo il tutto alla ricezione da parte del figlio dell'evento
+      const event = new CustomEvent('panelOpen', { detail: { isOpen: panelOpen } });
+      window.dispatchEvent(event);
       if (panelOpen && onOpen) {
         onOpen();
       }
@@ -237,7 +241,7 @@ const SidePanel = ({
               content={getToolTipContent(childComponent.label, childComponent.disabled)}
               className={classnames(
                 'flex items-center',
-                side === 'left' ? 'justify-end ' : 'justify-start '
+                side === 'left' ? 'justify-end' : 'justify-start'
               )}
             >
               <div
@@ -292,7 +296,7 @@ const SidePanel = ({
     const numCols = getNumGridColumns(tabs.length, gridWidth);
 
     return (
-      <div className={classnames('flex grow ', side === 'right' ? 'justify-start' : 'justify-end')}>
+      <div className={classnames('flex grow', side === 'right' ? 'justify-start' : 'justify-end')}>
         <div
           className={classnames('bg-primary-dark text-primary-active flex flex-wrap')}
           style={getGridStyle(side, tabs.length, gridWidth, expandedWidth)}
@@ -354,7 +358,7 @@ const SidePanel = ({
     return (
       <div
         className={classnames(
-          'text-primary-active flex	 grow cursor-pointer select-none justify-center self-center text-[13px]'
+          'text-primary-active flex grow cursor-pointer select-none justify-center self-center text-[13px]'
         )}
         style={{
           ...(side === 'left'
@@ -371,7 +375,7 @@ const SidePanel = ({
 
   const getOpenStateComponent = () => {
     return (
-      <div className="bg-primary-dark flex select-none rounded-t pt-1.5 pb-[2px]	">
+      <div className="bg-primary-dark flex select-none rounded-t pt-1.5 pb-[2px]">
         {getCloseIcon()}
         {tabs.length === 1 ? getOneTabComponent() : getTabGridComponent()}
       </div>
