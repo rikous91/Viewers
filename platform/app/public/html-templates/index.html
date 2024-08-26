@@ -216,18 +216,25 @@
       }
     </script>
 
-
     <!-- EXTENSIONS -->
-    <!-- <script type="text/javascript" src="path/to/some-extension.js"></script>
+    <link
+      rel="stylesheet"
+      href="<%= PUBLIC_URL %>/estensioni/stampa/printBtn.css"
+    />
 
-    <script>
+    <script
+      type="text/javascript"
+      src="<%= PUBLIC_URL %>/estensioni/stampa/printBtn.js"
+    ></script>
+
+    <!-- <script>
       // If configuration file is a JS Object:
       window.config.extensions = [SomeExtension];
 
       // If configuration file is a JS Function:
       window.config = () => {
         return {
-          extensions: [SomeExtension]
+          extensions: [SomeExtension],
         };
       };
     </script> -->
