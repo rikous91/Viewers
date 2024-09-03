@@ -64,7 +64,14 @@ function ViewportActionCorners({ cornerComponents }: ViewportActionCornersProps)
             className={classNames(classes[location])}
           >
             {locationComponents.map(componentInfo => {
-              return <div key={componentInfo.id}>{componentInfo.component}</div>;
+              return (
+                <div
+                  className="div-icone-right-viewport"
+                  key={componentInfo.id}
+                >
+                  {componentInfo.component}
+                </div>
+              );
             })}
           </div>
         );

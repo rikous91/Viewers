@@ -1,9 +1,9 @@
 import { Types } from '@ohif/core';
 
-const frameView: Types.HangingProtocol.Protocol = {
-  id: '@ohif/frameView',
+const frameView3x3: Types.HangingProtocol.Protocol = {
+  id: '@ohif/frameView3x3',
   description: 'Frame view for the active series',
-  name: 'Modalità Frame (Serie attiva)',
+  name: 'Modalità Frame (Serie attiva) 3x3',
   icon: 'tool-stack-scroll',
   isPreset: true,
   toolGroupIds: ['default'],
@@ -44,12 +44,12 @@ const frameView: Types.HangingProtocol.Protocol = {
   stages: [
     {
       name: 'frameView',
-      id: '4x4',
+      id: '3x3',
       viewportStructure: {
         layoutType: 'grid',
         properties: {
-          rows: 4,
-          columns: 4,
+          rows: 3,
+          columns: 3,
         },
       },
       viewports: [
@@ -1563,4 +1563,4 @@ const frameView: Types.HangingProtocol.Protocol = {
   ],
 };
 
-export { frameView };
+export { frameView3x3 };

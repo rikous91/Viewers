@@ -46,6 +46,8 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
     if (!instance) {
       return;
     }
+    window.nolexInstance = instance;
+    console.log(instance);
     setPatientInfo({
       PatientID: instance.PatientID || null,
       PatientName: instance.PatientName ? formatPN(instance.PatientName.Alphabetic) : null,
