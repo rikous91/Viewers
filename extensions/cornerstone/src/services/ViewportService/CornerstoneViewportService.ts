@@ -60,11 +60,13 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
   gridResizeTimeOut = null;
 
   constructor(servicesManager: AppTypes.ServicesManager) {
+    window.servicesManager = servicesManager;
     super(EVENTS);
     this.renderingEngine = null;
     this.viewportGridResizeObserver = null;
     this.servicesManager = servicesManager;
   }
+
   hangingProtocolService: unknown;
   viewportsInfo: unknown;
   sceneVolumeInputs: unknown;
@@ -79,6 +81,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
    * @param {*} viewportId
    * @param {*} elementRef
    */
+
   public enableViewport(viewportId: string, elementRef: HTMLDivElement): void {
     const viewportInfo = new ViewportInfo(viewportId);
     viewportInfo.setElement(elementRef);
@@ -395,6 +398,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
    * @param publicDisplaySetOptions - The public display set options.
    * @param presentations - The presentations to set.
    */
+
   public setViewportData(
     viewportId: string,
     viewportData: StackViewportData | VolumeViewportData,
@@ -1054,8 +1058,8 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
       const { dimensions } = imageVolume;
       const slabThickness = Math.sqrt(
         dimensions[0] * dimensions[0] +
-          dimensions[1] * dimensions[1] +
-          dimensions[2] * dimensions[2]
+        dimensions[1] * dimensions[1] +
+        dimensions[2] * dimensions[2]
       );
 
       return slabThickness;

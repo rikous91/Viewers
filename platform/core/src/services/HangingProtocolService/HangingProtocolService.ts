@@ -864,6 +864,7 @@ export default class HangingProtocolService extends PubSubService {
    *
    * @returns boolean - true if the protocol was applied and no errors were found
    */
+
   public setProtocol(
     protocolId: string,
     options = {} as HangingProtocol.SetProtocolOptions,
@@ -879,8 +880,15 @@ export default class HangingProtocolService extends PubSubService {
     }
 
     try {
-      const protocol = this._validateProtocol(foundProtocol);
-
+      let protocol = this._validateProtocol(foundProtocol);
+      // if (protocol.id === '@nolex/preferiti') {
+      if (window.hpPreferiti) {
+        const newID = window.hpPreferiti.id;
+        //Se il protocollo è uno presente nella condizione, essendo dinamico forzo la riaggiunta. Praticamente gli hanging protocol vengono caricati solamente all'inizio,
+        //se ho degli hanging protocol da modificare live come nel caso dei preferiti, devo riaggiungerlo con le modifiche
+        this.addProtocol(newID, window.hpPreferiti);
+        protocol = window.hpPreferiti;
+      }
       if (options) {
         this._validateOptions(options);
       }
@@ -1256,9 +1264,9 @@ export default class HangingProtocolService extends PubSubService {
           const match = matchDetails.matchingScores[i];
           return match.matchingScore > 0
             ? {
-                matchingScores,
-                ...matchDetails.matchingScores[i],
-              }
+              matchingScores,
+              ...matchDetails.matchingScores[i],
+            }
             : null;
         }
       }

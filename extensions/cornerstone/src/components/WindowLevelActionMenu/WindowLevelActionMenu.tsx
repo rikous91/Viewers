@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { AllInOneMenu, useViewportGrid } from '@ohif/ui';
 import { Colormap } from './Colormap';
 import { Colorbar } from './Colorbar';
+import { Preferiti } from '../Preferiti/Preferiti';
 import { setViewportColorbar } from './Colorbar';
 import { WindowLevelPreset } from '../../types/WindowLevel';
 import { ColorbarProperties } from '../../types/Colorbar';
@@ -179,131 +180,167 @@ export function WindowLevelActionMenu({
   ]);
 
   return (
-    <AllInOneMenu.IconMenu
-      icon={isMPR ? 'settings-bars' : 'viewport-window-level'}
-      verticalDirection={verticalDirection}
-      horizontalDirection={horizontalDirection}
-      iconClassName={classNames(
-        // Visible on hover and for the active viewport
-        activeViewportId === viewportId ? 'visible' : 'invisible group-hover:visible',
-        'flex shrink-0 cursor-pointer rounded active:text-white text-primary-light',
-        isLight ? ' hover:bg-secondary-dark' : 'hover:bg-secondary-light/60'
-      )}
-      menuStyle={{ maxHeight: vpHeight - 32, minWidth: 218 }}
-      onVisibilityChange={() => {
-        setVpHeight(element.clientHeight);
-      }}
-      menuKey={menuKey}
-    >
-      <AllInOneMenu.ItemPanel>
-        {!is3DVolume && (
-          <Colorbar
-            viewportId={viewportId}
-            displaySets={displaySets.filter(ds => !nonImageModalities.includes(ds.Modality))}
-            commandsManager={commandsManager}
-            servicesManager={servicesManager}
-            colorbarProperties={colorbarProperties}
-          />
+    <>
+      <AllInOneMenu.IconMenu
+        icon={isMPR ? 'settings-bars' : 'viewport-window-level'}
+        verticalDirection={verticalDirection}
+        horizontalDirection={horizontalDirection}
+        iconClassName={classNames(
+          // Visible on hover and for the active viewport
+          activeViewportId === viewportId ? 'visible' : 'invisible group-hover:visible',
+          'flex shrink-0 cursor-pointer rounded active:text-white text-primary-light',
+          isLight ? ' hover:bg-secondary-dark' : 'hover:bg-secondary-light/60'
         )}
-
-        {colormaps && !is3DVolume && (
-          <AllInOneMenu.SubMenu
-            key="colorLUTPresets"
-            itemLabel="Colore LUT"
-            itemIcon="icon-color-lut"
-          >
-            <Colormap
-              colormaps={colormaps}
+        menuStyle={{ maxHeight: vpHeight - 32, minWidth: 218 }}
+        onVisibilityChange={() => {
+          setVpHeight(element.clientHeight);
+        }}
+        menuKey={menuKey}
+      >
+        <AllInOneMenu.ItemPanel>
+          {!is3DVolume && (
+            <Colorbar
               viewportId={viewportId}
               displaySets={displaySets.filter(ds => !nonImageModalities.includes(ds.Modality))}
               commandsManager={commandsManager}
               servicesManager={servicesManager}
+              colorbarProperties={colorbarProperties}
             />
-          </AllInOneMenu.SubMenu>
-        )}
+          )}
 
-        {presets && presets.length > 0 && !is3DVolume && (
-          <AllInOneMenu.SubMenu
-            key="windowLevelPresets"
-            itemLabel={t('Modality Window Presets')}
-            itemIcon="viewport-window-level"
-          >
-            <WindowLevel
-              viewportId={viewportId}
-              commandsManager={commandsManager}
-              presets={presets}
-            />
-          </AllInOneMenu.SubMenu>
-        )}
-
-        {isMPR && (
-          <div className="spessore-div">
-            <label htmlFor="rangeInput">
-              Spessore: <span>{rangeValue}</span>
-            </label>
-            <div className="range-container">
-              <input
-                type="range"
-                id="rangeInput"
-                min="0"
-                max="100"
-                step="1"
-                value={rangeValue} // Uso il valore dallo stato
-                onChange={ManageSpessore}
+          {colormaps && !is3DVolume && (
+            <AllInOneMenu.SubMenu
+              key="colorLUTPresets"
+              itemLabel="Colore LUT"
+              itemIcon="icon-color-lut"
+            >
+              <Colormap
+                colormaps={colormaps}
+                viewportId={viewportId}
+                displaySets={displaySets.filter(ds => !nonImageModalities.includes(ds.Modality))}
+                commandsManager={commandsManager}
+                servicesManager={servicesManager}
               />
-              <div
-                className="range-fill"
-                style={{ width: `${rangeValue}%` }}
-              ></div>
+            </AllInOneMenu.SubMenu>
+          )}
+
+          {presets && presets.length > 0 && !is3DVolume && (
+            <AllInOneMenu.SubMenu
+              key="windowLevelPresets"
+              itemLabel={t('Modality Window Presets')}
+              itemIcon="viewport-window-level"
+            >
+              <WindowLevel
+                viewportId={viewportId}
+                commandsManager={commandsManager}
+                presets={presets}
+              />
+            </AllInOneMenu.SubMenu>
+          )}
+
+          {isMPR && (
+            <div className="spessore-div">
+              <label htmlFor="rangeInput">
+                Spessore: <span>{rangeValue}</span>
+              </label>
+              <div className="range-container">
+                <input
+                  type="range"
+                  id="rangeInput"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={rangeValue} // Uso il valore dallo stato
+                  onChange={ManageSpessore}
+                />
+                <div
+                  className="range-fill"
+                  style={{ width: `${rangeValue}%` }}
+                ></div>
+              </div>
+              <fieldset>
+                <div>
+                  <input
+                    type="radio"
+                    id="mip"
+                    name="renderingMethod"
+                    value="mip"
+                    checked={selectedRenderingMethod === 'mip'} // Controllo se è selezionato
+                    onClick={handleRadioChange}
+                  />
+                  <label htmlFor="mip">MIP</label>
+                </div>
+
+                <div>
+                  <input
+                    type="radio"
+                    id="minip"
+                    name="renderingMethod"
+                    value="minip"
+                    checked={selectedRenderingMethod === 'minip'} // Controllo se è selezionato
+                    onClick={handleRadioChange}
+                  />
+                  <label htmlFor="minip">MinIP</label>
+                </div>
+              </fieldset>
             </div>
-            <fieldset>
-              <div>
-                <input
-                  type="radio"
-                  id="mip"
-                  name="renderingMethod"
-                  value="mip"
-                  checked={selectedRenderingMethod === 'mip'} // Controllo se è selezionato
-                  onClick={handleRadioChange}
-                />
-                <label htmlFor="mip">MIP</label>
-              </div>
+          )}
 
-              <div>
-                <input
-                  type="radio"
-                  id="minip"
-                  name="renderingMethod"
-                  value="minip"
-                  checked={selectedRenderingMethod === 'minip'} // Controllo se è selezionato
-                  onClick={handleRadioChange}
-                />
-                <label htmlFor="minip">MinIP</label>
-              </div>
-            </fieldset>
-          </div>
-        )}
-
-        {volumeRenderingPresets && is3DVolume && (
-          <VolumeRenderingPresets
-            servicesManager={servicesManager}
-            viewportId={viewportId}
-            commandsManager={commandsManager}
-            volumeRenderingPresets={volumeRenderingPresets}
-          />
-        )}
-
-        {volumeRenderingQualityRange && is3DVolume && (
-          <AllInOneMenu.SubMenu itemLabel="Opzioni rendering">
-            <VolumeRenderingOptions
+          {volumeRenderingPresets && is3DVolume && (
+            <VolumeRenderingPresets
+              servicesManager={servicesManager}
               viewportId={viewportId}
               commandsManager={commandsManager}
-              volumeRenderingQualityRange={volumeRenderingQualityRange}
-              servicesManager={servicesManager}
+              volumeRenderingPresets={volumeRenderingPresets}
             />
-          </AllInOneMenu.SubMenu>
-        )}
-      </AllInOneMenu.ItemPanel>
-    </AllInOneMenu.IconMenu>
+          )}
+
+          {volumeRenderingQualityRange && is3DVolume && (
+            <AllInOneMenu.SubMenu itemLabel="Opzioni rendering">
+              <VolumeRenderingOptions
+                viewportId={viewportId}
+                commandsManager={commandsManager}
+                volumeRenderingQualityRange={volumeRenderingQualityRange}
+                servicesManager={servicesManager}
+              />
+            </AllInOneMenu.SubMenu>
+          )}
+        </AllInOneMenu.ItemPanel>
+      </AllInOneMenu.IconMenu>
+
+      {/* Preferiti */}
+      {!isMPR && !is3DVolume && (
+        <AllInOneMenu.IconMenu
+          icon="preferiti"
+          verticalDirection={verticalDirection}
+          horizontalDirection={horizontalDirection}
+          iconClassName={classNames(
+            // Visible on hover and for the active viewport
+            activeViewportId === viewportId
+              ? 'visible preferiti-btn'
+              : 'preferiti-btn invisible group-hover:visible',
+            'flex shrink-0 cursor-pointer rounded active:text-white text-primary-light',
+            isLight ? ' hover:bg-secondary-dark' : 'hover:bg-secondary-light/60'
+          )}
+          menuStyle={{ maxHeight: vpHeight - 32, minWidth: 218 }}
+          onVisibilityChange={() => {
+            setVpHeight(element.clientHeight);
+          }}
+          menuKey={menuKey}
+        >
+          <AllInOneMenu.ItemPanel>
+            {!is3DVolume && (
+              <Preferiti
+                viewportId={viewportId}
+                displaySets={displaySets.filter(ds => !nonImageModalities.includes(ds.Modality))}
+                commandsManager={commandsManager}
+                servicesManager={servicesManager}
+                colorbarProperties={colorbarProperties}
+              />
+            )}
+          </AllInOneMenu.ItemPanel>
+        </AllInOneMenu.IconMenu>
+      )}
+    </>
   );
 }

@@ -52,6 +52,9 @@ module.exports = (env, argv) => {
   const mergedConfig = merge(baseConfig, {
     entry: {
       app: ENTRY_TARGET,
+      printBtn: path.join(__dirname, '../public/estensioni/stampa/printBtn.js'),
+      preferitiBtn: path.join(__dirname, '../public/estensioni/preferiti/preferiti.js'),
+      editorBtn: path.join(__dirname, '../public/estensioni/editor/editorBtn.js'),
     },
     output: {
       path: DIST_DIR,

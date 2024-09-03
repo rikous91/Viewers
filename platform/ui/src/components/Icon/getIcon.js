@@ -205,6 +205,9 @@ import MRMIP from './../../assets/icons/MR-MIP.png';
 import MRT2Brain from './../../assets/icons/MR-T2-Brain.png';
 import VolumeRendering from './../../assets/icons/VolumeRendering.png';
 
+import preferiti from './../../assets/icons/preferiti.png';
+import preferitiActive from './../../assets/icons/preferiti-active.png';
+
 const ICONS = {
   'arrow-down': arrowDown,
   'arrow-left': arrowLeft,
@@ -417,6 +420,9 @@ const ICONS = {
   'layout-common-2x2': layoutCommon2x2,
   'layout-common-2x3': layoutCommon2x3,
   'tab-4d': tab4D,
+  /** Nolex **/
+  preferiti: preferiti,
+  preferitiActive: preferitiActive,
 
   /** New investigational use */
   'illustration-investigational-use': investigationalUse,

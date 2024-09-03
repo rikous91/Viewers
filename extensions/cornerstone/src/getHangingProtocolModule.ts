@@ -5,7 +5,10 @@ import { mprAnd3DVolumeViewport } from './hps/mprAnd3DVolumeViewport';
 import { only3D } from './hps/only3D';
 import { primary3D } from './hps/primary3D';
 import { primaryAxial } from './hps/primaryAxial';
-import { frameView } from './hps/frameView';
+import { frameView3x3 } from './hps/frameView3x3';
+import { frameView4x4 } from './hps/frameView4x4';
+import { preferiti } from './hps/preferiti';
+import { testHP } from './hps/testHP';
 
 function getHangingProtocolModule() {
   return [
@@ -38,8 +41,20 @@ function getHangingProtocolModule() {
       protocol: primary3D,
     },
     // {
-    //   name: frameView.id,
-    //   protocol: frameView,
+    //   name: frameView3x3.id,
+    //   protocol: frameView3x3,
+    // },
+    // {
+    //   name: frameView4x4.id,
+    //   protocol: frameView4x4,
+    // },
+    // {
+    //   name: preferiti.id,
+    //   protocol: preferiti,
+    // },
+    // {
+    //   name: testHP.id,
+    //   protocol: testHP,
     // },
   ];
 }

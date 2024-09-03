@@ -180,12 +180,14 @@ const SidePanel = ({
   const style = Object.assign({}, styleMap[openStatus][side], baseStyle);
 
   const updatePanelOpen = useCallback(
-    (panelOpen: boolean) => {
+    (panelOpen: boolean, side: string) => {
       setPanelOpen(panelOpen);
-      // Lancio un evento personalizzato che intercetto dalle estensioni js. Ogni volta che il pannello si apre/chiude viene distrutto/ricreato il componente e perdo tutto.
+      // Lancio un evento personalizzato che intercetto dalle estensioni js. Ogni volta che il pannello dx si apre/chiude viene distrutto/ricreato il componente e perdo tutto.
       //Di conseguenza ricreo il tutto alla ricezione da parte del figlio dell'evento
-      const event = new CustomEvent('panelOpen', { detail: { isOpen: panelOpen } });
+
+      const event = new CustomEvent('panelOpen', { detail: { isOpen: panelOpen, side: side } });
       window.dispatchEvent(event);
+
       if (panelOpen && onOpen) {
         onOpen();
       }
@@ -196,12 +198,12 @@ const SidePanel = ({
   const updateActiveTabIndex = useCallback(
     (activeTabIndex: number) => {
       if (activeTabIndex === null) {
-        updatePanelOpen(false);
+        updatePanelOpen(false, null);
         return;
       }
 
       setActiveTabIndex(activeTabIndex);
-      updatePanelOpen(true);
+      updatePanelOpen(true, null);
 
       if (onActiveTabIndexChange) {
         onActiveTabIndexChange({ activeTabIndex });
@@ -224,7 +226,7 @@ const SidePanel = ({
             side === 'left' ? 'justify-end pr-2' : 'justify-start pl-2'
           )}
           onClick={() => {
-            updatePanelOpen(!panelOpen);
+            updatePanelOpen(!panelOpen, side);
           }}
           data-cy={`side-panel-header-${side}`}
         >
@@ -280,7 +282,7 @@ const SidePanel = ({
         )}
         style={{ width: `${closeIconWidth}px` }}
         onClick={() => {
-          updatePanelOpen(!panelOpen);
+          updatePanelOpen(!panelOpen, side);
         }}
         data-cy={`side-panel-header-${side}`}
       >
@@ -366,7 +368,7 @@ const SidePanel = ({
             : { marginRight: `${closeIconWidth}px` }),
         }}
         data-cy={`${tabs[0].name}-btn`}
-        onClick={() => updatePanelOpen(!panelOpen)}
+        onClick={() => updatePanelOpen(!panelOpen, null)}
       >
         <span>{tabs[0].label}</span>
       </div>
