@@ -12,7 +12,7 @@ import {
   utilities as cstUtils,
   ReferenceLinesTool,
 } from '@cornerstonejs/tools';
-import { Types as OhifTypes } from '@ohif/core';
+import { utils, Types as OhifTypes } from '@ohif/core';
 import { vec3, mat4 } from 'gl-matrix';
 
 import CornerstoneViewportDownloadForm from './utils/CornerstoneViewportDownloadForm';
@@ -21,6 +21,9 @@ import toggleImageSliceSync from './utils/imageSliceSync/toggleImageSliceSync';
 import { getFirstAnnotationSelected } from './utils/measurementServiceMappings/utils/selection';
 import getActiveViewportEnabledElement from './utils/getActiveViewportEnabledElement';
 import toggleVOISliceSync from './utils/toggleVOISliceSync';
+import findViewportsByPosition, {
+  findOrCreateViewport as layoutFindOrCreate,
+} from '../../default/src/findViewportsByPosition';
 
 const toggleSyncFunctions = {
   imageSlice: toggleImageSliceSync,
@@ -42,7 +45,9 @@ function commandsModule({
     customizationService,
     colorbarService,
     hangingProtocolService,
+    displaySetService,
     syncGroupService,
+    stateSyncService,
   } = servicesManager.services;
 
   const { measurementServiceSource } = this;
@@ -55,6 +60,60 @@ function commandsModule({
     const viewport = _getActiveViewportEnabledElement();
     return toolGroupService.getToolGroupForViewport(viewport.id);
   }
+
+  let isMprClicked = false;
+
+  //Salvo lo stato attuale
+  const storeState = () => {
+    window.storedState = true;
+    const viewportGridState = viewportGridService.getState();
+    stateSyncService.store({
+      toggleOneUpViewportGridStore: viewportGridState,
+    });
+
+    const clearToggleOneUpViewportGridStore = () => {
+      const toggleOneUpViewportGridStore = {};
+      stateSyncService.store({
+        toggleOneUpViewportGridStore,
+      });
+    };
+    const { subscribeToNextViewportGridChange } = utils;
+
+    // subscribeToNextViewportGridChange(viewportGridService, clearToggleOneUpViewportGridStore);
+  };
+
+  const restoreState = () => {
+    if (!window.storedState) {
+      return;
+    }
+    window.storedState = false; //Permetto di ripristinare lo stato una volta sola, per ripristinarlo una seconda volta occorre fare un nuovo storeState
+    // Restore the previous layout including the active viewport.
+
+    const { toggleOneUpViewportGridStore } = stateSyncService.getState();
+
+    const viewportIdToUpdate = toggleOneUpViewportGridStore.activeViewportId;
+    const layoutOptions = viewportGridService.getLayoutOptionsFromState(
+      toggleOneUpViewportGridStore
+    );
+
+    const findOrCreateViewport = (position: number, positionId: string) => {
+      // Find the viewport for the given position prior to the toggle to one-up.
+      const preOneUpViewport = Array.from(toggleOneUpViewportGridStore.viewports.values()).find(
+        viewport => viewport.positionId === positionId
+      );
+
+      return preOneUpViewport;
+    };
+
+    viewportGridService.setLayout({
+      numRows: toggleOneUpViewportGridStore.layout.numRows,
+      numCols: toggleOneUpViewportGridStore.layout.numCols,
+      activeViewportId: viewportIdToUpdate,
+      layoutOptions,
+      findOrCreateViewport,
+      isHangingProtocolLayout: false,
+    });
+  };
 
   const actions = {
     /**
@@ -416,6 +475,116 @@ function commandsModule({
           },
           containerDimensions: 'w-[70%] max-w-[900px]',
         });
+      }
+    },
+    storeState: () => {
+      //memorizzo tutte le impostazioni attuali della griglia con le relative serie
+
+      storeState();
+    },
+    restoreState: () => {
+      //ripristino  tutte le impostazioni precedentemente salvate
+      restoreState();
+    },
+    mprDirectClick: () => {
+      try {
+        //Se lo premo troppo velocemente avrò degli errori sulla camera ecc. per cui imposto un timeout
+        if (isMprClicked) {
+          return;
+        }
+
+        const { activeViewportId, viewports } = viewportGridService.getState();
+        const activeViewport = viewports.get(activeViewportId);
+        const activeDisplaySetInstanceUID = activeViewport.displaySetInstanceUIDs[0];
+        const thumbnailList = document.querySelector('#ohif-thumbnail-list');
+        if (!thumbnailList) {
+          return;
+        }
+        const ActiveThumbnail = document.querySelector(
+          `#thumbnail-${activeDisplaySetInstanceUID} img`
+        ); //Attivo l'mpr sulla serie attualmente attiva
+
+        // const enabledElement = _getActiveViewportEnabledElement();
+        // if (!enabledElement) {
+        //   return;
+        // }
+        // const viewport = enabledElement.viewport;
+
+        //Verifico di non essere già in modalità MPR, se lo sono già torno alla visualizzazione default
+        if (window.mprIsActive) {
+          // hangingProtocolService.setProtocol('default');
+
+          restoreState();
+          window.mprIsActive = false;
+
+          // setTimeout(() => {
+          //   if (ActiveThumbnail) {
+          //     ActiveThumbnail.click();
+          //   }
+          // }, 0);
+          return;
+        }
+
+        //Attivazione MPR
+        const _areSelectorsValid = (hp, displaySets, hangingProtocolService) => {
+          if (!hp.displaySetSelectors || Object.values(hp.displaySetSelectors).length === 0) {
+            return true;
+          }
+
+          return hangingProtocolService.areRequiredSelectorsValid(
+            Object.values(hp.displaySetSelectors),
+            displaySets[0]
+          );
+        };
+
+        const hangingProtocols = Array.from(hangingProtocolService.protocols.values());
+
+        const viewportId = viewportGridService.getActiveViewportId();
+
+        if (!viewportId) {
+          return [];
+        }
+        const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
+
+        if (!displaySetInsaneUIDs) {
+          return [];
+        }
+
+        const displaySets = displaySetInsaneUIDs.map(uid =>
+          displaySetService.getDisplaySetByUID(uid)
+        );
+
+        return hangingProtocols
+          .map(hp => {
+            if (hp.id !== 'mpr') {
+              return;
+            }
+            if (!hp.isPreset) {
+              return null;
+            }
+
+            const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
+            if (!areValid) {
+              uiNotificationService.show({
+                title: 'Attivazione MPR',
+                message: "L'MPR non è disponibile per la serie selezionata",
+                type: 'warning',
+              });
+              return;
+            }
+            //Salva stato attuale
+            storeState();
+            isMprClicked = true;
+            hangingProtocolService.setProtocol('mpr');
+            window.mprIsActive = true;
+            setTimeout(() => {
+              ActiveThumbnail.click();
+              isMprClicked = false;
+            }, 0);
+          })
+          .filter(preset => preset !== null);
+      } catch (err) {
+        console.error('Errore attivazione MPR: ', err);
       }
     },
     rotateViewport: ({ rotation }) => {
@@ -878,6 +1047,15 @@ function commandsModule({
     },
     setToolEnabled: {
       commandFn: actions.setToolEnabled,
+    },
+    mprDirectClick: {
+      commandFn: actions.mprDirectClick,
+    },
+    storeState: {
+      commandFn: actions.storeState,
+    },
+    restoreState: {
+      commandFn: actions.restoreState,
     },
     rotateViewportCW: {
       commandFn: actions.rotateViewport,

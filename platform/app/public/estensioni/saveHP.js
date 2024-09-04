@@ -77,6 +77,7 @@ const saveHP = () => {
     ];
     baseHP.stages[0].viewports.push({
       viewportOptions: {
+        viewportId: `nolex-${i}`,
         viewportType: 'stack',
         orientation: 'sagittal',
         initialImageOptions: {

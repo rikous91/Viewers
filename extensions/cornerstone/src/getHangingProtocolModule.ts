@@ -52,10 +52,10 @@ function getHangingProtocolModule() {
     //   name: preferiti.id,
     //   protocol: preferiti,
     // },
-    // {
-    //   name: testHP.id,
-    //   protocol: testHP,
-    // },
+    {
+      name: testHP.id,
+      protocol: testHP,
+    },
   ];
 }
 

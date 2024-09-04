@@ -111,6 +111,7 @@ function modeFactory({ modeConfiguration }) {
         'Pan',
         'TrackballRotate',
         'Layout',
+        'LayoutMPR',
         'Crosshairs',
         'WindowLevel',
         'invert',
@@ -122,6 +123,8 @@ function modeFactory({ modeConfiguration }) {
         'ReferenceLines',
         'StackScroll',
         'MoreTools',
+        'storeState',
+        'restoreState',
       ]);
 
       customizationService.addModeCustomizations([
