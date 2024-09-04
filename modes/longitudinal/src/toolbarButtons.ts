@@ -372,6 +372,37 @@ const toolbarButtons: Button[] = [
     props: {
       rows: 3,
       columns: 4,
+      commands: 'showDownloadViewportModal',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'LayoutMPR',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'mprDirect',
+      label: 'MPR',
+      commands: 'mprDirectClick',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'storeState',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'mprDirect',
+      label: 'storeState',
+      commands: 'storeState',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'restoreState',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'mprDirect',
+      label: 'restoreState',
+      commands: 'restoreState',
       evaluate: 'evaluate.action',
     },
   },

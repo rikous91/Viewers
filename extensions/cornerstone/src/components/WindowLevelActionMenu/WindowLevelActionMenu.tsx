@@ -13,7 +13,7 @@ import { WindowLevel } from './WindowLevel';
 import { VolumeRenderingPresets } from './VolumeRenderingPresets';
 import { VolumeRenderingOptions } from './VolumeRenderingOptions';
 import { ViewportPreset } from '../../types/ViewportPresets';
-import { VolumeViewport3D } from '@cornerstonejs/core';
+import { VolumeViewport, VolumeViewport3D } from '@cornerstonejs/core';
 import { utilities } from '@cornerstonejs/core';
 import { CrosshairsTool } from '@cornerstonejs/tools';
 
@@ -163,7 +163,7 @@ export function WindowLevelActionMenu({
     } else {
       setIs3DVolume(false);
     }
-    if (viewport && viewport.type === 'orthographic') {
+    if (viewport instanceof VolumeViewport) {
       setIsMPR(true);
     } else {
       setIsMPR(false);

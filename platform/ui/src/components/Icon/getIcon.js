@@ -207,6 +207,7 @@ import VolumeRendering from './../../assets/icons/VolumeRendering.png';
 
 import preferiti from './../../assets/icons/preferiti.png';
 import preferitiActive from './../../assets/icons/preferiti-active.png';
+import mprDirect from './../../assets/icons/mpr.png';
 
 const ICONS = {
   'arrow-down': arrowDown,
@@ -423,6 +424,7 @@ const ICONS = {
   /** Nolex **/
   preferiti: preferiti,
   preferitiActive: preferitiActive,
+  mprDirect: mprDirect,
 
   /** New investigational use */
   'illustration-investigational-use': investigationalUse,
