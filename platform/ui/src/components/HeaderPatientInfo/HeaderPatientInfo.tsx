@@ -104,7 +104,7 @@ function HeaderPatientInfo({ servicesManager, appConfig }: withAppTypes) {
         className="text-primary-active"
       />
       <div className="flex flex-col justify-center">
-        {expanded ? (
+        {!expanded ? (
           <>
             <div className="self-start text-[13px] font-bold text-white">
               {formattedPatientName}

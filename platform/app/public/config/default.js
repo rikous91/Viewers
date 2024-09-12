@@ -1,5 +1,38 @@
 /** @type {AppTypes.Config} */
 
+// @ts-ignore
+let prefetch = new URLSearchParams(new URL(window.location.href).search).get('prefetch');
+let dicomLoad = new URLSearchParams(new URL(window.location.href).search).get('dicomload');
+let hdnDicomLoad = new URLSearchParams(new URL(window.location.href).search).get('fZG');
+const modality = new URLSearchParams(new URL(window.location.href).search).get('Modality');
+window.nolexStudyInstanceUIDs = new URLSearchParams(new URL(window.location.href).search).get(
+  'StudyInstanceUIDs'
+);
+window.nolexStudyDescription = new URLSearchParams(new URL(window.location.href).search).get(
+  'StudyDescription'
+);
+window.nolexModality = new URLSearchParams(new URL(window.location.href).search).get('Modality');
+window.nolexAETitle = new URLSearchParams(new URL(window.location.href).search).get('aetitle');
+window.nolexUsername = new URLSearchParams(new URL(window.location.href).search).get('User');
+window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
+let origin = window.location.origin;
+let suite = true;
+
+let qidoRoot = `${origin}/viewer/qido`;
+let wadoRoot = `${origin}/viewer/wado`;
+if (suite) {
+  qidoRoot = 'https://suite.nolex.it/viewer/qido';
+  wadoRoot = 'https://suite.nolex.it/viewer/wado';
+}
+
+//Fix vecchio link
+if (window.location.href.includes('&study=')) {
+  let newUrl = window.location.href;
+  // newUrl = newUrl.replace('https://test2.nolex.it/', 'http://195.231.5.156/');
+  newUrl = newUrl.replace('&study', '&StudyInstanceUIDs');
+  window.location.href = newUrl;
+}
+
 window.config = {
   routerBasename: '/nuovo-visualizzatore',
   // whiteLabeling: {},
@@ -10,7 +43,7 @@ window.config = {
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
   // below flag is for performance reasons, but it might not work for all servers
-  showWarningMessageForCrossOrigin: true,
+  showWarningMessageForCrossOrigin: false,
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   experimentalStudyBrowserSort: false,
@@ -21,7 +54,8 @@ window.config = {
     thumbnail: 75,
     // Prefetch number is dependent on the http protocol. For http 2 or
     // above, the number of requests can be go a lot higher.
-    prefetch: 25,
+    // prefetch: prefetch ? prefetch : 25,
+    prefetch: prefetch ? prefetch : 5,
   },
   // filterQueryParam: false,
   defaultDataSourceName: 'dicomweb',
@@ -42,13 +76,16 @@ window.config = {
       configuration: {
         friendlyName: 'AWS S3 Static wado server',
         name: 'aws',
-        wadoUriRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
-        qidoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
-        wadoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+        // qidoRoot: 'https://suite.nolex.it/viewer/qido',
+        // qidoRoot: 'http://195.231.5.156:8080/viewer/qido',
+        qidoRoot: qidoRoot,
+        // wadoRoot: 'https://suite.nolex.it/viewer/wado',
+        // wadoRoot: 'http://195.231.5.156:8080/viewer/wado',
+        wadoRoot: wadoRoot,
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
-        enableStudyLazyLoad: true,
+        enableStudyLazyLoad: false,
         supportsFuzzyMatching: false,
         supportsWildcard: true,
         staticWado: true,
@@ -64,6 +101,34 @@ window.config = {
         omitQuotationForMultipartRequest: true,
       },
     },
+    // {
+    //   namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
+    //   sourceName: 'dicomweb',
+    //   configuration: {
+    //     friendlyName: 'AWS S3 Static wado server',
+    //     name: 'aws',
+    //     wadoUriRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+    //     qidoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+    //     wadoRoot: 'https://d33do7qe4w26qo.cloudfront.net/dicomweb',
+    //     qidoSupportsIncludeField: false,
+    //     imageRendering: 'wadors',
+    //     thumbnailRendering: 'wadors',
+    //     enableStudyLazyLoad: true,
+    //     supportsFuzzyMatching: false,
+    //     supportsWildcard: true,
+    //     staticWado: true,
+    //     singlepart: 'bulkdata,video',
+    //     // whether the data source should use retrieveBulkData to grab metadata,
+    //     // and in case of relative path, what would it be relative to, options
+    //     // are in the series level or study level (some servers like series some study)
+    //     bulkDataURI: {
+    //       enabled: true,
+    //       relativeResolution: 'studies',
+    //       transform: url => url.replace('/pixeldata.mp4', '/rendered'),
+    //     },
+    //     omitQuotationForMultipartRequest: true,
+    //   },
+    // },
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
       sourceName: 'ohif2',

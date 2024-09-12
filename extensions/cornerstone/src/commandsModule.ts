@@ -21,9 +21,7 @@ import toggleImageSliceSync from './utils/imageSliceSync/toggleImageSliceSync';
 import { getFirstAnnotationSelected } from './utils/measurementServiceMappings/utils/selection';
 import getActiveViewportEnabledElement from './utils/getActiveViewportEnabledElement';
 import toggleVOISliceSync from './utils/toggleVOISliceSync';
-import findViewportsByPosition, {
-  findOrCreateViewport as layoutFindOrCreate,
-} from '../../default/src/findViewportsByPosition';
+import salvataggioHP from '../../../platform/app/public/estensioni/gestioneHP/salvataggioHP';
 
 const toggleSyncFunctions = {
   imageSlice: toggleImageSliceSync,
@@ -486,6 +484,12 @@ function commandsModule({
       //ripristino  tutte le impostazioni precedentemente salvate
       restoreState();
     },
+    setHPPreferiti: () => {
+      window.saveHP();
+    },
+    gestioneHP: () => {
+      salvataggioHP();
+    },
     mprDirectClick: () => {
       try {
         //Se lo premo troppo velocemente avrò degli errori sulla camera ecc. per cui imposto un timeout
@@ -655,6 +659,26 @@ function commandsModule({
       viewport.setProperties({ invert: !invert });
       viewport.render();
     },
+    setCamera: () => {
+      const renderingEngine = cornerstoneViewportService.getRenderingEngine();
+      const { viewports } = viewportGridService.getState();
+
+      const parallelscale = 191.14258844937564;
+      const focalpoint = [-188.23641967773438, 204.3086395263672, -15.805070877075195];
+      const position = [79.57884216308594, 204.3086395263672, -15.805070877075195];
+
+      viewports.forEach(_viewport => {
+        const { viewportId } = _viewport;
+        const viewport = renderingEngine.getViewport(viewportId);
+        const camera = viewport.getCamera();
+        viewport.setCamera({
+          parallelScale: parallelscale,
+          focalPoint: focalpoint,
+          position: position,
+        });
+        viewport.render();
+      });
+    },
     resetViewport: () => {
       const enabledElement = _getActiveViewportEnabledElement();
 
@@ -718,6 +742,7 @@ function commandsModule({
 
       const jumpIndex = imageIndex < 0 ? numberOfSlices + imageIndex : imageIndex;
       if (jumpIndex >= numberOfSlices || jumpIndex < 0) {
+        return;
         throw new Error(`Can't jump to ${imageIndex}`);
       }
 
@@ -1048,8 +1073,14 @@ function commandsModule({
     setToolEnabled: {
       commandFn: actions.setToolEnabled,
     },
+    gestioneHP: {
+      commandFn: actions.gestioneHP,
+    },
     mprDirectClick: {
       commandFn: actions.mprDirectClick,
+    },
+    setHPPreferiti: {
+      commandFn: actions.setHPPreferiti,
     },
     storeState: {
       commandFn: actions.storeState,
@@ -1080,6 +1111,9 @@ function commandsModule({
     },
     invertViewport: {
       commandFn: actions.invertViewport,
+    },
+    setCamera: {
+      commandFn: actions.setCamera,
     },
     resetViewport: {
       commandFn: actions.resetViewport,

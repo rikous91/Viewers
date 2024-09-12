@@ -92,16 +92,8 @@ const saveHP = () => {
     });
   }
   window.hpPreferiti = JSON.parse(JSON.stringify(baseHP));
-
-  const event = new CustomEvent('customNolex', {
-    detail: {
-      isOpen: false, // Puoi passare qualsiasi dato tu voglia qui
-      message: JSON.stringify(baseHP),
-    },
-  });
-
-  // Dispatch dell'evento
-  window.dispatchEvent(event);
 };
+
+window.saveHP = saveHP;
 
 export default saveHP;

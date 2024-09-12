@@ -24,6 +24,9 @@ export default class RetrieveMetadataLoader {
   ) {
     this.client = client;
     this.studyInstanceUID = studyInstanceUID;
+    if (window.nolexAETitle) {
+      this.studyInstanceUID = `${this.studyInstanceUID}|${window.nolexAETitle}`;
+    }
     this.filters = filters;
     this.sortCriteria = sortCriteria;
     this.sortFunction = sortFunction;
@@ -57,8 +60,8 @@ export default class RetrieveMetadataLoader {
   }
 
   // Methods to be overwrite
-  async configLoad() {}
-  async preLoad() {}
-  async load(preLoadData) {}
-  async posLoad(loadData) {}
+  async configLoad() { }
+  async preLoad() { }
+  async load(preLoadData) { }
+  async posLoad(loadData) { }
 }

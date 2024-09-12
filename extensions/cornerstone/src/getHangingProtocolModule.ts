@@ -8,7 +8,7 @@ import { primaryAxial } from './hps/primaryAxial';
 import { frameView3x3 } from './hps/frameView3x3';
 import { frameView4x4 } from './hps/frameView4x4';
 import { preferiti } from './hps/preferiti';
-import { testHP } from './hps/testHP';
+import { nolexHP } from './hps/nolexHP';
 
 function getHangingProtocolModule() {
   return [
@@ -52,10 +52,10 @@ function getHangingProtocolModule() {
     //   name: preferiti.id,
     //   protocol: preferiti,
     // },
-    {
-      name: testHP.id,
-      protocol: testHP,
-    },
+    // {
+    //   name: nolexHP.id,
+    //   protocol: nolexHP,
+    // },
   ];
 }
 

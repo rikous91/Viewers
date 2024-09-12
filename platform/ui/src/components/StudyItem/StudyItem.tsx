@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import Icon from '../Icon';
 
 const baseClasses =
-  'first:border-0 border-t border-secondary-light cursor-pointer select-none outline-none';
+  'first:border-0 border-t border-secondary-light cursor-pointer select-none outline-none nolex-study-item';
 
 const StudyItem = ({
   date,
@@ -49,7 +49,7 @@ const StudyItem = ({
         <div className="flex-2 flex">
           <div
             className={classnames(
-              'bg-secondary-main mt-2 flex flex-row py-1 pl-2 pr-4 text-base text-white ',
+              'bg-secondary-main mt-2 flex flex-row py-1 pl-2 pr-4 text-base text-white',
               isActive
                 ? 'border-secondary-light flex-1 justify-center border-t'
                 : 'mx-4 mb-4 rounded-sm'

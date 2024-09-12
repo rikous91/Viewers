@@ -68,7 +68,10 @@ function makeSeriesAsyncLoader(client, studyInstanceUID, seriesInstanceUIDList) 
       return seriesInstanceUIDList.length > 0;
     },
     next() {
-      const { seriesInstanceUID, metadata } = seriesInstanceUIDList.shift();
+      let { seriesInstanceUID, metadata } = seriesInstanceUIDList.shift();
+      if (window.nolexAETitle) {
+        seriesInstanceUID = `${seriesInstanceUID}|${window.nolexAETitle}`;
+      }
       const promise = new DeferredPromise();
       promise.setMetadata(metadata);
       promise.setProcessFunction(() => {
@@ -111,6 +114,9 @@ export default class RetrieveMetadataLoaderAsync extends RetrieveMetadataLoader 
       preLoaders.push(client.searchForSeries.bind(client, options));
     }
     // Fallback preloader
+    if (window.nolexAETitle) {
+      options.queryParams.partizione = window.nolexAETitle;
+    }
     preLoaders.push(client.searchForSeries.bind(client, options));
 
     yield* preLoaders;

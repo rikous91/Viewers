@@ -880,27 +880,32 @@ export default class HangingProtocolService extends PubSubService {
     }
 
     try {
-      let protocol = this._validateProtocol(foundProtocol);
-      // if (protocol.id === '@nolex/preferiti') {
+      let protocol;
       if (window.hpPreferiti) {
-        const generateRandomString = length => {
-          const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-          let result = '';
-
-          for (let i = 0; i < length; i++) {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            result += characters[randomIndex];
-          }
-
-          return result;
-        };
-
-        const newID = window.hpPreferiti.id + generateRandomString(4);
-        //Se il protocollo è uno presente nella condizione, essendo dinamico forzo la riaggiunta. Praticamente gli hanging protocol vengono caricati solamente all'inizio,
-        //se ho degli hanging protocol da modificare live come nel caso dei preferiti, devo riaggiungerlo con le modifiche
-        this.addProtocol(newID, window.hpPreferiti);
-        protocol = window.hpPreferiti;
+        protocol = this._validateProtocol(window.hpPreferiti);
+      } else {
+        protocol = this._validateProtocol(foundProtocol);
       }
+      // if (protocol.id === '@nolex/preferiti') {
+      // if (window.hpPreferiti) {
+      //   const generateRandomString = length => {
+      //     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      //     let result = '';
+
+      //     for (let i = 0; i < length; i++) {
+      //       const randomIndex = Math.floor(Math.random() * characters.length);
+      //       result += characters[randomIndex];
+      //     }
+
+      //     return result;
+      //   };
+
+      //   const newID = window.hpPreferiti.id;
+      //   //Se il protocollo è uno presente nella condizione, essendo dinamico forzo la riaggiunta. Praticamente gli hanging protocol vengono caricati solamente all'inizio,
+      //   //se ho degli hanging protocol da modificare live come nel caso dei preferiti, devo riaggiungerlo con le modifiche
+      //   this.addProtocol(newID, window.hpPreferiti);
+      //   protocol = window.hpPreferiti;
+      // }
       if (options) {
         this._validateOptions(options);
       }

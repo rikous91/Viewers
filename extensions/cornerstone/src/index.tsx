@@ -78,6 +78,9 @@ const cornerstoneExtension: Types.Extensions.Extension = {
   onModeEnter: ({ servicesManager }: withAppTypes): void => {
     const { cornerstoneViewportService, toolbarService, segmentationService } =
       servicesManager.services;
+    if (!window.servicesManager) {
+      window.servicesManager = servicesManager;
+    }
     toolbarService.registerEventForToolbarUpdate(cornerstoneViewportService, [
       cornerstoneViewportService.EVENTS.VIEWPORT_DATA_CHANGED,
     ]);

@@ -56,9 +56,9 @@ const injectPrintBtn = () => {
 const createPrint = () => {
   //L'area di anteprima stampa è a dimensioni fisse in base al formato (es. a4 width: 210mm;height: 297mm) ma in base al monitor mi può venire tagliato quindi lo scalo
   //dinamicamente in base all'altezza del monitor
-  // const scalableElement = document.querySelector('.nolex-main-area');
-  const scalableElement = document.body;
-  const scaleFactor = window.innerHeight / 1300;
+  //Salvo lo stato attuale della griglia e serie così da ripristinarlo se esco dalla stampa
+  document.querySelector('[data-cy="storeState"]').click();
+
   // scalableElement.style.transform = `scale(${scaleFactor})`;
   //Di default attivo sempre lo strumento WL
   document.querySelector('[data-cy="WindowLevel"]').click();
@@ -317,6 +317,8 @@ const createPrint = () => {
   }
 
   document.getElementById('annulla-button').addEventListener('click', () => {
+    //Ripristino stato precedente griglia e serie
+    document.querySelector('[data-cy="restoreState"]').click();
     document.body.classList.remove('iframe-stampa');
     document.body.classList.remove('nascondi-intestazione-stampa');
     document.body.classList.remove('nascondi-misurazioni-stampa');

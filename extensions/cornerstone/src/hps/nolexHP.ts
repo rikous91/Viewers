@@ -1,7 +1,7 @@
-export const testHP = {
-  id: 'testHP',
+export const nolexHP = {
+  id: 'nolexHP',
   locked: true,
-  name: 'testHP',
+  name: 'nolexHP',
   icon: 'layout-advanced-axial-primary',
   isPreset: true,
   createdDate: '2021-02-23T19:22:08.894Z',

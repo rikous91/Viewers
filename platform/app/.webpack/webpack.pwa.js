@@ -55,6 +55,8 @@ module.exports = (env, argv) => {
       printBtn: path.join(__dirname, '../public/estensioni/stampa/printBtn.js'),
       preferitiBtn: path.join(__dirname, '../public/estensioni/preferiti/preferiti.js'),
       editorBtn: path.join(__dirname, '../public/estensioni/editor/editorBtn.js'),
+      caricamentoHP: path.join(__dirname, '../public/estensioni/gestioneHP/caricamentoHP.js'),
+      mostraChangelogAggiornamenti: path.join(__dirname, '../public/estensioni/mostraChangelogAggiornamenti/mostraChangelogAggiornamenti.js'),
     },
     output: {
       path: DIST_DIR,

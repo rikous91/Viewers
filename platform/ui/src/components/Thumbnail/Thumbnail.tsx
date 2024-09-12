@@ -66,7 +66,7 @@ const Thumbnail = ({
       tabIndex="0"
     >
       <div ref={drag}>
-        <div className="flex flex-1 flex-row items-center pt-2 text-base text-blue-300">
+        {/* <div className="flex flex-1 flex-row items-center pt-2 text-base text-blue-300">
           <div className="mr-4">
             <span className="text-primary-main font-bold">{'S: '}</span>
             {seriesNumber}
@@ -94,7 +94,7 @@ const Thumbnail = ({
           >
             {description}
           </div>
-        </div>
+        </div> */}
         <div
           className={classnames(
             'flex h-32 flex-1 items-center justify-center overflow-hidden rounded-md bg-black text-base text-white',
@@ -111,7 +111,8 @@ const Thumbnail = ({
               crossOrigin="anonymous"
             />
           ) : (
-            <div>{imageAltText}</div>
+            // <div>{imageAltText}</div>
+            <div className="spinner-loading-thumbnail"></div>
           )}
         </div>
         <div className="flex flex-1 flex-row items-center pt-2 text-base text-blue-300">
@@ -131,14 +132,14 @@ const Thumbnail = ({
             {loadingProgress && loadingProgress === 1 && (
               <Icon
                 name={'database'}
-              className="w-3"
-            />
-          )}
-        </div>
-        <DisplaySetMessageListTooltip
-          messages={messages}
-          id={`display-set-tooltip-${displaySetInstanceUID}`}
-        />
+                className="w-3"
+              />
+            )}
+          </div>
+          <DisplaySetMessageListTooltip
+            messages={messages}
+            id={`display-set-tooltip-${displaySetInstanceUID}`}
+          />
         </div>
         <div className="break-all text-base text-white">{description}</div>
       </div>

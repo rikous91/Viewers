@@ -606,6 +606,8 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     presentations: Presentations = {}
   ): Promise<void> {
     const displaySetOptions = viewportInfo.getDisplaySetOptions();
+    const { element } = viewportInfo;
+    element.classList.add('viewport-loading');
 
     const displaySetInstanceUIDs = viewportData.data.map(data => data.displaySetInstanceUID);
 
@@ -646,6 +648,10 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     this._handleOverlays(viewport);
 
     return viewport.setStack(imageIds, initialImageIndexToUse).then(() => {
+      element.classList.remove('viewport-loading');
+      if (!window.nolexAllReady) {
+        window.nolexAllReady = true;
+      }
       viewport.setProperties({ ...properties });
       this.setPresentations(viewport.id, presentations, viewportInfo);
       if (displayArea) {
@@ -735,6 +741,8 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     // If you call loadStudyMetadata and it's not in the DicomMetadataStore cache, it should fire
     // a request through the data source?
     // (This call may or may not create sub-requests for series metadata)
+    const { element } = viewportInfo;
+    element.classList.remove('viewport-loading');
     const volumeInputArray = [];
     const displaySetOptionsArray = viewportInfo.getDisplaySetOptions();
     const { hangingProtocolService } = this.servicesManager.services;
