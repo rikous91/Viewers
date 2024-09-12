@@ -8,6 +8,7 @@ window.config = {
   // below flag is for performance reasons, but it might not work for all servers
   showWarningMessageForCrossOrigin: true,
   showCPUFallbackMessage: true,
+  useExperimentalUI: false,
   showLoadingIndicator: true,
   experimentalStudyBrowserSort: false,
   strictZSpacingForVolumeViewport: true,
@@ -127,6 +128,14 @@ window.config = {
       },
     },
 
+    {
+      namespace: '@ohif/extension-default.dataSourcesModule.dicomwebproxy',
+      sourceName: 'dicomwebproxy',
+      configuration: {
+        friendlyName: 'dicomweb delegating proxy',
+        name: 'dicomwebproxy',
+      },
+    },
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomjson',
       sourceName: 'dicomjson',
