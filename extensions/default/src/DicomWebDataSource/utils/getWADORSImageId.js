@@ -8,7 +8,7 @@ function buildInstanceFrameWadoRsUri(instance, config, frame) {
 
   frame = frame || 1;
 
-  return `${baseWadoRsUri}/frames/${frame}`;
+  return `${baseWadoRsUri}/frames/${frame}?token=${window.nolexToken}&aetitle=${window.nolexAETitle}`;
 }
 
 // function getWADORSImageUrl(instance, frame) {

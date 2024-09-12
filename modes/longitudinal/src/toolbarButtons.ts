@@ -407,6 +407,51 @@ const toolbarButtons: Button[] = [
     },
   },
   {
+    id: 'setHPPreferiti',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'setHPPreferiti',
+      label: 'setHPPreferiti',
+      commands: 'setHPPreferiti',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'gestioneHP',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'hpIcon',
+      label: 'Hanging Protocol',
+      commands: 'gestioneHP',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'setCamera',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'hpIcon',
+      label: 'Set Camera',
+      commands: 'setCamera',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'jumpIndex',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'mprDirect',
+      label: 'jumpToImage',
+      commands: {
+        commandName: 'jumpToImage',
+        commandOptions: {
+          imageIndex: ['2'],
+        },
+      },
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
     id: 'Crosshairs',
     uiType: 'ohif.radioGroup',
     props: {

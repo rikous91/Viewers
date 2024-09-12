@@ -38,8 +38,10 @@ export function Preferiti({
   }
   const isAlreadyPreferito = window.preferiti?.some(
     preferito =>
-      preferito.SeriesInstanceUID === SeriesInstanceUID &&
-      preferito.SOPInstanceUID === displaySets[0].instances[activeElementIndex].SOPInstanceUID
+      preferito.SOPInstanceUID === SeriesInstanceUID &&
+      (displaySets[0].instances.length > 1
+        ? displaySets[0].instances[activeElementIndex].SOPInstanceUID
+        : displaySets[0].instances[0].SOPInstanceUID)
   );
 
   // if (isAlreadyPreferito) {
@@ -62,7 +64,9 @@ export function Preferiti({
         window.preferiti = window.preferiti.filter(preferito => {
           return !(
             preferito.SeriesInstanceUID === SeriesInstanceUID &&
-            preferito.SOPInstanceUID === displaySets[0].instances[activeElementIndex].SOPInstanceUID
+            (preferito.SOPInstanceUID === displaySets[0].instances.length > 1
+              ? displaySets[0].instances[activeElementIndex].SOPInstanceUID
+              : displaySets[0].instances[0].SOPInstanceUID)
           );
         });
         //Se ho la clipbooard preferiti aperta, aggiorno i preferiti in tempo reale dopo la rimozione
@@ -127,9 +131,18 @@ export function Preferiti({
 
       //Cattura del canvas senza misurazioni e altro anziché di tutta la div
       if (!isAlreadyPreferito && checked) {
-        const SOPInstanceUID = displaySets[0].instances[activeElementIndex].SOPInstanceUID;
-        const NumeroSerie = displaySets[0].instances[activeElementIndex].SeriesNumber;
-        const DescrizioneSerie = displaySets[0].instances[activeElementIndex].SeriesDescription;
+        const SOPInstanceUID =
+          displaySets[0].instances.length > 1
+            ? displaySets[0].instances[activeElementIndex].SOPInstanceUID
+            : displaySets[0].instances[0].SOPInstanceUID;
+        const NumeroSerie =
+          displaySets[0].instances.length > 1
+            ? displaySets[0].instances[activeElementIndex].SeriesNumber
+            : displaySets[0].instances[0].SOPInstanceUID;
+        const DescrizioneSerie =
+          displaySets[0].instances.length > 1
+            ? displaySets[0].instances[activeElementIndex].SeriesDescription
+            : displaySets[0].instances[0].SOPInstanceUID;
         const NumeroIstanza = activeElementIndex + 1;
         const imgData = document
           .querySelector('.nolex-selected .cornerstone-canvas')
@@ -199,11 +212,11 @@ export function Preferiti({
   //cambio icona
   setTimeout(() => {
     const iconaStella = document.querySelector('.nolex-selected .preferiti-btn img');
-    // if (iconaStella.src.includes('preferiti-active')) {
-    //   iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti.png';
-    // } else {
-    //   iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti-active.png';
-    // }
+    if (iconaStella.src.includes('preferiti-active')) {
+      iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti.png';
+    } else {
+      iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti-active.png';
+    }
   }, 0);
 
   setTimeout(() => {

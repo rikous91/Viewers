@@ -409,7 +409,7 @@ const OHIFCornerstoneViewport = React.memo((props: withAppTypes) => {
     <React.Fragment>
       <div className="viewport-wrapper">
         <div
-          className="cornerstone-viewport-element"
+          className="cornerstone-viewport-element viewport-loading"
           style={{ height: '100%', width: '100%' }}
           onContextMenu={e => e.preventDefault()}
           onMouseDown={e => e.preventDefault()}

@@ -110,5 +110,6 @@
     "wadors",
     "wadouri",
     "workerpool"
-  ]
+  ],
+  "svn.ignoreMissingSvnWarning": true
 }

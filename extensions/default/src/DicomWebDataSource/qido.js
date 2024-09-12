@@ -172,6 +172,7 @@ function mapParams(params, options = {}) {
     offset: params.offset || 0,
     fuzzymatching: options.supportsFuzzyMatching === true,
     includefield: commaSeparatedFields, // serverSupportsQIDOIncludeField ? commaSeparatedFields : 'all',
+    aetitle: window.nolexAETitle,
   };
 
   // build the StudyDate range parameter

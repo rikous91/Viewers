@@ -62,13 +62,29 @@ function ViewportImageSliceLoadingIndicator({ viewportData, element }) {
     );
   }
 
+  //Originale
+  // if (loading) {
+  //   return (
+  //     // IMPORTANT: we need to use the pointer-events-none class to prevent the loading indicator from
+  //     // interacting with the mouse, since scrolling should propagate to the viewport underneath
+  //     <div className="pointer-events-none absolute top-0 left-0 h-full w-full bg-black opacity-50">
+  //       <div className="transparent flex h-full w-full items-center justify-center">
+  //         <p className="text-primary-light text-xl font-light">Caricamento...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+
   if (loading) {
     return (
       // IMPORTANT: we need to use the pointer-events-none class to prevent the loading indicator from
       // interacting with the mouse, since scrolling should propagate to the viewport underneath
-      <div className="pointer-events-none absolute top-0 left-0 h-full w-full bg-black opacity-50">
-        <div className="transparent flex h-full w-full items-center justify-center">
-          <p className="text-primary-light text-xl font-light">Loading...</p>
+      <div>
+        <div className="nolex-scrolling-loading pointer-events-none absolute top-0 left-0 h-full bg-black">
+          <div className="transparent flex h-full w-full items-start justify-end"></div>
+        </div>
+        <div>
+          <p className="nolex-scrolling-loading-p text-primary-light text-xl font-light">🟡</p>
         </div>
       </div>
     );

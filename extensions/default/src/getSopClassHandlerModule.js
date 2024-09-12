@@ -130,6 +130,7 @@ const makeDisplaySet = instances => {
 };
 
 const isSingleImageModality = modality => {
+  return false;
   return modality === 'CR' || modality === 'MG' || modality === 'DX';
 };
 

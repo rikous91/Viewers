@@ -65,14 +65,14 @@ export function createStudyBrowserTabs(
       label: 'Studio attuale',
       studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
-    {
-      name: 'recent',
-      label: 'Storico',
-      studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
-    },
+    // {
+    //   name: 'recent',
+    //   label: 'Storico',
+    //   studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    // },
     {
       name: 'all',
-      label: 'Tutti',
+      label: 'Storico sul cloud',
       studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
   ];

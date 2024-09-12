@@ -200,6 +200,7 @@ function initMPRToolGroup(extensionManager, toolGroupService, commandsManager, m
         bindings: [{ mouseButton: Enums.MouseBindings.Secondary }],
       },
       { toolName: toolNames.StackScrollMouseWheel, bindings: [] },
+      { toolName: toolNames.ReferenceLines, bindings: [] },
     ],
     passive: [
       { toolName: toolNames.Length },
@@ -280,7 +281,7 @@ function initMPRToolGroup(extensionManager, toolGroupService, commandsManager, m
       {
         toolName: toolNames.AdvancedMagnify,
       },
-      { toolName: toolNames.ReferenceLines },
+      // { toolName: toolNames.ReferenceLines },
     ],
   };
 

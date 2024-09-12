@@ -113,6 +113,7 @@ function modeFactory({ modeConfiguration }) {
         'Layout',
         'LayoutMPR',
         'Crosshairs',
+        'gestioneHP',
         'WindowLevel',
         'invert',
         'polygon',
@@ -123,8 +124,11 @@ function modeFactory({ modeConfiguration }) {
         'ReferenceLines',
         'StackScroll',
         'MoreTools',
-        'storeState',
-        'restoreState',
+        // 'setCamera',
+        // 'storeState',
+        // 'restoreState',
+        // 'jumpIndex',
+        // 'setHPPreferiti',
       ]);
 
       customizationService.addModeCustomizations([
