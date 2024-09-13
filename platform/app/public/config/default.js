@@ -25,11 +25,17 @@ if (suite) {
   wadoRoot = 'https://suite.nolex.it/viewer/wado';
 }
 
+window.qidoUrl = qidoRoot;
+
 //Fix vecchio link
-if (window.location.href.includes('&study=')) {
+if (
+  window.location.href.includes('&study=') ||
+  window.location.href.includes('&hangingProtocolId=nolexhp')
+) {
   let newUrl = window.location.href;
   // newUrl = newUrl.replace('https://test2.nolex.it/', 'http://195.231.5.156/');
   newUrl = newUrl.replace('&study', '&StudyInstanceUIDs');
+  newUrl = newUrl.replace(/&hangingProtocolId=nolexhp/g, '');
   window.location.href = newUrl;
 }
 
@@ -237,11 +243,12 @@ window.config = {
     },
   ],
   httpErrorHandler: error => {
+    window.erroriFetch(error);
     // This is 429 when rejected from the public idc sandbox too often.
     console.warn(error.status);
 
     // Could use services manager here to bring up a dialog/modal if needed.
-    console.warn('test, navigate to https://ohif.org/');
+    // console.warn('test, navigate to https://ohif.org/');
   },
   whiteLabeling: {
     /* Optional: Should return a React component to be rendered in the "Logo" section of the application's Top Navigation bar */

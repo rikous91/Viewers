@@ -38,10 +38,10 @@ export function Preferiti({
   }
   const isAlreadyPreferito = window.preferiti?.some(
     preferito =>
-      preferito.SOPInstanceUID === SeriesInstanceUID &&
+      preferito.SeriesInstanceUID === SeriesInstanceUID &&
       (displaySets[0].instances.length > 1
-        ? displaySets[0].instances[activeElementIndex].SOPInstanceUID
-        : displaySets[0].instances[0].SOPInstanceUID)
+        ? preferito.SOPInstanceUID === displaySets[0].instances[activeElementIndex].SOPInstanceUID
+        : preferito.SOPInstanceUID === displaySets[0].instances[0].SOPInstanceUID)
   );
 
   // if (isAlreadyPreferito) {

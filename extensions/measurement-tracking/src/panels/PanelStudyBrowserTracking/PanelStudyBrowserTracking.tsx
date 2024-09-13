@@ -14,6 +14,7 @@ import { PanelStudyBrowserTrackingHeader } from './PanelStudyBrowserTrackingHead
 import { defaultActionIcons, defaultViewPresets } from './constants';
 
 const { formatDate, createStudyBrowserTabs } = utils;
+let erroreStudiRemoti = false;
 
 /**
  *
@@ -112,6 +113,70 @@ function PanelStudyBrowserTracking({
 
   const { trackedSeries } = trackedMeasurements.context;
 
+  const storicoRemoto = async qidoStudiesForPatient => {
+    try {
+      const qidoUrl = window.qidoUrlDefinitivo.replace('/qido/', '/qido-remoto/');
+      const apiResponse = await fetch(qidoUrl, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+      });
+
+      if (!apiResponse.ok) {
+        erroreStudiRemoti = true;
+        throw new Error(`Errore storico remoto: ${apiResponse.status}`);
+      }
+      const response = await apiResponse.json();
+      console.log('storico ', response);
+
+      setTimeout(() => {
+        for (const a of response) {
+          // This is where the push happens after the delay
+          qidoStudiesForPatient.push({
+            studyInstanceUid: a['0020000D'].Value[0],
+            date: a['00080020'].Value[0],
+            time: a['00080030'].Value[0],
+            accession: a['00080050'].Value[0],
+            mrn: a['00100020'].Value[0],
+            patientName: a['00100010'].Value[0],
+            instances: a['00201208'].Value[0],
+            description: a['00081030'].Value[0] + ' |Remoto|',
+            modalities: a['00080061'].Value[0],
+          });
+        }
+
+        // After the push, create a new array reference and update the state
+        const updatedStudies = [...qidoStudiesForPatient];
+
+        // Map and update the study display list with the new data
+        const mappedStudies = _mapDataSourceStudies(updatedStudies);
+        const actuallyMappedStudies = mappedStudies.map(qidoStudy => {
+          return {
+            studyInstanceUid: qidoStudy.StudyInstanceUID,
+            date: formatDate(qidoStudy.StudyDate),
+            description: qidoStudy.StudyDescription,
+            modalities: qidoStudy.ModalitiesInStudy,
+            numInstances: qidoStudy.NumInstances,
+          };
+        });
+
+        setStudyDisplayList(prevArray => {
+          const ret = [...prevArray];
+          for (const study of actuallyMappedStudies) {
+            if (!ret.find(it => it.studyInstanceUid === study.studyInstanceUid)) {
+              ret.push(study);
+            }
+          }
+          return ret;
+        });
+      }, 0); // Set timeout only for the push operation
+    } catch (err) {
+      erroreStudiRemoti = true;
+      console.error('Non è stato possibile recuperare lo storico remoto: ', err);
+      return;
+    }
+  };
+
   // ~~ studyDisplayList
   useEffect(() => {
     // Fetch all studies for the patient in each primary study
@@ -156,6 +221,7 @@ function PanelStudyBrowserTracking({
         }
         return ret;
       });
+      await storicoRemoto(qidoStudiesForPatient);
     }
 
     StudyInstanceUIDs.forEach(sid => fetchStudiesForPatient(sid));
@@ -407,6 +473,42 @@ function PanelStudyBrowserTracking({
     }
   }, [expandedStudyInstanceUIDs, jumpToDisplaySet, tabs]);
 
+  const onClickedtabName = clickedTabName => {
+    try {
+      // document.querySelector('[data-cy="FixReferenceLines"]').style.display = 'none'
+      if (document.getElementById('storico-remoto')) {
+        document.getElementById('storico-remoto').remove();
+      }
+      document.querySelector('.ohif-scrollbar .bg-black').style.display = 'block';
+      if (clickedTabName === 'primary') {
+        document.querySelector('[data-cy="FixReferenceLines"]').style.display = 'flex';
+      }
+      if (clickedTabName === 'remoteAll') {
+        document.querySelector('.ohif-scrollbar').insertAdjacentHTML(
+          'afterbegin',
+          `
+      <div class="${erroreStudiRemoti ? 'error' : ''}" id="storico-remoto">
+      <p>${erroreStudiRemoti
+            ? 'Offline'
+            : window.studiRemoti[0].description !== 'Nessuno storico remoto'
+              ? 'Online'
+              : 'Tutto lo storico è già online'
+          }</p>
+      </div>
+      `
+        );
+        // if (studiRemoti[0].description === 'Nessuno storico remoto') {
+        if (window.studiRemoti[0].description === 'Nessuno storico remoto') {
+          setTimeout(() => {
+            document.querySelector('.ohif-scrollbar .bg-black').style.display = 'none'; //Nascondo lo studio fake presente di default nello storico remoto
+          }, 0);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const onClickUntrack = displaySetInstanceUID => {
     const onConfirm = () => {
       const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
@@ -492,12 +594,13 @@ function PanelStudyBrowserTracking({
         expandedStudyInstanceUIDs={expandedStudyInstanceUIDs}
         onClickStudy={_handleStudyClick}
         onClickTab={clickedTabName => {
+          onClickedtabName(clickedTabName);
           setActiveTabName(clickedTabName);
         }}
         onClickUntrack={displaySetInstanceUID => {
           onClickUntrack(displaySetInstanceUID);
         }}
-        onClickThumbnail={() => {}}
+        onClickThumbnail={() => { }}
         onDoubleClickThumbnail={onDoubleClickThumbnailHandler}
         activeDisplaySetInstanceUIDs={activeViewportDisplaySetInstanceUIDs}
         showSettings={actionIcons.find(icon => icon.id === 'settings').value}
@@ -720,7 +823,8 @@ function _createStudyBrowserTabs(
 ) {
   const primaryStudies = [];
   const recentStudies = [];
-  const allStudies = [];
+  let allStudies = [];
+  let studiRemoti = [];
 
   // Iterate over each study...
   studyDisplayList.forEach(study => {
@@ -762,6 +866,30 @@ function _createStudyBrowserTabs(
     }
   });
 
+  allStudies = allStudies.filter(study => {
+    if (study.description.includes('|Remoto|')) {
+      study.description = study.description.replace('|Remoto|', '');
+      studiRemoti.push(study);
+      return false; // Esclude l'elemento da allStudies
+    }
+    return true; // Mantiene l'elemento in allStudies
+  });
+
+  if (studiRemoti.length === 0) {
+    studiRemoti = [
+      {
+        studyInstanceUid: '',
+        date: '',
+        description: 'Nessuno storico remoto',
+        modalities: '',
+        numInstances: 0,
+        displaySets: [],
+      },
+    ];
+  }
+  console.log(studiRemoti);
+  window.studiRemoti = JSON.parse(JSON.stringify(studiRemoti));
+
   // Newest first
   const _byDate = (a, b) => {
     const dateA = Date.parse(a);
@@ -781,11 +909,11 @@ function _createStudyBrowserTabs(
       label: 'Storico locale',
       studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
-    // {
-    //   name: 'all',
-    //   label: 'All',
-    //   studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
-    // },
+    {
+      name: 'remoteAll',
+      label: 'Storico remoto',
+      studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    },
   ];
 
   return tabs;

@@ -19,7 +19,8 @@ export function createStudyBrowserTabs(
   recentTimeframeMS = 31536000000
 ) {
   const primaryStudies = [];
-  const allStudies = [];
+  let allStudies = [];
+  let studiRemoti = [];
 
   studyDisplayList.forEach(study => {
     const displaySetsForStudy = displaySets.filter(
@@ -31,9 +32,33 @@ export function createStudyBrowserTabs(
 
     if (primaryStudyInstanceUIDs.includes(study.studyInstanceUid)) {
       primaryStudies.push(tabStudy);
+    } else {
+      allStudies.push(tabStudy);
     }
-    allStudies.push(tabStudy);
   });
+
+  allStudies = allStudies.filter(study => {
+    if (study.description.includes('|Remoto|')) {
+      study.description = study.description.replace('|Remoto|', '');
+      studiRemoti.push(study);
+      return false; // Esclude l'elemento da allStudies
+    }
+    return true; // Mantiene l'elemento in allStudies
+  });
+
+  if (studiRemoti.length === 0) {
+    studiRemoti = [
+      {
+        studyInstanceUid: '',
+        date: '',
+        description: 'Nessuno storico remoto',
+        modalities: '',
+        numInstances: 0,
+        displaySets: [],
+      },
+    ];
+  }
+  window.studiRemoti = JSON.parse(JSON.stringify(studiRemoti));
 
   const primaryStudiesTimestamps = primaryStudies
     .filter(study => study.date)
@@ -67,13 +92,23 @@ export function createStudyBrowserTabs(
     },
     // {
     //   name: 'recent',
-    //   label: 'Storico',
+    //   label: 'Storico sul cloud',
     //   studies: recentStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     // },
     {
       name: 'all',
       label: 'Storico sul cloud',
       studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    },
+    // {
+    //   name: 'all',
+    //   label: 'All',
+    //   studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    // },
+    {
+      name: 'remoteAll',
+      label: 'Storico remoto',
+      studies: studiRemoti.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
   ];
 

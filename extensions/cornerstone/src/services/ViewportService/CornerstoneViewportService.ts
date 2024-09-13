@@ -648,7 +648,6 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     this._handleOverlays(viewport);
 
     return viewport.setStack(imageIds, initialImageIndexToUse).then(() => {
-      element.classList.remove('viewport-loading');
       if (!window.nolexAllReady) {
         window.nolexAllReady = true;
       }
@@ -663,6 +662,30 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
       if (flipHorizontal) {
         viewport.setCamera({ flipHorizontal: true });
       }
+      //Applico le camera settings se presenti nell'hanging protocol
+      if (!window.viewportsAlreadyHPApplied) {
+        window.viewportsAlreadyHPApplied = [];
+      }
+      if (
+        viewport.id &&
+        window.cameraSettingsFromHPNolex &&
+        window.cameraSettingsFromHPNolex[viewport.id] &&
+        !window.viewportsAlreadyHPApplied.includes(viewport.id)
+      ) {
+        window.viewportsAlreadyHPApplied.push(viewport.id);
+        const cameraSettings = window.cameraSettingsFromHPNolex[viewport.id];
+        console.log(viewport.id);
+        console.log(window.cameraSettingsFromHPNolex[viewport.id]);
+        viewport.setCamera({
+          parallelScale: cameraSettings.parallelscale,
+          focalPoint: cameraSettings.focalpoint,
+          position: cameraSettings.position,
+        });
+        viewport.render();
+      }
+      setTimeout(() => {
+        element.classList.remove('viewport-loading');
+      }, 0);
     });
   }
 

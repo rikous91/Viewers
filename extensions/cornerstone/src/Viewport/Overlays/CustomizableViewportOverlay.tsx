@@ -55,6 +55,33 @@ const studyDateItem = {
     formatDate(referenceInstance.StudyDate),
 };
 
+const patientIDItem = {
+  id: 'PatientID',
+  customizationType: 'ohif.overlayItem',
+  label: '',
+  title: 'PatientID',
+  className: 'descrizione-serie-viewport',
+  condition: ({ referenceInstance }) => {
+    return referenceInstance && referenceInstance.PatientID;
+  },
+  contentF: ({ referenceInstance }) => 'ID: ' + referenceInstance.PatientID,
+};
+
+const patientNameItem = {
+  id: 'PatientName',
+  customizationType: 'ohif.overlayItem',
+  label: '',
+  title: 'PatientName',
+  className: 'descrizione-serie-viewport',
+  condition: ({ referenceInstance }) => {
+    return (
+      referenceInstance && referenceInstance.PatientName && referenceInstance.PatientName.Alphabetic
+    );
+  },
+  contentF: ({ referenceInstance, formatters: { formatPN } }) =>
+    `${formatPN(referenceInstance.PatientName.Alphabetic)} ${referenceInstance.PatientSex ? '(' + referenceInstance.PatientSex + ')' : ''}`,
+};
+
 const seriesDescriptionItem = {
   id: 'SeriesDescription',
   customizationType: 'ohif.overlayItem',
@@ -72,7 +99,7 @@ const topLeftItems = {
   items: [studyDateItem, seriesDescriptionItem],
 };
 
-const topRightItems = { id: 'cornerstoneOverlayTopRight', items: [] };
+const topRightItems = { id: 'cornerstoneOverlayTopRight', items: [patientNameItem, patientIDItem] };
 
 const bottomLeftItems = {
   id: 'cornerstoneOverlayBottomLeft',
