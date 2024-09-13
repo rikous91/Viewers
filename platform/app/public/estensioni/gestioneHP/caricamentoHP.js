@@ -12,12 +12,14 @@ setTimeout(() => {
   clearInterval(intervalCaricamentoHP);
 }, 10000);
 
+let cameraSettings;
+
 const caricamentoHP = async () => {
   let url = window.location.href;
   const aetitle = window.nolexAETitle;
   const username = new URLSearchParams(new URL(url).search).get('User');
   let nolexhp;
-  let cameraSettings;
+
   let istanzeSpecifiche = [];
   let hpTrovati = false;
   let studyInstanceUID = new URLSearchParams(new URL(url).search).get('StudyInstanceUIDs');
@@ -100,8 +102,10 @@ const caricamentoHP = async () => {
   }
 
   if (cameraSettings) {
-    cameraSettings = Object.values(cameraSettings);
+    // cameraSettings = Object.values(cameraSettings);
   }
+
+  window.cameraSettingsFromHPNolex = cameraSettings;
 
   //Applico HP letti
   if (nolexhp) {
@@ -111,31 +115,43 @@ const caricamentoHP = async () => {
     hangingProtocolService.addProtocol(nolexhp.id, nolexhp);
 
     hangingProtocolService.setProtocol('nolexhp');
-    //Applico camera settings
+    const uiNotificationService = window.servicesManager.services.uiNotificationService;
+    uiNotificationService.show({
+      title: 'Hanging protocol',
+      message: `Hanging protocol applicati`,
+      type: 'success',
+    });
 
-    setTimeout(() => {
-      const renderingEngine = cornerstoneViewportService.getRenderingEngine();
-      const { viewports } = viewportGridService.getState();
-      let i = 0;
-      if (
-        !cameraSettings ||
-        cameraSettings.length === 0 ||
-        cameraSettings.length !== viewports.length
-      ) {
-        return;
-      }
-      viewports.forEach(_viewport => {
-        const { viewportId } = _viewport;
-        const viewport = renderingEngine.getViewport(viewportId);
-        viewport.setCamera({
-          parallelScale: cameraSettings[i].parallelscale,
-          focalPoint: cameraSettings[i].focalpoint,
-          position: cameraSettings[i].position,
-        });
-        viewport.render();
-        i++;
-      });
-    }, 500);
+    //Applico camera settings
+    // setTimeout(() => {
+    //   const uiNotificationService = window.servicesManager.services.uiNotificationService;
+    //   uiNotificationService.show({
+    //     title: 'Hanging protocol',
+    //     message: `Hanging protocol applicati`,
+    //     type: 'success',
+    //   });
+    //   const renderingEngine = cornerstoneViewportService.getRenderingEngine();
+    //   const { viewports } = viewportGridService.getState();
+    //   let i = 0;
+    //   if (
+    //     !cameraSettings ||
+    //     cameraSettings.length === 0 ||
+    //     cameraSettings.length !== viewports.size
+    //   ) {
+    //     return;
+    //   }
+    //   viewports.forEach(_viewport => {
+    //     const { viewportId } = _viewport;
+    //     const viewport = renderingEngine.getViewport(viewportId);
+    //     viewport.setCamera({
+    //       parallelScale: cameraSettings[i].parallelscale,
+    //       focalPoint: cameraSettings[i].focalpoint,
+    //       position: cameraSettings[i].position,
+    //     });
+    //     viewport.render();
+    //     i++;
+    //   });
+    // }, 0);
   }
 
   //A fine caricamento rinnovo la localStorage per avere dati sempre freschi e aggiornati
@@ -148,7 +164,7 @@ const caricamentoHP = async () => {
 };
 
 async function letturaPreferenzeAPI(aetitle, studyInstanceUID) {
-  const apiUrl = `https://suite.nolex.it/viewer/userdata/${aetitle}/?user=admin&StudyInstanceUIDs=${studyInstanceUID}`;
+  const apiUrl = `https://suite.nolex.it/viewer/userdata/${aetitle}/?user=admin&StudyInstanceUIDs=${studyInstanceUID}&cacheBuster=${new Date().getTime()}`;
 
   try {
     const apiResponse = await fetch(apiUrl, {
@@ -172,4 +188,4 @@ async function letturaPreferenzeAPI(aetitle, studyInstanceUID) {
   }
 }
 
-export default letturaPreferenzeAPI;
+export { letturaPreferenzeAPI };

@@ -309,7 +309,7 @@ export function WindowLevelActionMenu({
       </AllInOneMenu.IconMenu>
 
       {/* Preferiti */}
-      {!isMPR && !is3DVolume && (
+      {!isMPR && (
         <AllInOneMenu.IconMenu
           icon="preferiti"
           verticalDirection={verticalDirection}
@@ -329,7 +329,7 @@ export function WindowLevelActionMenu({
           menuKey={menuKey}
         >
           <AllInOneMenu.ItemPanel>
-            {!is3DVolume && (
+            {
               <Preferiti
                 viewportId={viewportId}
                 displaySets={displaySets.filter(ds => !nonImageModalities.includes(ds.Modality))}
@@ -337,7 +337,7 @@ export function WindowLevelActionMenu({
                 servicesManager={servicesManager}
                 colorbarProperties={colorbarProperties}
               />
-            )}
+            }
           </AllInOneMenu.ItemPanel>
         </AllInOneMenu.IconMenu>
       )}

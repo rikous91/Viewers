@@ -1,4 +1,5 @@
 import moment from 'moment';
+import 'moment/locale/it';
 import { metaData } from '@cornerstonejs/core';
 
 /**
@@ -31,7 +32,8 @@ export function formatNumberPrecision(number, precision = 0) {
  * @param {string} strFormat
  * @returns {string} formatted date.
  */
-export function formatDICOMDate(date, strFormat = 'MMM D, YYYY') {
+export function formatDICOMDate(date, strFormat = 'D MMM, YYYY') {
+  moment.locale('it');
   return moment(date, 'YYYYMMDD').format(strFormat);
 }
 

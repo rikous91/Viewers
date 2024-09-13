@@ -1,5 +1,5 @@
 // import { nolexHP } from 'extensions/cornerstone/src/hps/nolexHP';
-import letturaPreferenzeAPI from './caricamentoHP';
+import { letturaPreferenzeAPI } from './caricamentoHP';
 let uiNotificationService;
 let nolexHP = {
   id: 'nolexhp',
@@ -335,7 +335,9 @@ function hpAttualmenteSalvati() {
   return configAttiva;
 }
 
-function creaDIV() {
+let preferenzeRemote;
+
+async function creaDIV() {
   //Toggle
   if (document.getElementById('menu-hp')) {
     document.getElementById('menu-hp').remove();
@@ -408,13 +410,17 @@ function creaDIV() {
   closeHPDivBtn.addEventListener('click', () => {
     document.getElementById('menu-hp').remove();
   });
+  preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
+  if (!preferenzeRemote || !preferenzeRemote.json) {
+    return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
+  }
   uiNotificationService = window.servicesManager.services.uiNotificationService;
 }
 
 async function componiHP() {
   //Ottengo gli HP aggiornati in tempo reale
   const preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
-  if (!preferenzeRemote || !preferenzeRemote.json) {
+  if (!preferenzeRemote) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
   const attualiHP = preferenzeRemote.json.hp;
@@ -430,10 +436,10 @@ async function componiHP() {
     const viewport = renderingEngine.getViewport(viewportId);
     const { element } = viewport;
     const cameraViewport = viewport.getCamera();
-    cameraHP[`viewport-${i}`] = {};
-    cameraHP[`viewport-${i}`].focalpoint = cameraViewport.focalPoint;
-    cameraHP[`viewport-${i}`].parallelscale = cameraViewport.parallelScale;
-    cameraHP[`viewport-${i}`].position = cameraViewport.position;
+    cameraHP[`nolexhp-${i}`] = {};
+    cameraHP[`nolexhp-${i}`].focalpoint = cameraViewport.focalPoint;
+    cameraHP[`nolexhp-${i}`].parallelscale = cameraViewport.parallelScale;
+    cameraHP[`nolexhp-${i}`].position = cameraViewport.position;
     const descrizioneSerie = element.parentElement.querySelector(
       '[title="Series description"]'
     )?.textContent;
@@ -449,6 +455,8 @@ async function componiHP() {
         },
       },
     ];
+
+    nolexHP.stages[0].viewports[i].viewportOptions.viewportId = `nolexhp-${i}`;
 
     nolexHP.stages[0].viewports[i].viewportOptions.initialImageOptions = {
       index: numeroIstanza,

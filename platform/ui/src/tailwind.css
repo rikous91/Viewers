@@ -371,6 +371,18 @@ input[type='range']::-webkit-slider-thumb {
   animation: pulse 1s infinite;
 }
 
+#storico-remoto {
+  margin: 01rem;
+  padding: 8px;
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
 @keyframes loading2 {
   100% {
     width: 100%;

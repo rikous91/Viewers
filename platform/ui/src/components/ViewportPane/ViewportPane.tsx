@@ -61,7 +61,10 @@ function ViewportPane({
     const displaySetInstanceUID = viewportData.data[0].displaySetInstanceUID;
     const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
     const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
-    const { currentImageIdIndex } = viewport;
+    let { currentImageIdIndex } = viewport;
+    if (!currentImageIdIndex) {
+      currentImageIdIndex = 0;
+    }
     const SOPInstanceUID =
       displaySet.instances.length > 1
         ? displaySet.instances[currentImageIdIndex]['SOPInstanceUID']
