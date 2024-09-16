@@ -35,6 +35,45 @@ body {
 
 /*CUSTOM*/
 
+.logo {
+  max-width: 200px;
+}
+
+.selettore-opzioni-tool {
+  margin-left: -6px;
+  margin-top: 10px;
+  background-color: transparent !important;
+}
+.hover\:bg-primary-dark.selettore-opzioni-tool:hover {
+  background-color: transparent !important;
+}
+
+.\!text-black[data-cy='StackScroll'] svg {
+  filter: invert(1);
+}
+
+.hide-info-dicom {
+  .overlay-info-dicom {
+    display: none;
+  }
+  [data-cy='hideInfoDicom'] {
+    color: #b71c1c !important;
+  }
+}
+
+#SplitButton {
+  button {
+    padding-right: 0 !important;
+  }
+  .text-primary-active {
+    color: #b71c1c;
+  }
+}
+
+#SplitButton .hover\:\!bg-primary-dark:hover {
+  background-color: transparent !important;
+}
+
 .text-primary-active {
   color: #fff;
 }
@@ -88,7 +127,8 @@ body {
 }
 
 .group\/button:hover .group-hover\/button\:border-primary-dark {
-  border-color: #b71c1c !important;
+  /* border-color: #b71c1c !important; */
+  border-color: transparent !important;
 }
 
 .group:hover .group-hover\:border-primary-light\/70 {

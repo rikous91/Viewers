@@ -16,11 +16,13 @@ window.nolexAETitle = new URLSearchParams(new URL(window.location.href).search).
 window.nolexUsername = new URLSearchParams(new URL(window.location.href).search).get('User');
 window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
 let origin = window.location.origin;
-let suite = true;
+
+window.isSuite = true;
+window.storicoRemoto = true;
 
 let qidoRoot = `${origin}/viewer/qido`;
 let wadoRoot = `${origin}/viewer/wado`;
-if (suite) {
+if (window.isSuite) {
   qidoRoot = 'https://suite.nolex.it/viewer/qido';
   wadoRoot = 'https://suite.nolex.it/viewer/wado';
 }

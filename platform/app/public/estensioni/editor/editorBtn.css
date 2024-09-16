@@ -42,7 +42,7 @@
   font-size: 0.8rem;
   top: -7px;
   position: relative;
-  background: #607d8b;
+  background: #b71c1c;
   padding: 0 4px;
   border-radius: 2px;
 }
@@ -63,11 +63,13 @@
 
 #salva-testo {
   position: absolute;
-  bottom: 0;
+  bottom: 6px;
   left: 50%;
   transform: translateX(-50%);
   background: #607d8b;
   width: 91%;
+  font-size: 0.9rem;
+  border-radius: 3px;
 }
 
 @-webkit-keyframes pulse {

@@ -490,6 +490,9 @@ function commandsModule({
     gestioneHP: () => {
       salvataggioHP();
     },
+    hideInfoDicom: () => {
+      document.body.classList.toggle('hide-info-dicom');
+    },
     mprDirectClick: () => {
       try {
         //Se lo premo troppo velocemente avrò degli errori sulla camera ecc. per cui imposto un timeout
@@ -1075,6 +1078,9 @@ function commandsModule({
     },
     gestioneHP: {
       commandFn: actions.gestioneHP,
+    },
+    hideInfoDicom: {
+      commandFn: actions.hideInfoDicom,
     },
     mprDirectClick: {
       commandFn: actions.mprDirectClick,

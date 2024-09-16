@@ -45,11 +45,24 @@ const OverlayItemComponents = {
   'ohif.overlayItem.instanceNumber': InstanceNumberOverlayItem,
 };
 
+const storicoLabelItem = {
+  id: 'StoricoLabel',
+  customizationType: 'ohif.overlayItem',
+  label: '',
+  title: 'Storico Label',
+  color: 'red',
+  condition: ({ referenceInstance }) =>
+    referenceInstance?.StudyInstanceUID &&
+    referenceInstance?.StudyInstanceUID !== window.nolexStudyInstanceUIDs,
+  contentF: ({ referenceInstance }) => 'STORICO',
+};
+
 const studyDateItem = {
   id: 'StudyDate',
   customizationType: 'ohif.overlayItem',
   label: '',
   title: 'Study date',
+  className: 'overlay-info-dicom',
   condition: ({ referenceInstance }) => referenceInstance?.StudyDate,
   contentF: ({ referenceInstance, formatters: { formatDate } }) =>
     formatDate(referenceInstance.StudyDate),
@@ -60,11 +73,23 @@ const patientIDItem = {
   customizationType: 'ohif.overlayItem',
   label: '',
   title: 'PatientID',
-  className: 'descrizione-serie-viewport',
+  className: 'overlay-info-dicom',
   condition: ({ referenceInstance }) => {
     return referenceInstance && referenceInstance.PatientID;
   },
   contentF: ({ referenceInstance }) => 'ID: ' + referenceInstance.PatientID,
+};
+
+const accessionItem = {
+  id: 'Accession',
+  customizationType: 'ohif.overlayItem',
+  label: '',
+  title: 'Accession',
+  className: 'overlay-info-dicom',
+  condition: ({ referenceInstance }) => {
+    return referenceInstance && referenceInstance.AccessionNumber;
+  },
+  contentF: ({ referenceInstance }) => referenceInstance.AccessionNumber,
 };
 
 const patientNameItem = {
@@ -72,7 +97,7 @@ const patientNameItem = {
   customizationType: 'ohif.overlayItem',
   label: '',
   title: 'PatientName',
-  className: 'descrizione-serie-viewport',
+  className: 'overlay-info-dicom',
   condition: ({ referenceInstance }) => {
     return (
       referenceInstance && referenceInstance.PatientName && referenceInstance.PatientName.Alphabetic
@@ -82,12 +107,24 @@ const patientNameItem = {
     `${formatPN(referenceInstance.PatientName.Alphabetic)} ${referenceInstance.PatientSex ? '(' + referenceInstance.PatientSex + ')' : ''}`,
 };
 
+const seriesNumberItem = {
+  id: 'SeriesNumber',
+  customizationType: 'ohif.overlayItem',
+  label: '',
+  title: 'SeriesNumber',
+  className: 'overlay-info-dicom',
+  condition: ({ referenceInstance }) => {
+    return referenceInstance && referenceInstance.SeriesNumber;
+  },
+  contentF: ({ referenceInstance }) => 'S: ' + referenceInstance.SeriesNumber,
+};
+
 const seriesDescriptionItem = {
   id: 'SeriesDescription',
   customizationType: 'ohif.overlayItem',
   label: '',
   title: 'Series description',
-  className: 'descrizione-serie-viewport',
+  className: 'overlay-info-dicom',
   condition: ({ referenceInstance }) => {
     return referenceInstance && referenceInstance.SeriesDescription;
   },
@@ -96,10 +133,13 @@ const seriesDescriptionItem = {
 
 const topLeftItems = {
   id: 'cornerstoneOverlayTopLeft',
-  items: [studyDateItem, seriesDescriptionItem],
+  items: [studyDateItem, seriesNumberItem, seriesDescriptionItem, storicoLabelItem],
 };
 
-const topRightItems = { id: 'cornerstoneOverlayTopRight', items: [patientNameItem, patientIDItem] };
+const topRightItems = {
+  id: 'cornerstoneOverlayTopRight',
+  items: [patientNameItem, patientIDItem, accessionItem],
+};
 
 const bottomLeftItems = {
   id: 'cornerstoneOverlayBottomLeft',
@@ -463,14 +503,14 @@ function _getInstanceNumberFromVolume(
 
 function OverlayItem(props) {
   const { instance, customization = {} } = props;
-  const { color, attribute, title, label, background } = customization;
+  const { color, attribute, title, label, background, className } = customization;
   const value = customization.contentF?.(props, customization) ?? instance?.[attribute];
   if (value === undefined || value === null) {
     return null;
   }
   return (
     <div
-      className="overlay-item flex flex-row"
+      className={`overlay-item flex flex-row ${className}`}
       style={{ color, background }}
       title={title}
     >

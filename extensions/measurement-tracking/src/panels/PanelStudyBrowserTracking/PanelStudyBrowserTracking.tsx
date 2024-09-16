@@ -887,7 +887,6 @@ function _createStudyBrowserTabs(
       },
     ];
   }
-  console.log(studiRemoti);
   window.studiRemoti = JSON.parse(JSON.stringify(studiRemoti));
 
   // Newest first

@@ -90,6 +90,20 @@ export function createStudyBrowserTabs(
       label: 'Studio attuale',
       studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
+    {
+      name: 'all',
+      label: window.isSuite ? 'Storico sul cloud' : 'Storico locale',
+      studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    },
+  ];
+
+  //Tabs con storico remoto
+  const tabsStoricoRemoto = [
+    {
+      name: 'primary',
+      label: 'Studio attuale',
+      studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    },
     // {
     //   name: 'recent',
     //   label: 'Storico sul cloud',
@@ -97,7 +111,7 @@ export function createStudyBrowserTabs(
     // },
     {
       name: 'all',
-      label: 'Storico sul cloud',
+      label: window.isSuite ? 'Storico sul cloud' : 'Storico locale',
       studies: allStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
     },
     // {
@@ -112,5 +126,9 @@ export function createStudyBrowserTabs(
     },
   ];
 
-  return tabs;
+  if (window.storicoRemoto) {
+    return tabsStoricoRemoto;
+  } else {
+    return tabs;
+  }
 }

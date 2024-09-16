@@ -43,7 +43,7 @@ const createEditorFunc = () => {
             <div id="area-editor">
 
              </div>
-      <button id="salva-testo">Salva</button>
+      <button id="salva-testo">Salva note per questo studio</button>
       </div>
     </div>
   `;
@@ -69,35 +69,89 @@ const createEditorFunc = () => {
     }, 350);
   }, 0);
 
+  let nota = {};
   const inserisciNotaDom = () => {
-    const savedDelta = localStorage.getItem('quillContent');
-    if (savedDelta) {
-      console.log('Contenuto caricato correttamente.');
-      const areaNoteSalvate = document.getElementById('area-note-salvate');
-      areaNoteSalvate.insertAdjacentHTML(
-        'afterbegin',
-        `
-    <div onclick="window.handleNotaClick(this)" class="nota-salvata">
-      <p>Carica contenuto salvato</p>
-    </div>`
-      );
+    let savedDelta = localStorage.getItem('quillContent');
+    let notaTrovata = false;
+    if (!savedDelta) {
+      return;
+    }
+    savedDelta = JSON.parse(savedDelta);
+    if (savedDelta.length > 0) {
+      savedDelta.forEach(element => {
+        if (element.studyInstanceUID === window.nolexStudyInstanceUIDs) {
+          nota.ops = element.ops;
+          notaTrovata = true;
+        }
+      });
+      if (notaTrovata) {
+        console.log('Contenuto caricato correttamente.');
+        const areaNoteSalvate = document.getElementById('area-note-salvate');
+        areaNoteSalvate.insertAdjacentHTML(
+          'afterbegin',
+          `
+      <div onclick="window.handleNotaClick(this)" class="nota-salvata">
+          <p>Carica nota salvata</p>
+        </div>`
+        );
+      } else {
+        console.log('Nessuna nota trovata.');
+      }
     } else {
-      console.log('Nessun contenuto salvato trovato.');
+      console.log('Nessuna nota trovata.');
     }
   };
 
   window.handleNotaClick = e => {
-    const savedDelta = localStorage.getItem('quillContent');
-    const delta = JSON.parse(savedDelta);
-    quill.setContents(delta);
+    if (
+      confirm(
+        "Il caricamento della nota sovrascriverà l'eventuale contenuto scritto finora. Procedere?"
+      ) == true
+    ) {
+      quill.setContents(nota);
+    }
   };
 
   const salvaTesto = () => {
+    //Ottengo le note attuali
+    let noteAttuali = [];
+    if (localStorage.getItem('quillContent')) {
+      noteAttuali = JSON.parse(localStorage.getItem('quillContent'));
+    }
     const delta = quill.getContents();
+    delta.studyInstanceUID = window.nolexStudyInstanceUIDs;
+    //Verifico che non ca già una nota per quello studyInstanceUID così da non aggiungere duplicati, eventualmente sovrascrivo
+    const studyInstanceUID = window.nolexStudyInstanceUIDs; // UID corrente
 
-    // Converti il Delta in stringa JSON per salvarlo
-    const deltaString = JSON.stringify(delta);
-    localStorage.setItem('quillContent', deltaString);
+    // Controlla se l'array di note attuali è vuoto
+    if (noteAttuali.length === 0) {
+      // Se è vuoto, inserisci direttamente il delta
+      noteAttuali.push(delta);
+    } else {
+      let found = false;
+
+      // Cicla attraverso l'array delle note attuali
+      for (let i = 0; i < noteAttuali.length; i++) {
+        // Controlla se esiste già un elemento con lo stesso studyInstanceUID
+        if (noteAttuali[i].studyInstanceUID === studyInstanceUID) {
+          // Se lo trovi, sostituisci l'elemento con il nuovo delta
+          found = true;
+          if (confirm('Hai già una nota salvata per questo studio, vuoi sovrasciverla?') == true) {
+            noteAttuali[i] = delta;
+          } else {
+            return;
+          }
+          break;
+        }
+      }
+
+      // Se non è stato trovato alcun elemento con lo stesso UID, aggiungi il nuovo delta
+      if (!found) {
+        noteAttuali.push(delta);
+      }
+    }
+    const noteAttualiString = JSON.stringify(noteAttuali);
+    localStorage.setItem('quillContent', noteAttualiString);
 
     console.log('Contenuto salvato correttamente.');
     alert('Contenuto salvato correttamente');
