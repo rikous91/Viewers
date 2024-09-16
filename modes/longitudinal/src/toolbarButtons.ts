@@ -337,7 +337,7 @@ const toolbarButtons: Button[] = [
     props: {
       type: 'tool',
       icon: 'tool-stack-scroll',
-      label: 'Scprrimento con mouse',
+      label: 'Scorrimento con mouse',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',
     },
@@ -423,6 +423,17 @@ const toolbarButtons: Button[] = [
       icon: 'hpIcon',
       label: 'Hanging Protocol',
       commands: 'gestioneHP',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'hideInfoDicom',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'hideInfoDicom',
+      type: 'toggle',
+      label: 'Nascondi info nelle viewport',
+      commands: 'hideInfoDicom',
       evaluate: 'evaluate.action',
     },
   },

@@ -12,9 +12,10 @@ const baseClasses = {
   Button: 'flex items-center rounded-md border-transparent group/button',
   Primary: 'h-full rounded-tl-md rounded-bl-md group/primary',
   Secondary:
-    'h-full flex items-center justify-center rounded-tr-md rounded-br-md w-4 border-2 border-transparent group/secondary',
+    'h-full flex items-center justify-center rounded-tr-md rounded-br-md w-4 border-2 border-transparent group/secondary selettore-opzioni-tool',
   SecondaryIcon: 'w-4 h-full stroke-1',
-  Separator: 'border-l py-3 ml-0.5',
+  // Separator: 'border-l py-3 ml-0.5',
+  Separator: '',
   Content: 'absolute z-10 top-0 mt-12',
 };
 
@@ -66,7 +67,7 @@ const DefaultListItemRenderer = props => {
         'flex h-8 w-full select-none flex-row items-center p-3',
         'whitespace-pre text-base',
         className,
-        `${isActive ? 'hover:opacity-80' : 'hover:bg-primary-dark '}`
+        `${isActive ? 'hover:opacity-80' : 'hover:bg-primary-dark'}`
       )}
     >
       {icon && (

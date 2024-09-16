@@ -25,7 +25,7 @@ const createRenderedRetrieve = (config, params) => {
   }
 
   if (tag === 'PixelData' || tag === 'EncapsulatedDocument') {
-    return `${wadoRoot}/studies/${StudyInstanceUID}/series/${SeriesInstanceUID}/instances/${SOPInstanceUID}/rendered`;
+    return `${wadoRoot}/studies/${StudyInstanceUID}/series/${SeriesInstanceUID}/instances/${SOPInstanceUID}/rendered?aetitle=${window.nolexAETitle}`;
   }
 };
 
