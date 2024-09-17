@@ -2,7 +2,7 @@
   "emptyFilenameError": "The file name cannot be empty.",
   "fileType": "File Type",
   "filename": "File Name",
-  "formTitle": "Please specify the dimensions, filename, and desired type for the output image.",
+  "formTitle": "Specifica le dimensioni, il nome del file e il tipo desiderato per l'immagine di output.",
   "imageHeight": "Image height (px)",
   "imagePreview": "Image Preview",
   "imageWidth": "Image width (px)",

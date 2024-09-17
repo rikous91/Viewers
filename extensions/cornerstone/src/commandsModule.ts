@@ -465,7 +465,7 @@ function commandsModule({
       if (uiModalService) {
         uiModalService.show({
           content: CornerstoneViewportDownloadForm,
-          title: 'Download High Quality Image',
+          title: "Scarica l'immagine ad alta qualità",
           contentProps: {
             activeViewportId,
             onClose: uiModalService.hide,
@@ -520,6 +520,7 @@ function commandsModule({
         //Verifico di non essere già in modalità MPR, se lo sono già torno alla visualizzazione default
         if (window.mprIsActive) {
           // hangingProtocolService.setProtocol('default');
+          document.body.classList.remove('hp-mpr-active');
 
           restoreState();
           window.mprIsActive = false;
@@ -584,6 +585,7 @@ function commandsModule({
             isMprClicked = true;
             hangingProtocolService.setProtocol('mpr');
             window.mprIsActive = true;
+            document.body.classList.add('hp-mpr-active');
             setTimeout(() => {
               ActiveThumbnail.click();
               isMprClicked = false;

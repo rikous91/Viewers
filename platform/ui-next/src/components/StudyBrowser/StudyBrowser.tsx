@@ -16,7 +16,7 @@ const getTrackedSeries = displaySets => {
   return trackedSeries;
 };
 
-const noop = () => {};
+const noop = () => { };
 
 const StudyBrowser = ({
   tabs,
@@ -69,7 +69,7 @@ const StudyBrowser = ({
 
   return (
     <React.Fragment>
-      {showSettings && (
+      {!showSettings && (
         <div
           className="w-100 bg-bkg-low flex h-[48px] items-center justify-center gap-[10px] px-[8px] py-[10px]"
           data-cy={'studyBrowser-panel'}

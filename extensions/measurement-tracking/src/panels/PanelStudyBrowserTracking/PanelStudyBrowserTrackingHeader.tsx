@@ -56,7 +56,7 @@ function PanelStudyBrowserTrackingHeader({
                   React.createElement(Icons[icon.iconName] || Icons.MissingIcon, {
                     key: index,
                     onClick: () => updateActionIconValue(icon),
-                    className: `cursor-pointer`,
+                    className: `cursor-pointer ${icon.iconName}`,
                   })
                 )}
               </div>

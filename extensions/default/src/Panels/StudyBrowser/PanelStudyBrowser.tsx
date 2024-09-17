@@ -83,7 +83,7 @@ function PanelStudyBrowser({
     } catch (error) {
       console.warn(error);
       uiNotificationService.show({
-        title: 'Doppio click serie',
+        title: 'Selezione serie',
         message: 'Il display set selezionato non può essere aggiunto alla viewport.',
         type: 'info',
         duration: 3000,
@@ -272,7 +272,7 @@ function PanelStudyBrowser({
     const shouldCollapseStudy = expandedStudyInstanceUIDs.includes(StudyInstanceUID);
     const updatedExpandedStudyInstanceUIDs = shouldCollapseStudy
       ? // eslint-disable-next-line prettier/prettier
-        [...expandedStudyInstanceUIDs.filter(stdyUid => stdyUid !== StudyInstanceUID)]
+      [...expandedStudyInstanceUIDs.filter(stdyUid => stdyUid !== StudyInstanceUID)]
       : [...expandedStudyInstanceUIDs, StudyInstanceUID];
 
     setExpandedStudyInstanceUIDs(updatedExpandedStudyInstanceUIDs);

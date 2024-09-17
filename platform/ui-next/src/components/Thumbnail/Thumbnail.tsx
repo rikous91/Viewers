@@ -28,9 +28,9 @@ const Thumbnail = ({
   modality,
   isHydratedForDerivedDisplaySet = false,
   canReject = false,
-  onReject = () => {},
+  onReject = () => { },
   isTracked = false,
-  onClickUntrack = () => {},
+  onClickUntrack = () => { },
 }): React.ReactNode => {
   // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
   // this will still allow for "drag", even if there is no drop target for the
@@ -152,6 +152,99 @@ const Thumbnail = ({
   const renderListPreset = () => {
     return (
       <div className="flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]">
+        <div className="relative flex h-full items-center gap-[8px]">
+          <div
+            className={classnames(
+              'h-full w-[4px] rounded-[2px]',
+              isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
+              loadingProgress && loadingProgress < 1 && 'bg-primary/25'
+            )}
+          ></div>
+          <div className="flex h-full flex-col">
+            <div className="flex items-center gap-[7px]">
+              <div className="text-[13px] text-white">{modality}</div>
+
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
+                {description}
+              </div>
+            </div>
+
+            <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
+              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
+              <div className="text-muted-foreground text-[12px]">
+                <div className="flex items-center gap-[4px]">
+                  {' '}
+                  {countIcon ? (
+                    React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
+                  ) : (
+                    <Icons.InfoSeries className="w-3" />
+                  )}
+                  <div>{numInstances}</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative my-2">
+              {imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt={imageAltText}
+                  className="h-[114px] w-[128px] rounded"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <div className="bg-background h-[114px] w-[128px] rounded"></div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex h-full items-center gap-[4px]">
+          <DisplaySetMessageListTooltip
+            messages={messages}
+            id={`display-set-tooltip-${displaySetInstanceUID}`}
+          />
+          {canReject && (
+            <Icons.Trash
+              className="h-[20px] w-[20px] text-red-500"
+              onClick={onReject}
+            />
+          )}
+          {isTracked && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="group">
+                    <Icons.StatusTracking className="text-primary-light h-[20px] w-[20px] group-hover:hidden" />
+                    <Icons.Cancel
+                      className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                      onClick={onClickUntrack}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <div className="flex flex-1 flex-row">
+                    <div className="flex-2 flex items-center justify-center pr-4">
+                      <Icons.InfoLink className="text-primary-active" />
+                    </div>
+                    <div className="flex flex-1 flex-col">
+                      <span>
+                        <span className="text-white">
+                          {isTracked ? 'Series is tracked' : 'Series is untracked'}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const _oldrenderListPreset = () => {
+    return (
+      <div className="flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]">
         <div className="relative flex h-[32px] items-center gap-[8px]">
           <div
             className={classnames(
@@ -234,9 +327,9 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        'bg-muted hover:bg-primary/30 flex cursor-pointer select-none flex-col outline-none',
+        `bg-muted hover:bg-primary/30 flex cursor-pointer select-none flex-col outline-none ${isActive && 'series-is-active'} ${countIcon && countIcon === 'icon-mpr' ? 'mpr-thumbnail' : 'no-mpr-thumbnail'}`,
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
-        viewPreset === 'list' && 'h-[40px] w-[275px]'
+        viewPreset === 'list' && 'w-[275px]'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
       data-cy={`study-browser-thumbnail`}

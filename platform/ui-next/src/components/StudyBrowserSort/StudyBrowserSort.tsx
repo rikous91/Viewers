@@ -42,6 +42,8 @@ export default function StudyBrowserSort({ servicesManager }: withAppTypes) {
     };
   }, [displaySetService, selectedSort, sortDirection]);
 
+  return;
+
   return (
     <div className="border-inputfield-main focus:border-inputfield-main flex h-[26px] w-[125px] items-center justify-center rounded border bg-black p-2">
       <select
