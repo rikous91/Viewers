@@ -100,6 +100,10 @@ function ToolbarLayoutSelectorWithServices({
       commandOptions: { ...props },
     });
     setIsDisabled(true);
+    //Disabilito modalità MPR (quella dell'hanging protocol) ad ogni cambio di layout
+
+    document.body.classList.remove('hp-mpr-active');
+    window.mprIsActive = false;
   }, []);
 
   const onSelectionPreset = useCallback(props => {
@@ -216,7 +220,7 @@ function LayoutSelector({
               </div>
             </div>
 
-            <div className="bg-primary-dark flex flex-col gap-2.5 border-l-2 border-solid border-black  p-2">
+            <div className="bg-primary-dark flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
               <div className="text-aqua-pale text-xs">Personalizzato</div>
               <DropdownContent
                 rows={rows}

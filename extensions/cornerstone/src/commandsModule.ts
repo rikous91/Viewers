@@ -587,7 +587,9 @@ function commandsModule({
             window.mprIsActive = true;
             document.body.classList.add('hp-mpr-active');
             setTimeout(() => {
-              ActiveThumbnail.click();
+              if (ActiveThumbnail) {
+                ActiveThumbnail.click();
+              }
               isMprClicked = false;
             }, 0);
           })
