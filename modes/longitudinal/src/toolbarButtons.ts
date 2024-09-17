@@ -352,7 +352,7 @@ const toolbarButtons: Button[] = [
       commands: setToolActiveToolbar,
       evaluate: {
         name: 'evaluate.cornerstoneTool',
-        disabledText: 'Select a 3D viewport to enable this tool',
+        disabledText: 'Seleziona una viewport 3D per abilitare questo strumento.',
       },
     },
   },
@@ -383,9 +383,13 @@ const toolbarButtons: Button[] = [
       icon: 'mprDirect',
       label: 'MPR',
       commands: 'mprDirectClick',
-      evaluate: 'evaluate.action',
+      evaluate: {
+        name: 'evaluate.mpr',
+        disabledText: 'Seleziona una serie ricostrubile in MPR per abilitare questo strumento.',
+      },
     },
   },
+
   {
     id: 'storeState',
     uiType: 'ohif.radioGroup',

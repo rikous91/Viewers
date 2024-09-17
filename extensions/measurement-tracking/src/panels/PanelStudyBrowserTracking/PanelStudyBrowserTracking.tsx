@@ -97,7 +97,7 @@ function PanelStudyBrowserTracking({
     } catch (error) {
       console.warn(error);
       uiNotificationService.show({
-        title: 'Doppio click serie',
+        title: 'Selezione serie',
         message:
           "Il display set selezionato non può essere aggiunto alla viewport a causa di un'incongruenza con le regole dell'Hanging Protocol",
         type: 'info',
@@ -479,9 +479,8 @@ function PanelStudyBrowserTracking({
       if (document.getElementById('storico-remoto')) {
         document.getElementById('storico-remoto').remove();
       }
-      document.querySelector('.ohif-scrollbar .bg-black').style.display = 'block';
-      if (clickedTabName === 'primary') {
-        document.querySelector('[data-cy="FixReferenceLines"]').style.display = 'flex';
+      if (document.querySelector('.ohif-scrollbar .bg-black')) {
+        document.querySelector('.ohif-scrollbar .bg-black').style.display = 'block';
       }
       if (clickedTabName === 'remoteAll') {
         document.querySelector('.ohif-scrollbar').insertAdjacentHTML(
@@ -500,7 +499,12 @@ function PanelStudyBrowserTracking({
         // if (studiRemoti[0].description === 'Nessuno storico remoto') {
         if (window.studiRemoti[0].description === 'Nessuno storico remoto') {
           setTimeout(() => {
-            document.querySelector('.ohif-scrollbar .bg-black').style.display = 'none'; //Nascondo lo studio fake presente di default nello storico remoto
+            if (document.querySelector('.ohif-scrollbar .bg-black')) {
+              document.querySelector('.ohif-scrollbar .bg-black').style.display = 'none';
+            } //Nascondo lo studio fake presente di default nello storico remoto
+            if (document.querySelector('.ohif-scrollbar button')) {
+              document.querySelector('.ohif-scrollbar button').style.display = 'none';
+            } //Nascondo lo studio fake presente di default nello storico remoto
           }, 0);
         }
       }
@@ -600,7 +604,8 @@ function PanelStudyBrowserTracking({
         onClickUntrack={displaySetInstanceUID => {
           onClickUntrack(displaySetInstanceUID);
         }}
-        onClickThumbnail={() => { }}
+        // onClickThumbnail={() => { }}
+        onClickThumbnail={onDoubleClickThumbnailHandler}
         onDoubleClickThumbnail={onDoubleClickThumbnailHandler}
         activeDisplaySetInstanceUIDs={activeViewportDisplaySetInstanceUIDs}
         showSettings={actionIcons.find(icon => icon.id === 'settings').value}

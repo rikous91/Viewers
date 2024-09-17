@@ -22,7 +22,7 @@ const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
 
 const baseClasses =
-  'transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col';
+  'nolex-new-panel transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col';
 
 const classesMap = {
   open: {
@@ -166,6 +166,8 @@ const SidePanel = ({
   const updatePanelOpen = useCallback(
     (panelOpen: boolean) => {
       setPanelOpen(panelOpen);
+      const event = new CustomEvent('panelOpen', { detail: { isOpen: panelOpen, side: side } });
+      window.dispatchEvent(event);
       if (panelOpen && onOpen) {
         onOpen();
       }

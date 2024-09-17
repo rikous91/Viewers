@@ -145,9 +145,9 @@ const ViewportDownloadForm = ({
   };
 
   const error_messages = {
-    width: 'The minimum valid width is 100px.',
-    height: 'The minimum valid height is 100px.',
-    filename: 'The file name cannot be empty.',
+    width: 'La larghezza minima valida è 100px.',
+    height: "L'altezza minima valida è 100px.",
+    filename: 'Il nome del file non può essere vuoto.',
   };
 
   const renderErrorHandler = errorType => {
@@ -263,7 +263,9 @@ const ViewportDownloadForm = ({
   return (
     <div>
       <Typography variant="h6">
-        {t('Please specify the dimensions, filename, and desired type for the output image.')}
+        {t(
+          "Specifica le dimensioni, il nome del file e il tipo desiderato per l'immagine di output."
+        )}
       </Typography>
 
       <div className="mt-6 flex flex-col">
@@ -272,7 +274,7 @@ const ViewportDownloadForm = ({
             data-cy="file-name"
             value={filename}
             onChange={evt => setFilename(evt.target.value)}
-            label={t('File Name')}
+            label={t('Nome file')}
           />
           {renderErrorHandler('filename')}
         </div>
@@ -284,7 +286,7 @@ const ViewportDownloadForm = ({
                   type="number"
                   min={minimumSize}
                   max={maximumSize}
-                  label={t('Image width (px)')}
+                  label={t('Larghezza immagine (px)')}
                   value={dimensions.width}
                   onChange={evt => onDimensionsChange(evt.target.value, 'width')}
                   data-cy="image-width"
@@ -296,7 +298,7 @@ const ViewportDownloadForm = ({
                   type="number"
                   min={minimumSize}
                   max={maximumSize}
-                  label={t('Image height (px)')}
+                  label={t('Altezza immagine (px)')}
                   value={dimensions.height}
                   onChange={evt => onDimensionsChange(evt.target.value, 'height')}
                   data-cy="image-height"
@@ -308,7 +310,7 @@ const ViewportDownloadForm = ({
             <div className="mt-8 flex items-center">
               <Tooltip
                 position="right"
-                content={keepAspect ? 'Dismiss Aspect' : 'Keep Aspect'}
+                content={keepAspect ? 'Dismiss Aspect' : 'Manieni aspetto'}
               >
                 <IconButton
                   onClick={onKeepAspectToggle}
@@ -325,9 +327,9 @@ const ViewportDownloadForm = ({
             <div>
               <InputLabelWrapper
                 sortDirection="none"
-                label={t('File Type')}
+                label={t('Estensione file')}
                 isSortable={false}
-                onLabelClick={() => {}}
+                onLabelClick={() => { }}
               >
                 <Select
                   className="mt-2 text-white"
@@ -356,7 +358,7 @@ const ViewportDownloadForm = ({
                   checked={showAnnotations}
                   onChange={event => setShowAnnotations(event.target.checked)}
                 />
-                <Typography>{t('Show Annotations')}</Typography>
+                <Typography>{t('Mostra annotazioni')}</Typography>
               </label>
             </div>
           </div>
@@ -368,7 +370,7 @@ const ViewportDownloadForm = ({
           className="bg-secondary-dark border-secondary-primary w-max-content min-w-full rounded p-4"
           data-cy="image-preview"
         >
-          <Typography variant="h5">{t('Image preview')}</Typography>
+          <Typography variant="h5">{t('Anteprima immagine')}</Typography>
           {activeViewportElement && (
             <div
               className="mx-auto my-2"
@@ -391,7 +393,7 @@ const ViewportDownloadForm = ({
           type={ButtonEnums.type.secondary}
           onClick={onClose}
         >
-          {t('Cancel')}
+          {t('Annulla')}
         </Button>
         <Button
           className="ml-2"

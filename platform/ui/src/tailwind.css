@@ -68,6 +68,9 @@ body {
   .text-primary-active {
     color: #b71c1c;
   }
+  svg {
+    cursor: pointer;
+  }
 }
 
 #SplitButton .hover\:\!bg-primary-dark:hover {
@@ -204,7 +207,7 @@ body {
 }
 
 .border-primary-light {
-  border-color: #b71c1c;
+  border-color: #8a1818;
 }
 
 .border-primary-dark {
@@ -378,6 +381,143 @@ input[type='range']::-webkit-slider-thumb {
   transform: translate(-50%, -50%);
   -webkit-animation: spin 1s linear infinite;
   animation: spin 1s linear infinite;
+}
+
+.nolex-new-panel {
+  .Settings {
+    display: none;
+  }
+  [data-cy='studyBrowser-panel'] {
+    padding: 0;
+    display: flex;
+    height: auto;
+    .border-inputfield-main {
+      width: 100%;
+    }
+    select {
+      -webkit-appearance: menulist; /* Per WebKit */
+      appearance: menulist; /* Per i browser moderni */
+      cursor: pointer; /* Aggiungi un puntatore per indicare che è cliccabile */
+      option {
+        background-color: #fff; /* Colore di sfondo predefinito */
+        color: #333; /* Colore del testo */
+      }
+
+      /* Tentativo di stilizzare l'hover, ma supporto limitato */
+      option:hover {
+        background-color: #f0f0f0; /* Colore di sfondo al passaggio del mouse */
+      }
+    }
+    .bg-blue-500 {
+      background-color: rgb(138 24 24);
+    }
+    .focus\:outline-none:focus {
+      color: #fff;
+    }
+    .bg-gray-700 {
+      background-color: rgb(30 30 30);
+    }
+  }
+  .bg-muted {
+    background-color: #0a0a0a;
+  }
+  .select-none span {
+    color: #fff;
+  }
+  .text-actions-primary {
+    color: #fff;
+  }
+  .data-\[state\=on\]\:text-highlight[data-state='on'] {
+    color: #fff;
+  }
+  .hover\:text-primary:hover {
+    color: #fff;
+  }
+  .hover\:bg-primary\/20:hover {
+    background-color: hsl(0deg 73.13% 39.41%);
+  }
+  .data-\[state\=on\]\:bg-primary\/20[data-state='on'] {
+    background-color: #adadad33;
+  }
+  .bg-popover,
+  .bg-bkg-med {
+    background-color: hsl(0deg 0% 7.09%) !important;
+  }
+  .text-muted-foreground {
+    color: hsl(0deg 0% 68.5%);
+    div {
+      color: #fff;
+    }
+  }
+  .bg-bkg-low,
+  .bg-background {
+    background-color: rgb(6 6 6);
+  }
+  .bg-customblue-40 {
+    background-color: #111111;
+  }
+
+  .ohif-scrollbar {
+    button {
+      padding-top: 32px;
+      padding-bottom: 32px;
+    }
+  }
+  #status-warning {
+    display: none;
+  }
+  .grid-cols-1 {
+    .series-is-active {
+      border-left: 3px solid #8a1818;
+      background-color: hsla(0, 98%, 60%, 0.3);
+    }
+  }
+  .grid-cols-2 {
+    .series-is-active {
+      border: 1px solid #8a1818;
+    }
+  }
+  #ohif-thumbnail-list {
+    .bg-highlight {
+      background-color: hsl(0deg 98% 60% / 65%);
+    }
+    .bg-primary\/65 {
+      background-color: hsl(0deg 0% 100% / 65%);
+    }
+    .hover\:bg-primary\/30:hover {
+      background-color: hsl(0deg 98% 60% / 30%);
+    }
+  }
+  .chiudi-modalita-mpr {
+    background-color: #b72424;
+    border-radius: 2px;
+    padding: 0 2px;
+    cursor: pointer;
+  }
+}
+
+#info-mpr-attivo {
+  color: #fff;
+  padding: 5px;
+  font-size: 0.8rem;
+  text-align: center;
+  background: #0a0a0a;
+  margin: 2px 0;
+  display: none;
+}
+
+.hp-mpr-active {
+  [data-cy='LayoutMPR'] {
+    background: #8a1818;
+  }
+  .no-mpr-thumbnail {
+    opacity: 0.1;
+    pointer-events: none;
+    cursor: default;
+  }
+  #info-mpr-attivo {
+    display: block;
+  }
 }
 
 @keyframes spin {
