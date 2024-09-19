@@ -1,5 +1,5 @@
-// import { nolexHP } from 'extensions/cornerstone/src/hps/nolexHP';
 import { letturaPreferenzeAPI } from './caricamentoHP';
+
 let uiNotificationService;
 let nolexHP = {
   id: 'nolexhp',

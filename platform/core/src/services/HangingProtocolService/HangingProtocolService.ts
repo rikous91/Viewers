@@ -880,12 +880,13 @@ export default class HangingProtocolService extends PubSubService {
     }
 
     try {
-      let protocol;
-      if (window.hpPreferiti) {
-        protocol = this._validateProtocol(window.hpPreferiti);
-      } else {
-        protocol = this._validateProtocol(foundProtocol);
-      }
+      // let protocol;
+      // if (window.hpPreferiti) {
+      //   protocol = this._validateProtocol(window.hpPreferiti);
+      // } else {
+      //   protocol = this._validateProtocol(foundProtocol);
+      // }
+      const protocol = this._validateProtocol(foundProtocol);
       // if (protocol.id === '@nolex/preferiti') {
       // if (window.hpPreferiti) {
       //   const generateRandomString = length => {

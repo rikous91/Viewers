@@ -507,9 +507,6 @@ function commandsModule({
         if (!thumbnailList) {
           return;
         }
-        const ActiveThumbnail = document.querySelector(
-          `#thumbnail-${activeDisplaySetInstanceUID} img`
-        ); //Attivo l'mpr sulla serie attualmente attiva
 
         // const enabledElement = _getActiveViewportEnabledElement();
         // if (!enabledElement) {
@@ -567,9 +564,6 @@ function commandsModule({
             if (hp.id !== 'mpr') {
               return;
             }
-            if (!hp.isPreset) {
-              return null;
-            }
 
             const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
             if (!areValid) {
@@ -582,15 +576,28 @@ function commandsModule({
             }
             //Salva stato attuale
             storeState();
-            isMprClicked = true;
-            hangingProtocolService.setProtocol('mpr');
-            window.mprIsActive = true;
-            document.body.classList.add('hp-mpr-active');
+            //Verifico che la serie selezionata su cui attivare l'mpr sia dello studio attuale o magari dello storico così la clicco subito dopo l'attivazione
+            if (displaySets[0].studyInstanceUid !== window.nolexStudyInstanceUIDs) {
+              document.querySelectorAll('.qualestudio-btn')[1].click();
+            } else {
+              document.querySelectorAll('.qualestudio-btn')[0].click();
+            }
+            //Dopo il click della tab corretta applico un timeout
             setTimeout(() => {
-              if (ActiveThumbnail) {
-                ActiveThumbnail.click();
-              }
-              isMprClicked = false;
+              const ActiveThumbnail = document.querySelector(
+                `#thumbnail-${activeDisplaySetInstanceUID} img`
+              ); //Attivo l'mpr sulla serie attualmente attiva
+
+              isMprClicked = true;
+              hangingProtocolService.setProtocol('mpr');
+              window.mprIsActive = true;
+              document.body.classList.add('hp-mpr-active');
+              setTimeout(() => {
+                if (ActiveThumbnail) {
+                  ActiveThumbnail.click();
+                }
+                isMprClicked = false;
+              }, 0);
             }, 0);
           })
           .filter(preset => preset !== null);
@@ -874,8 +881,49 @@ function commandsModule({
         true // overwrite
       );
 
-      const renderingEngine = cornerstoneViewportService.getRenderingEngine();
-      renderingEngine.render();
+      return;
+
+      const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
+
+      if (!displaySetInsaneUIDs) {
+        return [];
+      }
+
+      const displaySets = displaySetInsaneUIDs.map(uid =>
+        displaySetService.getDisplaySetByUID(uid)
+      );
+
+      if (
+        displaySets[0].studyInstanceUid &&
+        displaySets[0].studyInstanceUid === window.nolexStudyInstanceUIDs
+      ) {
+        console.log('viewport attuale');
+        const toolGroup = toolGroupService.getToolGroupForViewport(viewportId);
+
+        toolGroup?.setToolConfiguration(
+          ReferenceLinesTool.toolName,
+          {
+            sourceViewportId: viewportId,
+          },
+          true // overwrite
+        );
+
+        const renderingEngine = cornerstoneViewportService.getRenderingEngine();
+        renderingEngine.render();
+      } else {
+        console.log('viewport del passato');
+        const toolGroup = toolGroupService.getToolGroupForViewport('viewportId');
+        toolGroup?.setToolConfiguration(
+          ReferenceLinesTool.toolName,
+          {
+            sourceViewportId: viewportId,
+          },
+          false // overwrite
+        );
+
+        const renderingEngine = cornerstoneViewportService.getRenderingEngine();
+        renderingEngine.render();
+      }
     },
     storePresentation: ({ viewportId }) => {
       cornerstoneViewportService.storePresentation({ viewportId });

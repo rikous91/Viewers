@@ -506,7 +506,23 @@ input[type='range']::-webkit-slider-thumb {
   display: none;
 }
 
+.advanced-layout {
+  display: none;
+}
+
+.separatore-layout {
+  display: none;
+}
+
 .hp-mpr-active {
+  .standard-layout,
+  .custom-layout {
+    display: none;
+  }
+  .advanced-layout {
+    display: block;
+  }
+
   [data-cy='LayoutMPR'] {
     background: #8a1818;
   }
@@ -517,6 +533,12 @@ input[type='range']::-webkit-slider-thumb {
   }
   #info-mpr-attivo {
     display: block;
+  }
+}
+
+.caricamento-layout-mpr {
+  .cornerstone-viewport-element {
+    opacity: 0;
   }
 }
 
