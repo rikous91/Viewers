@@ -49,8 +49,7 @@ export default function StudyBrowserViewOptions({
           const { name, label, studies } = tab;
           const isActive = activeTabName === name;
           const isDisabled = !studies.length;
-          const baseClasses =
-            'leading-none font-sans text-center justify-center items-center outline-none transition duration-300 ease-in-out focus:outline-none text-primary-light hover:bg-primary-light hover:text-black focus:text-black focus:bg-primary-light active:opacity-80 bg-black inline-flex border outline-none border border-r-0 last:border-r border border-secondary-light first:rounded-l-md last:rounded-r-md min-w-18 p-2 text-base text-white border-l-0 last:border-r-0';
+          const baseClasses = `${label && label.replace(/\s+/g, '').toLowerCase()} qualestudio-btn leading-none font-sans text-center justify-center items-center outline-none transition duration-300 ease-in-out focus:outline-none text-primary-light hover:bg-primary-light hover:text-black focus:text-black focus:bg-primary-light active:opacity-80 bg-black inline-flex border outline-none border border-r-0 last:border-r border border-secondary-light first:rounded-l-md last:rounded-r-md min-w-18 p-2 text-base text-white border-l-0 last:border-r-0`;
 
           return (
             <button

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { LayoutSelector as OHIFLayoutSelector, ToolbarButton, LayoutPreset } from '@ohif/ui';
 
+let hpSelezionato = 'mpr';
 const defaultCommonPresets = [
   {
     icon: 'layout-common-1x1',
@@ -45,6 +46,7 @@ const _areSelectorsValid = (hp, displaySets, hangingProtocolService) => {
 };
 
 const generateAdvancedPresets = ({ servicesManager }: withAppTypes) => {
+  console.log(hpSelezionato);
   const { hangingProtocolService, viewportGridService, displaySetService } =
     servicesManager.services;
 
@@ -77,7 +79,7 @@ const generateAdvancedPresets = ({ servicesManager }: withAppTypes) => {
         commandOptions: {
           protocolId: hp.id,
         },
-        disabled: !areValid,
+        disabled: !areValid || hpSelezionato === hp.id,
       };
     })
     .filter(preset => preset !== null);
@@ -106,13 +108,40 @@ function ToolbarLayoutSelectorWithServices({
     window.mprIsActive = false;
   }, []);
 
-  const onSelectionPreset = useCallback(props => {
+  const _onSelectionPreset = useCallback(props => {
     commandsManager.run({
       commandName: 'setHangingProtocol',
       commandOptions: { ...props },
     });
     setIsDisabled(true);
   }, []);
+
+  const onSelectionPreset = preset => {
+    try {
+      document.body.classList.add('caricamento-layout-mpr');
+      hpSelezionato = preset.commandOptions.protocolId;
+      const { hangingProtocolService, viewportGridService } = servicesManager.services;
+
+      const { activeViewportId, viewports } = viewportGridService.getState();
+      const activeViewport = viewports.get(activeViewportId);
+      const activeDisplaySetInstanceUID = activeViewport.displaySetInstanceUIDs[0];
+
+      const ActiveThumbnail = document.querySelector(
+        `#thumbnail-${activeDisplaySetInstanceUID} img`
+      );
+
+      hangingProtocolService.setProtocol(hpSelezionato);
+
+      setTimeout(() => {
+        if (ActiveThumbnail) {
+          ActiveThumbnail.click();
+          document.body.classList.remove('caricamento-layout-mpr');
+        }
+      }, 500);
+    } catch (err) {
+      console.error('Errore attivazione MPR: ', err);
+    }
+  };
 
   return (
     <div onMouseEnter={handleMouseEnter}>
@@ -187,40 +216,44 @@ function LayoutSelector({
             ref={dropdownRef}
           >
             <div className="bg-secondary-dark flex flex-col gap-2.5 p-2">
-              <div className="text-aqua-pale text-xs">Standard</div>
+              <div className="standard-layout">
+                <div className="text-aqua-pale text-xs">Standard</div>
 
-              <div className="flex gap-4">
-                {commonPresets.map((preset, index) => (
-                  <LayoutPreset
-                    key={index}
-                    classNames="hover:bg-primary-dark group p-1 cursor-pointer"
-                    icon={preset.icon}
-                    commandOptions={preset.commandOptions}
-                    onSelection={onSelection}
-                  />
-                ))}
+                <div className="flex gap-4">
+                  {commonPresets.map((preset, index) => (
+                    <LayoutPreset
+                      key={index}
+                      classNames="hover:bg-primary-dark group p-1 cursor-pointer"
+                      icon={preset.icon}
+                      commandOptions={preset.commandOptions}
+                      onSelection={onSelection}
+                    />
+                  ))}
+                </div>
               </div>
 
-              <div className="h-[2px] bg-black"></div>
+              <div className="separatore-layout h-[2px] bg-black"></div>
 
-              <div className="text-aqua-pale text-xs">Avanzato</div>
+              <div className="advanced-layout">
+                <div className="text-aqua-pale text-xs">Avanzato</div>
 
-              <div className="flex flex-col gap-2.5">
-                {advancedPresets.map((preset, index) => (
-                  <LayoutPreset
-                    key={index + commonPresets.length}
-                    classNames="hover:bg-primary-dark group flex gap-2 p-1 cursor-pointer"
-                    icon={preset.icon}
-                    title={preset.title}
-                    disabled={preset.disabled}
-                    commandOptions={preset.commandOptions}
-                    onSelection={onSelectionPreset}
-                  />
-                ))}
+                <div className="flex flex-col gap-2.5">
+                  {advancedPresets.map((preset, index) => (
+                    <LayoutPreset
+                      key={index + commonPresets.length}
+                      classNames="hover:bg-primary-dark group flex gap-2 p-1 cursor-pointer"
+                      icon={preset.icon}
+                      title={preset.title}
+                      disabled={preset.disabled}
+                      commandOptions={preset.commandOptions}
+                      onSelection={() => onSelectionPreset(preset)}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="bg-primary-dark flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
+            <div className="bg-primary-dark custom-layout flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
               <div className="text-aqua-pale text-xs">Personalizzato</div>
               <DropdownContent
                 rows={rows}

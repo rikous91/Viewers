@@ -121,37 +121,6 @@ const caricamentoHP = async () => {
       message: `Hanging protocol applicati`,
       type: 'success',
     });
-
-    //Applico camera settings
-    // setTimeout(() => {
-    //   const uiNotificationService = window.servicesManager.services.uiNotificationService;
-    //   uiNotificationService.show({
-    //     title: 'Hanging protocol',
-    //     message: `Hanging protocol applicati`,
-    //     type: 'success',
-    //   });
-    //   const renderingEngine = cornerstoneViewportService.getRenderingEngine();
-    //   const { viewports } = viewportGridService.getState();
-    //   let i = 0;
-    //   if (
-    //     !cameraSettings ||
-    //     cameraSettings.length === 0 ||
-    //     cameraSettings.length !== viewports.size
-    //   ) {
-    //     return;
-    //   }
-    //   viewports.forEach(_viewport => {
-    //     const { viewportId } = _viewport;
-    //     const viewport = renderingEngine.getViewport(viewportId);
-    //     viewport.setCamera({
-    //       parallelScale: cameraSettings[i].parallelscale,
-    //       focalPoint: cameraSettings[i].focalpoint,
-    //       position: cameraSettings[i].position,
-    //     });
-    //     viewport.render();
-    //     i++;
-    //   });
-    // }, 0);
   }
 
   //A fine caricamento rinnovo la localStorage per avere dati sempre freschi e aggiornati

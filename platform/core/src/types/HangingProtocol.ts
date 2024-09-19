@@ -82,8 +82,8 @@ export type ConstraintValue =
   | boolean
   | []
   | {
-      value: string | number | boolean | [];
-    };
+    value: string | number | boolean | [];
+  };
 
 export type Constraint = {
   // This value exactly

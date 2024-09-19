@@ -161,9 +161,8 @@ const commandsModule = ({
           hangingProtocolService.setActiveStudyUID(activeStudyUID);
         }
 
-        const storedHanging = `${hangingProtocolService.getState().activeStudyUID}:${protocolId}:${
-          useStageIdx || 0
-        }`;
+        const storedHanging = `${hangingProtocolService.getState().activeStudyUID}:${protocolId}:${useStageIdx || 0
+          }`;
 
         const restoreProtocol = !reset && viewportGridStore[storedHanging];
 
@@ -327,14 +326,14 @@ const commandsModule = ({
           displaySetInstanceUIDs.length > 1
             ? []
             : displaySetInstanceUIDs
-                .map(displaySetInstanceUID =>
-                  hangingProtocolService.getViewportsRequireUpdate(
-                    viewportIdToUpdate,
-                    displaySetInstanceUID,
-                    isHangingProtocolLayout
-                  )
+              .map(displaySetInstanceUID =>
+                hangingProtocolService.getViewportsRequireUpdate(
+                  viewportIdToUpdate,
+                  displaySetInstanceUID,
+                  isHangingProtocolLayout
                 )
-                .flat();
+              )
+              .flat();
 
         // findOrCreateViewport returns either one of the updatedViewportsViaHP
         // returned from the HP service OR if there is not one from the HP service then
@@ -352,9 +351,9 @@ const commandsModule = ({
 
           return viewport
             ? // Use the applicable viewport from the HP updated viewports
-              { viewportOptions, displaySetOptions, ...viewport }
+            { viewportOptions, displaySetOptions, ...viewport }
             : // Use the previous viewport for the given position
-              preOneUpViewport;
+            preOneUpViewport;
         };
 
         const layoutOptions = viewportGridService.getLayoutOptionsFromState(

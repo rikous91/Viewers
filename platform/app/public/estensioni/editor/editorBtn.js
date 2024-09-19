@@ -59,7 +59,7 @@ const createEditorFunc = () => {
     //Adatto la larghezza della griglia in base all'apertura del nuovo pannello
     setTimeout(() => {
       const widthPannelloSx = parseFloat(
-        window.getComputedStyle(document.querySelector('.nolex-panel')).width
+        window.getComputedStyle(document.querySelector('.nolex-new-panel')).width
       );
       const leftPositionPreferitiPanel = parseFloat(
         window.getComputedStyle(document.getElementById('editor-tools')).left
