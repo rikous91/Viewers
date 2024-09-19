@@ -301,6 +301,10 @@ const commandsModule = ({
     },
 
     toggleOneUp() {
+      //Non permetto il toggleOneUp se sono in MPR (salvataggio stato attualmnete implementato da gestire diversamente se voglio questa funzione)
+      if (document.body.classList.contains('hp-mpr-active')) {
+        return;
+      }
       const viewportGridState = viewportGridService.getState();
       const { activeViewportId, viewports, layout, isHangingProtocolLayout } = viewportGridState;
       const { displaySetInstanceUIDs, displaySetOptions, viewportOptions } =
