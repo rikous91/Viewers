@@ -89,28 +89,53 @@ function commandsModule({
 
     const { toggleOneUpViewportGridStore } = stateSyncService.getState();
 
-    const viewportIdToUpdate = toggleOneUpViewportGridStore.activeViewportId;
-    const layoutOptions = viewportGridService.getLayoutOptionsFromState(
-      toggleOneUpViewportGridStore
-    );
+    //Se è zero vuol dire che sto provando a ripristinare uno stato in cui era stato fatto doppio click sulla viewport e quindi
+    //per ripristinarlo il metodo è differente
+    if (Object.entries(toggleOneUpViewportGridStore).length === 0) {
+      const viewportGridState = viewportGridService.getState();
+      const { activeViewportId, viewports } = viewportGridState;
+      const { displaySetInstanceUIDs, displaySetOptions, viewportOptions } =
+        viewports.get(activeViewportId);
 
-    const findOrCreateViewport = (position: number, positionId: string) => {
-      // Find the viewport for the given position prior to the toggle to one-up.
-      const preOneUpViewport = Array.from(toggleOneUpViewportGridStore.viewports.values()).find(
-        viewport => viewport.positionId === positionId
+      const findOrCreateViewport = () => {
+        return {
+          displaySetInstanceUIDs,
+          displaySetOptions,
+          viewportOptions,
+        };
+      };
+
+      // Set the layout to be 1x1/one-up.
+      viewportGridService.setLayout({
+        numRows: 1,
+        numCols: 1,
+        findOrCreateViewport,
+        isHangingProtocolLayout: true,
+      });
+    } else {
+      const viewportIdToUpdate = toggleOneUpViewportGridStore.activeViewportId;
+      const layoutOptions = viewportGridService.getLayoutOptionsFromState(
+        toggleOneUpViewportGridStore
       );
 
-      return preOneUpViewport;
-    };
+      const findOrCreateViewport = (position: number, positionId: string) => {
+        // Find the viewport for the given position prior to the toggle to one-up.
+        const preOneUpViewport = Array.from(toggleOneUpViewportGridStore.viewports.values()).find(
+          viewport => viewport.positionId === positionId
+        );
 
-    viewportGridService.setLayout({
-      numRows: toggleOneUpViewportGridStore.layout.numRows,
-      numCols: toggleOneUpViewportGridStore.layout.numCols,
-      activeViewportId: viewportIdToUpdate,
-      layoutOptions,
-      findOrCreateViewport,
-      isHangingProtocolLayout: false,
-    });
+        return preOneUpViewport;
+      };
+
+      viewportGridService.setLayout({
+        numRows: toggleOneUpViewportGridStore.layout.numRows,
+        numCols: toggleOneUpViewportGridStore.layout.numCols,
+        activeViewportId: viewportIdToUpdate,
+        layoutOptions,
+        findOrCreateViewport,
+        isHangingProtocolLayout: false,
+      });
+    }
   };
 
   const actions = {
