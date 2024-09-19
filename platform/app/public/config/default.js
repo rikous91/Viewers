@@ -85,18 +85,12 @@ window.config = {
       configuration: {
         friendlyName: 'AWS S3 Static wado server',
         name: 'aws',
-<<<<<<< HEAD
         // qidoRoot: 'https://suite.nolex.it/viewer/qido',
         // qidoRoot: 'http://195.231.5.156:8080/viewer/qido',
         qidoRoot: qidoRoot,
         // wadoRoot: 'https://suite.nolex.it/viewer/wado',
         // wadoRoot: 'http://195.231.5.156:8080/viewer/wado',
         wadoRoot: wadoRoot,
-=======
-        wadoUriRoot: 'https://d14fa38qiwhyfd.cloudfront.net/dicomweb',
-        qidoRoot: 'https://d14fa38qiwhyfd.cloudfront.net/dicomweb',
-        wadoRoot: 'https://d14fa38qiwhyfd.cloudfront.net/dicomweb',
->>>>>>> upstream/master
         qidoSupportsIncludeField: false,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
