@@ -28,6 +28,9 @@ const toggleSyncFunctions = {
   voi: toggleVOISliceSync,
 };
 
+const debounceTime = 200;
+let debounceTimeout;
+
 function commandsModule({
   servicesManager,
   commandsManager,
@@ -891,6 +894,16 @@ function commandsModule({
       }
     },
     setSourceViewportForReferenceLinesTool: ({ viewportId }) => {
+      //Viene richiamato ripetute volte esponenzialmente ad ogni trigger, imposto un timeout così da avere sempre una sola chiamata
+      if (debounceTimeout) {
+        return;
+      }
+
+      // Imposta il timeout per ritardare la prossima chiamata
+      debounceTimeout = setTimeout(() => {
+        debounceTimeout = null; // Resetta il timeout dopo l'intervallo di debounce
+      }, debounceTime);
+
       if (!viewportId) {
         const { activeViewportId } = viewportGridService.getState();
         viewportId = activeViewportId ?? 'default';
@@ -905,50 +918,6 @@ function commandsModule({
         },
         true // overwrite
       );
-
-      return;
-
-      const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
-
-      if (!displaySetInsaneUIDs) {
-        return [];
-      }
-
-      const displaySets = displaySetInsaneUIDs.map(uid =>
-        displaySetService.getDisplaySetByUID(uid)
-      );
-
-      if (
-        displaySets[0].studyInstanceUid &&
-        displaySets[0].studyInstanceUid === window.nolexStudyInstanceUIDs
-      ) {
-        console.log('viewport attuale');
-        const toolGroup = toolGroupService.getToolGroupForViewport(viewportId);
-
-        toolGroup?.setToolConfiguration(
-          ReferenceLinesTool.toolName,
-          {
-            sourceViewportId: viewportId,
-          },
-          true // overwrite
-        );
-
-        const renderingEngine = cornerstoneViewportService.getRenderingEngine();
-        renderingEngine.render();
-      } else {
-        console.log('viewport del passato');
-        const toolGroup = toolGroupService.getToolGroupForViewport('viewportId');
-        toolGroup?.setToolConfiguration(
-          ReferenceLinesTool.toolName,
-          {
-            sourceViewportId: viewportId,
-          },
-          false // overwrite
-        );
-
-        const renderingEngine = cornerstoneViewportService.getRenderingEngine();
-        renderingEngine.render();
-      }
     },
     storePresentation: ({ viewportId }) => {
       cornerstoneViewportService.storePresentation({ viewportId });
