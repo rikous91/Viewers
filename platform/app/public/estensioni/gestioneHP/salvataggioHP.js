@@ -417,7 +417,8 @@ async function creaDIV() {
   uiNotificationService = window.servicesManager.services.uiNotificationService;
 }
 
-async function componiHP() {
+async function componiHP(modalita) {
+  //modalita='specificStudy', 'descrizioneEsame', 'modality'
   //Ottengo gli HP aggiornati in tempo reale
   const preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
   if (!preferenzeRemote) {
@@ -443,15 +444,20 @@ async function componiHP() {
     const descrizioneSerie = element.parentElement.querySelector(
       '[title="Series description"]'
     )?.textContent;
+    //Estraggo SeriesInstanceUID
+    const imageId = viewport.csImage?.imageId;
+    const match = imageId.match(/series\/([^\/]+)/);
+    const seriesInstanceUID = match ? match[1] : null;
+    // // //
     const numeroIstanza = viewport.currentImageIdIndex + 1;
     istanzeSpecifiche.push(numeroIstanza);
     const displaySetKey = `DisplaySet${i}`;
-    //Serie
+    //Serie (se salvo come studio specifico mi vado a settare la SeriesInstanceUID piuttosto che la SeriesDescription)
     nolexHP.displaySetSelectors[displaySetKey].seriesMatchingRules = [
       {
-        attribute: 'SeriesDescription',
+        attribute: `${modalita === 'specificStudy' ? 'SeriesInstanceUID' : 'SeriesDescription'}`,
         constraint: {
-          contains: descrizioneSerie,
+          contains: `${modalita === 'specificStudy' ? seriesInstanceUID : descrizioneSerie}`,
         },
       },
     ];
@@ -478,7 +484,11 @@ async function saveSpecificStudy() {
     }
   }
 
-  const { cameraHP = {}, attualiHP = {}, preferenzeRemote = {} } = (await componiHP()) || {};
+  const {
+    cameraHP = {},
+    attualiHP = {},
+    preferenzeRemote = {},
+  } = (await componiHP('specificStudy')) || {};
 
   attualiHP.studioSpecifico[studyInstanceUIDs] = {
     performanceHP: nolexHP,
@@ -514,7 +524,11 @@ async function saveConfigExam() {
       return;
     }
   }
-  const { cameraHP = {}, attualiHP = {}, preferenzeRemote = {} } = (await componiHP()) || {};
+  const {
+    cameraHP = {},
+    attualiHP = {},
+    preferenzeRemote = {},
+  } = (await componiHP('descrizioneEsame')) || {};
 
   const index = attualiHP.nomeEsame.findIndex(element => element.nomeEsame === studyDescription);
   if (index !== -1) {
@@ -570,7 +584,11 @@ async function saveConfigModality() {
       return;
     }
   }
-  const { cameraHP = {}, attualiHP = {}, preferenzeRemote = {} } = (await componiHP()) || {};
+  const {
+    cameraHP = {},
+    attualiHP = {},
+    preferenzeRemote = {},
+  } = (await componiHP('modality')) || {};
 
   const index = attualiHP.modality.findIndex(element => element.nomeModality === modality);
   if (index !== -1) {

@@ -4,8 +4,10 @@ import classnames from 'classnames';
 import ThumbnailList from '../ThumbnailList';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
+import openStorico from '../../../../app/public/estensioni/aperturaStorico/aperturaStorico.js';
 
 const StudyItem = ({
+  studyInstanceUID,
   date,
   description,
   numInstances,
@@ -19,7 +21,10 @@ const StudyItem = ({
   onDoubleClickThumbnail,
   onClickUntrack,
   viewPreset = 'thumbnails',
+  isStorico,
 }) => {
+  const isStudyUIDDefined =
+    studyInstanceUID !== undefined && studyInstanceUID !== null && studyInstanceUID !== '';
   return (
     <Accordion
       type="single"
@@ -47,6 +52,22 @@ const StudyItem = ({
             </div>
           </div>
         </AccordionTrigger>
+        {isStorico && isStudyUIDDefined && (
+          <div className="open-study-new-tab">
+            <button
+              style={{
+                opacity: 0.2,
+              }}
+              disabled
+              onClick={() => openStorico('stessaScheda', studyInstanceUID)}
+            >
+              Importa in questa scheda
+            </button>
+            <button onClick={() => openStorico('nuovaScheda', studyInstanceUID)}>
+              Apri in una nuova scheda
+            </button>
+          </div>
+        )}
         <AccordionContent
           onClick={event => {
             event.stopPropagation();
@@ -69,6 +90,7 @@ const StudyItem = ({
 };
 
 StudyItem.propTypes = {
+  studyInstanceUID: PropTypes.string.isRequired,
   date: PropTypes.string.isRequired,
   description: PropTypes.string,
   modalities: PropTypes.string.isRequired,
@@ -83,6 +105,7 @@ StudyItem.propTypes = {
   onDoubleClickThumbnail: PropTypes.func,
   onClickUntrack: PropTypes.func,
   viewPreset: PropTypes.string,
+  isStorico: PropTypes.bool,
 };
 
 export default StudyItem;

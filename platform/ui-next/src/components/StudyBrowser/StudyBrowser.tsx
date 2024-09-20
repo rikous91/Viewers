@@ -40,9 +40,11 @@ const StudyBrowser = ({
     return tabData.studies.map(
       ({ studyInstanceUid, date, description, numInstances, modalities, displaySets }) => {
         const isExpanded = expandedStudyInstanceUIDs.includes(studyInstanceUid);
+        const isStorico = studyInstanceUid !== window.nolexStudyInstanceUIDs;
         return (
           <React.Fragment key={studyInstanceUid}>
             <StudyItem
+              studyInstanceUID={studyInstanceUid}
               date={date}
               description={description}
               numInstances={numInstances}
@@ -60,6 +62,7 @@ const StudyBrowser = ({
               activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
               data-cy="thumbnail-list"
               viewPreset={viewPreset}
+              isStorico={isStorico}
             />
           </React.Fragment>
         );

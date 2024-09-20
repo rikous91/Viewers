@@ -1,0 +1,494 @@
+diff --git a/node_modules/@cornerstonejs/tools/Nuovo Immagine bitmap.bmp b/node_modules/@cornerstonejs/tools/Nuovo Immagine bitmap.bmp
+new file mode 100644
+index 0000000..e69de29
+diff --git a/node_modules/@cornerstonejs/tools/dist/cjs/tools/ReferenceLinesTool.js b/node_modules/@cornerstonejs/tools/dist/cjs/tools/ReferenceLinesTool.js
+index 651012b..0f13264 100644
+--- a/node_modules/@cornerstonejs/tools/dist/cjs/tools/ReferenceLinesTool.js
++++ b/node_modules/@cornerstonejs/tools/dist/cjs/tools/ReferenceLinesTool.js
+@@ -187,9 +187,9 @@ class ReferenceLines extends AnnotationDisplayTool_1.default {
+                     .map(([start, end]) => this.intersectInfiniteLines(start, end, lineStartImageCoord, lineEndImageCoord))
+                     .filter((point) => point && this.isInBound(point, dimensions))
+                     .map((point) => {
+-                    const world = core_1.utilities.imageToWorldCoords(referencedImageId, point);
+-                    return targetViewport.worldToCanvas(world);
+-                });
++                        const world = core_1.utilities.imageToWorldCoords(referencedImageId, point);
++                        return targetViewport.worldToCanvas(world);
++                    });
+             }
+             catch (err) {
+                 console.log(err);
+diff --git a/node_modules/@cornerstonejs/tools/dist/esm/tools/ReferenceLinesTool.js b/node_modules/@cornerstonejs/tools/dist/esm/tools/ReferenceLinesTool.js
+index 3a619d6..30832b9 100644
+--- a/node_modules/@cornerstonejs/tools/dist/esm/tools/ReferenceLinesTool.js
++++ b/node_modules/@cornerstonejs/tools/dist/esm/tools/ReferenceLinesTool.js
+@@ -1,5 +1,5 @@
+ import { vec3 } from 'gl-matrix';
+-import { getRenderingEngines, CONSTANTS, utilities as csUtils, } from '@cornerstonejs/core';
++import { getRenderingEngines, CONSTANTS, utilities as csUtils } from '@cornerstonejs/core';
+ import { getEnabledElementByViewportId } from '@cornerstonejs/core';
+ import { addAnnotation } from '../stateManagement/annotation/annotationState';
+ import { drawLine as drawLineSvg } from '../drawingSvg';
+@@ -7,14 +7,18 @@ import { filterViewportsWithToolEnabled } from '../utilities/viewportFilters';
+ import triggerAnnotationRenderForViewportIds from '../utilities/triggerAnnotationRenderForViewportIds';
+ import AnnotationDisplayTool from './base/AnnotationDisplayTool';
+ const { EPSILON } = CONSTANTS;
++
+ class ReferenceLines extends AnnotationDisplayTool {
+-    constructor(toolProps = {}, defaultToolProps = {
+-        supportedInteractionTypes: ['Mouse', 'Touch'],
+-        configuration: {
+-            sourceViewportId: '',
+-            showFullDimension: false,
+-        },
+-    }) {
++    constructor(
++        toolProps = {},
++        defaultToolProps = {
++            supportedInteractionTypes: ['Mouse', 'Touch'],
++            configuration: {
++                sourceViewportId: '',
++                showFullDimension: false,
++            },
++        }
++    ) {
+         super(toolProps, defaultToolProps);
+         this.editData = {};
+         this._init = () => {
+@@ -31,7 +35,8 @@ class ReferenceLines extends AnnotationDisplayTool {
+             }
+             const { element } = sourceViewport;
+             const { viewUp, viewPlaneNormal } = sourceViewport.getCamera();
+-            const sourceViewportCanvasCornersInWorld = csUtils.getViewportImageCornersInWorld(sourceViewport);
++            const sourceViewportCanvasCornersInWorld =
++                csUtils.getViewportImageCornersInWorld(sourceViewport);
+             let annotation = this.editData.annotation;
+             const FrameOfReferenceUID = sourceViewport.getFrameOfReferenceUID();
+             if (!annotation) {
+@@ -53,19 +58,18 @@ class ReferenceLines extends AnnotationDisplayTool {
+                 };
+                 addAnnotation(newAnnotation, element);
+                 annotation = newAnnotation;
+-            }
+-            else {
+-                this.editData.annotation.data.handles.points =
+-                    sourceViewportCanvasCornersInWorld;
++            } else {
++                this.editData.annotation.data.handles.points = sourceViewportCanvasCornersInWorld;
+             }
+             this.editData = {
+                 sourceViewportId: sourceViewport.id,
+                 renderingEngine,
+                 annotation,
+             };
+-            triggerAnnotationRenderForViewportIds(renderingEngine, viewports
+-                .filter((viewport) => viewport.id !== sourceViewport.id)
+-                .map((viewport) => viewport.id));
++            triggerAnnotationRenderForViewportIds(
++                renderingEngine,
++                viewports.filter(viewport => viewport.id !== sourceViewport.id).map(viewport => viewport.id)
++            );
+         };
+         this.onSetToolEnabled = () => {
+             this._init();
+@@ -73,7 +77,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+         this.onSetToolConfiguration = () => {
+             this._init();
+         };
+-        this.onCameraModified = (evt) => {
++        this.onCameraModified = evt => {
+             this._init();
+         };
+         this.renderAnnotation = (enabledElement, svgDrawingHelper) => {
+@@ -84,9 +88,27 @@ class ReferenceLines extends AnnotationDisplayTool {
+             if (!sourceViewport) {
+                 return renderStatus;
+             }
++
++            //Nolex - Attivo linee di riferimento solo per lo stesso studio evitando così di disegnare le linee anche tra storico e studio attuale
++            let studyInstanceUidSource = sourceViewport.csImage?.imageId;
++            let studyInstanceUidTarget = targetViewport.csImage?.imageId;
++            const regex = /studies\/(1\.[\d.]+)/;
++            const matchSource = studyInstanceUidSource?.match(regex);
++            const matchTarget = studyInstanceUidTarget?.match(regex);
++
++            if (matchSource) {
++                studyInstanceUidSource = matchSource[1]; // Output: 1.2.380.0.57129767.17204606.56177047
++            }
++            if (matchTarget) {
++                studyInstanceUidTarget = matchTarget[1]; // Output: 1.2.380.0.57129767.17204606.56177047
++            }
++
+             if (sourceViewport.id === targetViewport.id) {
+                 return renderStatus;
+             }
++            if (studyInstanceUidSource !== studyInstanceUidTarget) {
++                return renderStatus;
++            }
+             if (!annotation || !annotation?.data?.handles?.points) {
+                 return renderStatus;
+             }
+@@ -119,29 +141,54 @@ class ReferenceLines extends AnnotationDisplayTool {
+             if (this.isPerpendicular(topBottomVec, viewPlaneNormal)) {
+                 pointSetToUse = pointSet2;
+             }
+-            const lineStartWorld = csUtils.planar.linePlaneIntersection(pointSetToUse[0], pointSetToUse[1], targetViewportPlane);
+-            const lineEndWorld = csUtils.planar.linePlaneIntersection(pointSetToUse[2], pointSetToUse[3], targetViewportPlane);
++            const lineStartWorld = csUtils.planar.linePlaneIntersection(
++                pointSetToUse[0],
++                pointSetToUse[1],
++                targetViewportPlane
++            );
++            const lineEndWorld = csUtils.planar.linePlaneIntersection(
++                pointSetToUse[2],
++                pointSetToUse[3],
++                targetViewportPlane
++            );
+             const { annotationUID } = annotation;
+             styleSpecifier.annotationUID = annotationUID;
+             const lineWidth = this.getStyle('lineWidth', styleSpecifier, annotation);
+             const lineDash = this.getStyle('lineDash', styleSpecifier, annotation);
+             const color = this.getStyle('color', styleSpecifier, annotation);
+             const shadow = this.getStyle('shadow', styleSpecifier, annotation);
+-            let canvasCoordinates = [lineStartWorld, lineEndWorld].map((world) => targetViewport.worldToCanvas(world));
++            let canvasCoordinates = [lineStartWorld, lineEndWorld].map(world =>
++                targetViewport.worldToCanvas(world)
++            );
+             if (this.configuration.showFullDimension) {
+-                canvasCoordinates = this.handleFullDimension(targetViewport, lineStartWorld, viewPlaneNormal, viewUp, lineEndWorld, canvasCoordinates);
++                canvasCoordinates = this.handleFullDimension(
++                    targetViewport,
++                    lineStartWorld,
++                    viewPlaneNormal,
++                    viewUp,
++                    lineEndWorld,
++                    canvasCoordinates
++                );
+             }
+             if (canvasCoordinates.length < 2) {
+                 return renderStatus;
+             }
+             const dataId = `${annotationUID}-line`;
+             const lineUID = '1';
+-            drawLineSvg(svgDrawingHelper, annotationUID, lineUID, canvasCoordinates[0], canvasCoordinates[1], {
+-                color,
+-                width: lineWidth,
+-                lineDash,
+-                shadow,
+-            }, dataId);
++            drawLineSvg(
++                svgDrawingHelper,
++                annotationUID,
++                lineUID,
++                canvasCoordinates[0],
++                canvasCoordinates[1],
++                {
++                    color,
++                    width: lineWidth,
++                    lineDash,
++                    shadow,
++                },
++                dataId
++            );
+             renderStatus = true;
+             return renderStatus;
+         };
+@@ -150,42 +197,51 @@ class ReferenceLines extends AnnotationDisplayTool {
+             return Math.abs(dot) < EPSILON;
+         };
+     }
+-    handleFullDimension(targetViewport, lineStartWorld, viewPlaneNormal, viewUp, lineEndWorld, canvasCoordinates) {
++    handleFullDimension(
++        targetViewport,
++        lineStartWorld,
++        viewPlaneNormal,
++        viewUp,
++        lineEndWorld,
++        canvasCoordinates
++    ) {
+         const renderingEngine = targetViewport.getRenderingEngine();
+         const targetId = this.getTargetId(targetViewport);
+         const targetImage = this.getTargetIdImage(targetId, renderingEngine);
+-        const referencedImageId = this.getReferencedImageId(targetViewport, lineStartWorld, viewPlaneNormal, viewUp);
++        const referencedImageId = this.getReferencedImageId(
++            targetViewport,
++            lineStartWorld,
++            viewPlaneNormal,
++            viewUp
++        );
+         if (referencedImageId && targetImage) {
+             try {
+                 const { imageData, dimensions } = targetImage;
+-                const [topLeftImageCoord, topRightImageCoord, bottomRightImageCoord, bottomLeftImageCoord,] = [
+-                    imageData.indexToWorld([0, 0, 0]),
+-                    imageData.indexToWorld([dimensions[0] - 1, 0, 0]),
+-                    imageData.indexToWorld([
+-                        dimensions[0] - 1,
+-                        dimensions[1] - 1,
+-                        0,
+-                    ]),
+-                    imageData.indexToWorld([0, dimensions[1] - 1, 0]),
+-                ].map((world) => csUtils.worldToImageCoords(referencedImageId, world));
+-                const [lineStartImageCoord, lineEndImageCoord] = [
+-                    lineStartWorld,
+-                    lineEndWorld,
+-                ].map((world) => csUtils.worldToImageCoords(referencedImageId, world));
++                const [topLeftImageCoord, topRightImageCoord, bottomRightImageCoord, bottomLeftImageCoord] =
++                    [
++                        imageData.indexToWorld([0, 0, 0]),
++                        imageData.indexToWorld([dimensions[0] - 1, 0, 0]),
++                        imageData.indexToWorld([dimensions[0] - 1, dimensions[1] - 1, 0]),
++                        imageData.indexToWorld([0, dimensions[1] - 1, 0]),
++                    ].map(world => csUtils.worldToImageCoords(referencedImageId, world));
++                const [lineStartImageCoord, lineEndImageCoord] = [lineStartWorld, lineEndWorld].map(world =>
++                    csUtils.worldToImageCoords(referencedImageId, world)
++                );
+                 canvasCoordinates = [
+                     [topLeftImageCoord, topRightImageCoord],
+                     [topRightImageCoord, bottomRightImageCoord],
+                     [bottomLeftImageCoord, bottomRightImageCoord],
+                     [topLeftImageCoord, bottomLeftImageCoord],
+                 ]
+-                    .map(([start, end]) => this.intersectInfiniteLines(start, end, lineStartImageCoord, lineEndImageCoord))
+-                    .filter((point) => point && this.isInBound(point, dimensions))
+-                    .map((point) => {
+-                    const world = csUtils.imageToWorldCoords(referencedImageId, point);
+-                    return targetViewport.worldToCanvas(world);
+-                });
+-            }
+-            catch (err) {
++                    .map(([start, end]) =>
++                        this.intersectInfiniteLines(start, end, lineStartImageCoord, lineEndImageCoord)
++                    )
++                    .filter(point => point && this.isInBound(point, dimensions))
++                    .map(point => {
++                        const world = csUtils.imageToWorldCoords(referencedImageId, point);
++                        return targetViewport.worldToCanvas(world);
++                    });
++            } catch (err) {
+                 console.log(err);
+             }
+         }
+@@ -213,10 +269,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+         return Math.abs(vec3.dot(vec1, vec2)) > 1 - EPSILON;
+     }
+     isInBound(point, dimensions) {
+-        return (point[0] >= 0 &&
+-            point[0] <= dimensions[0] &&
+-            point[1] >= 0 &&
+-            point[1] <= dimensions[1]);
++        return point[0] >= 0 && point[0] <= dimensions[0] && point[1] >= 0 && point[1] <= dimensions[1];
+     }
+ }
+ ReferenceLines.toolName = 'ReferenceLines';
+diff --git a/node_modules/@cornerstonejs/tools/src/tools/ReferenceLinesTool.ts b/node_modules/@cornerstonejs/tools/src/tools/ReferenceLinesTool.ts
+index a1475fd..13331cc 100644
+--- a/node_modules/@cornerstonejs/tools/src/tools/ReferenceLinesTool.ts
++++ b/node_modules/@cornerstonejs/tools/src/tools/ReferenceLinesTool.ts
+@@ -1,9 +1,5 @@
+ import { vec3 } from 'gl-matrix';
+-import {
+-  getRenderingEngines,
+-  CONSTANTS,
+-  utilities as csUtils,
+-} from '@cornerstonejs/core';
++import { getRenderingEngines, CONSTANTS, utilities as csUtils } from '@cornerstonejs/core';
+ import { type Types, getEnabledElementByViewportId } from '@cornerstonejs/core';
+ 
+ import { addAnnotation } from '../stateManagement/annotation/annotationState';
+@@ -17,6 +13,7 @@ import { StyleSpecifier } from '../types/AnnotationStyle';
+ import AnnotationDisplayTool from './base/AnnotationDisplayTool';
+ 
+ const { EPSILON } = CONSTANTS;
++console.log('Nuovonolex');
+ 
+ /**
+  * @public
+@@ -89,8 +86,8 @@ class ReferenceLines extends AnnotationDisplayTool {
+         invalidated: true,
+         metadata: {
+           toolName: this.getToolName(),
+-          viewPlaneNormal: <Types.Point3>[...viewPlaneNormal],
+-          viewUp: <Types.Point3>[...viewUp],
++          viewPlaneNormal: [...viewPlaneNormal] as Types.Point3,
++          viewUp: [...viewUp] as Types.Point3,
+           FrameOfReferenceUID,
+           referencedImageId: null,
+         },
+@@ -104,8 +101,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+       addAnnotation(newAnnotation, element);
+       annotation = newAnnotation;
+     } else {
+-      this.editData.annotation.data.handles.points =
+-        sourceViewportCanvasCornersInWorld;
++      this.editData.annotation.data.handles.points = sourceViewportCanvasCornersInWorld;
+     }
+ 
+     this.editData = {
+@@ -116,9 +112,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+ 
+     triggerAnnotationRenderForViewportIds(
+       renderingEngine,
+-      viewports
+-        .filter((viewport) => viewport.id !== sourceViewport.id)
+-        .map((viewport) => viewport.id)
++      viewports.filter(viewport => viewport.id !== sourceViewport.id).map(viewport => viewport.id)
+     );
+   };
+ 
+@@ -153,17 +147,34 @@ class ReferenceLines extends AnnotationDisplayTool {
+     const { viewport: targetViewport } = enabledElement;
+     const { annotation, sourceViewportId } = this.editData;
+ 
++    console.log('oknolex');
++
+     let renderStatus = false;
+ 
+     // we need to grab the viewport again since there might have been
+     // a change in the viewport state since the last time we cached it
+-    const { viewport: sourceViewport } =
+-      getEnabledElementByViewportId(sourceViewportId) || {};
++    const { viewport: sourceViewport } = getEnabledElementByViewportId(sourceViewportId) || {};
+ 
+     if (!sourceViewport) {
+       return renderStatus;
+     }
+ 
++    //Nolex
++    let studyInstanceUidSource = sourceViewport.csImage.imageId;
++    let studyInstanceUidTarget = targetViewport.csImage.imageId;
++    const regex = /studies\/(1\.[\d.]+)/;
++    const matchSource = studyInstanceUidSource.match(regex);
++    const matchTarget = studyInstanceUidTarget.match(regex);
++
++    if (matchSource) {
++      studyInstanceUidSource = matchSource[1]; // Output: 1.2.380.0.57129767.17204606.56177047
++    }
++    if (matchTarget) {
++      studyInstanceUidTarget = matchTarget[1]; // Output: 1.2.380.0.57129767.17204606.56177047
++    }
++    console.log(studyInstanceUidSource);
++    console.log(studyInstanceUidSource);
++
+     if (sourceViewport.id === targetViewport.id) {
+       // If the source viewport is the same as the current viewport, we don't need to render
+       return renderStatus;
+@@ -186,18 +197,14 @@ class ReferenceLines extends AnnotationDisplayTool {
+     const bottomRight = annotation.data.handles.points[3];
+ 
+     const { focalPoint, viewPlaneNormal, viewUp } = targetViewport.getCamera();
+-    const { viewPlaneNormal: sourceViewPlaneNormal } =
+-      sourceViewport.getCamera();
++    const { viewPlaneNormal: sourceViewPlaneNormal } = sourceViewport.getCamera();
+ 
+     if (this.isParallel(viewPlaneNormal, sourceViewPlaneNormal)) {
+       // If the source and target viewports are parallel, we don't need to render
+       return renderStatus;
+     }
+ 
+-    const targetViewportPlane = csUtils.planar.planeEquation(
+-      viewPlaneNormal,
+-      focalPoint
+-    );
++    const targetViewportPlane = csUtils.planar.planeEquation(viewPlaneNormal, focalPoint);
+ 
+     // check if the topLeft and bottomLeft line is parallel to the viewUp
+     const pointSet1 = [topLeft, bottomLeft, topRight, bottomRight];
+@@ -211,11 +218,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+     let topRightVec = vec3.subtract(vec3.create(), pointSet1[2], pointSet1[0]);
+     topRightVec = vec3.normalize(vec3.create(), topRightVec);
+ 
+-    const newNormal = vec3.cross(
+-      vec3.create(),
+-      topBottomVec,
+-      topRightVec
+-    ) as Types.Point3;
++    const newNormal = vec3.cross(vec3.create(), topBottomVec, topRightVec) as Types.Point3;
+ 
+     if (this.isParallel(newNormal, viewPlaneNormal)) {
+       return renderStatus;
+@@ -247,7 +250,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+     const color = this.getStyle('color', styleSpecifier, annotation);
+     const shadow = this.getStyle('shadow', styleSpecifier, annotation);
+ 
+-    let canvasCoordinates = [lineStartWorld, lineEndWorld].map((world) =>
++    let canvasCoordinates = [lineStartWorld, lineEndWorld].map(world =>
+       targetViewport.worldToCanvas(world)
+     );
+ 
+@@ -317,27 +320,18 @@ class ReferenceLines extends AnnotationDisplayTool {
+         const { imageData, dimensions } = targetImage;
+ 
+         // Calculate bound image coordinates
+-        const [
+-          topLeftImageCoord,
+-          topRightImageCoord,
+-          bottomRightImageCoord,
+-          bottomLeftImageCoord,
+-        ] = [
+-          imageData.indexToWorld([0, 0, 0]) as Types.Point3,
+-          imageData.indexToWorld([dimensions[0] - 1, 0, 0]) as Types.Point3,
+-          imageData.indexToWorld([
+-            dimensions[0] - 1,
+-            dimensions[1] - 1,
+-            0,
+-          ]) as Types.Point3,
+-          imageData.indexToWorld([0, dimensions[1] - 1, 0]) as Types.Point3,
+-        ].map((world) => csUtils.worldToImageCoords(referencedImageId, world));
++        const [topLeftImageCoord, topRightImageCoord, bottomRightImageCoord, bottomLeftImageCoord] =
++          [
++            imageData.indexToWorld([0, 0, 0]) as Types.Point3,
++            imageData.indexToWorld([dimensions[0] - 1, 0, 0]) as Types.Point3,
++            imageData.indexToWorld([dimensions[0] - 1, dimensions[1] - 1, 0]) as Types.Point3,
++            imageData.indexToWorld([0, dimensions[1] - 1, 0]) as Types.Point3,
++          ].map(world => csUtils.worldToImageCoords(referencedImageId, world));
+ 
+         // Calculate line start and end image coordinates
+-        const [lineStartImageCoord, lineEndImageCoord] = [
+-          lineStartWorld,
+-          lineEndWorld,
+-        ].map((world) => csUtils.worldToImageCoords(referencedImageId, world));
++        const [lineStartImageCoord, lineEndImageCoord] = [lineStartWorld, lineEndWorld].map(world =>
++          csUtils.worldToImageCoords(referencedImageId, world)
++        );
+ 
+         // Calculate intersection points between line and image bounds
+         canvasCoordinates = [
+@@ -347,19 +341,11 @@ class ReferenceLines extends AnnotationDisplayTool {
+           [topLeftImageCoord, bottomLeftImageCoord],
+         ]
+           .map(([start, end]) =>
+-            this.intersectInfiniteLines(
+-              start,
+-              end,
+-              lineStartImageCoord,
+-              lineEndImageCoord
+-            )
++            this.intersectInfiniteLines(start, end, lineStartImageCoord, lineEndImageCoord)
+           )
+-          .filter((point) => point && this.isInBound(point, dimensions))
+-          .map((point) => {
+-            const world = csUtils.imageToWorldCoords(
+-              referencedImageId,
+-              point as Types.Point2
+-            );
++          .filter(point => point && this.isInBound(point, dimensions))
++          .map(point => {
++            const world = csUtils.imageToWorldCoords(referencedImageId, point as Types.Point2);
+             return targetViewport.worldToCanvas(world);
+           });
+       } catch (err) {
+@@ -406,12 +392,7 @@ class ReferenceLines extends AnnotationDisplayTool {
+   }
+ 
+   isInBound(point: number[], dimensions: Types.Point3): boolean {
+-    return (
+-      point[0] >= 0 &&
+-      point[0] <= dimensions[0] &&
+-      point[1] >= 0 &&
+-      point[1] <= dimensions[1]
+-    );
++    return point[0] >= 0 && point[0] <= dimensions[0] && point[1] >= 0 && point[1] <= dimensions[1];
+   }
+ }
+ 
