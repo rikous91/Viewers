@@ -124,12 +124,12 @@ const caricamentoHP = async () => {
   }
 
   //A fine caricamento rinnovo la localStorage per avere dati sempre freschi e aggiornati
-  // preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUID);
-  // if (!preferenzeRemote || !preferenzeRemote.json) {
-  //   return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
-  // }
-  // //A questo punto li setto in localStorage
-  // localStorage.setItem(`preferenzeUtente-${aetitle}`, JSON.stringify(preferenzeRemote.json));
+  preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUID);
+  if (!preferenzeRemote || !preferenzeRemote.json) {
+    return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
+  }
+  //A questo punto li setto in localStorage
+  localStorage.setItem(`preferenzeUtente-${aetitle}`, JSON.stringify(preferenzeRemote.json));
 };
 
 async function letturaPreferenzeAPI(aetitle, studyInstanceUID) {
