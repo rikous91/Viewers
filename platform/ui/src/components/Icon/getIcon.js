@@ -176,7 +176,11 @@ import { ReactComponent as investigationalUse } from './../../assets/icons/illus
 import { ReactComponent as actionNewDialog } from './../../assets/icons/action-new-dialog.svg';
 import { ReactComponent as iconToolCobbAngle } from './../../assets/icons/tool-cobb-angle.svg';
 import { ReactComponent as iconToolWindowRegion } from './../../assets/icons/tool-window-region.svg';
+
 import { ReactComponent as hideInfoDicom } from './../../assets/icons/tool-hide-info-dicom.svg';
+import { ReactComponent as storicoExpand } from './../../assets/icons/storico-expand.svg';
+import { ReactComponent as storicoSameWindow } from './../../assets/icons/storico-same-window.svg';
+import { ReactComponent as storicoNewWindow } from './../../assets/icons/storico-new-window.svg';
 
 import CTAAA from './../../assets/icons/CT-AAA.png';
 import CTAAA2 from './../../assets/icons/CT-AAA2.png';
@@ -425,6 +429,9 @@ const ICONS = {
   'tab-4d': tab4D,
   /** Nolex **/
   hideInfoDicom: hideInfoDicom,
+  'storico-expand': storicoExpand,
+  'storico-same-window': storicoSameWindow,
+  'storico-new-window': storicoNewWindow,
   preferiti: preferiti,
   preferitiActive: preferitiActive,
   hpIcon: hpIcon,

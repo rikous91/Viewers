@@ -123,7 +123,8 @@ function ViewerLayout({
         <React.Fragment>
           {showLoadingIndicator && <LoadingIndicatorProgress className="h-full w-full bg-black" />}
           {/* LEFT SIDEPANELS */}
-          {hasLeftPanels ? (
+
+          {hasLeftPanels && !window.sonoUnoStorico ? (
             <ErrorBoundary context="Left Panel">
               <SidePanelWithServices
                 side="left"
@@ -132,7 +133,9 @@ function ViewerLayout({
               />
             </ErrorBoundary>
           ) : null}
+
           {/* TOOLBAR + GRID */}
+
           <div className="flex h-full flex-1 flex-col">
             <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-black">
               <ErrorBoundary context="Grid">
@@ -144,8 +147,32 @@ function ViewerLayout({
               </ErrorBoundary>
             </div>
           </div>
-          {hasRightPanels ? (
+
+          {/* Right SIDEPANELS */}
+          {hasRightPanels && !window.sonoUnoStorico ? (
             <ErrorBoundary context="Right Panel">
+              <SidePanelWithServices
+                side="right"
+                activeTabIndex={rightPanelClosedState ? null : 0}
+                servicesManager={servicesManager}
+              />
+            </ErrorBoundary>
+          ) : null}
+
+          {hasRightPanels && window.sonoUnoStorico ? (
+            <ErrorBoundary context="Right Panel">
+              <SidePanelWithServices
+                side="left"
+                activeTabIndex={leftPanelClosedState ? null : 0}
+                servicesManager={servicesManager}
+              />
+            </ErrorBoundary>
+          ) : null}
+
+          {/* INVERT LEFT SIDEPANELS STORICO*/}
+
+          {hasLeftPanels && window.sonoUnoStorico ? (
+            <ErrorBoundary context="Left Panel">
               <SidePanelWithServices
                 side="right"
                 activeTabIndex={rightPanelClosedState ? null : 0}

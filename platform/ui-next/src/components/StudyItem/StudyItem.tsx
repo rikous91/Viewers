@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import ThumbnailList from '../ThumbnailList';
+import { Icon, Tooltip } from '@ohif/ui';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import openStorico from '../../../../app/public/estensioni/aperturaStorico/aperturaStorico.js';
@@ -25,6 +26,11 @@ const StudyItem = ({
 }) => {
   const isStudyUIDDefined =
     studyInstanceUID !== undefined && studyInstanceUID !== null && studyInstanceUID !== '';
+
+  const espandi = e => {
+    e.target.parentElement.parentElement.parentElement.querySelector('button').click();
+  };
+
   return (
     <Accordion
       type="single"
@@ -53,7 +59,52 @@ const StudyItem = ({
           </div>
         </AccordionTrigger>
         {isStorico && isStudyUIDDefined && (
+          <div className="open-storico-modes">
+            <Tooltip
+              position="bottom"
+              content="Espandi e mostra anteprime"
+              isDisabled={isExpanded ? true : false}
+            >
+              <button
+                id="storico-expand"
+                onClick={e => espandi(e)}
+              >
+                <Icon
+                  style={{ transform: isExpanded && 'rotate(180deg)' }}
+                  name="storico-expand"
+                ></Icon>
+              </button>
+            </Tooltip>
+            <Tooltip
+              position="bottom"
+              content="Apri qui come studio separato"
+            >
+              <button
+                id="storico-same-window"
+                onClick={e => openStorico(e, 'stessaScheda', studyInstanceUID)}
+              >
+                {/* <Icon name="storico-same-window"></Icon> */}
+                <Icon name="layout-common-1x2"></Icon>
+              </button>
+            </Tooltip>
+            <Tooltip
+              position="bottom"
+              content="Apri in una nuova scheda"
+            >
+              <button
+                id="storico-new-window"
+                onClick={e => openStorico(e, 'nuovaScheda', studyInstanceUID)}
+              >
+                <Icon name="storico-new-window"></Icon>
+              </button>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* {isStorico && isStudyUIDDefined && (
           <div className="open-study-new-tab">
+
+            <button onClick={e => espandi(e)}>{isExpanded ? 'Riduci' : 'Espandi'}</button>
             <button
               style={{
                 opacity: 0.2,
@@ -61,13 +112,13 @@ const StudyItem = ({
               disabled
               onClick={() => openStorico('stessaScheda', studyInstanceUID)}
             >
-              Importa in questa scheda
+              Apri in questa scheda
             </button>
             <button onClick={() => openStorico('nuovaScheda', studyInstanceUID)}>
               Apri in una nuova scheda
             </button>
           </div>
-        )}
+        )} */}
         <AccordionContent
           onClick={event => {
             event.stopPropagation();

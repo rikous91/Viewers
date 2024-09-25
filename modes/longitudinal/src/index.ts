@@ -114,6 +114,7 @@ function modeFactory({ modeConfiguration }) {
         // 'Zoom',
         'Layout',
         'LayoutMPR',
+        'LayoutMPRStorico',
         'Crosshairs',
         'TrackballRotate',
         'gestioneHP',

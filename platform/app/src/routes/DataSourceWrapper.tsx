@@ -4,8 +4,7 @@ import PropTypes from 'prop-types';
 import { Enums, ExtensionManager, MODULE_TYPES, log } from '@ohif/core';
 //
 import { extensionManager } from '../App.tsx';
-import { useParams, useLocation } from 'react-router';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router';
 import useSearchParams from '../hooks/useSearchParams.ts';
 
 /**
@@ -27,9 +26,9 @@ const areLocationsTheSame = (location0, location1) => {
  * @param {object} props
  * @param {function} props.children - Layout Template React Component
  */
+
 function DataSourceWrapper(props: withAppTypes) {
   const { servicesManager } = props;
-  const navigate = useNavigate();
   const { children: LayoutTemplate, ...rest } = props;
   const params = useParams();
   const location = useLocation();

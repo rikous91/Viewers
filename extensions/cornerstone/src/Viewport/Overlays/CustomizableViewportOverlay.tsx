@@ -50,10 +50,11 @@ const storicoLabelItem = {
   customizationType: 'ohif.overlayItem',
   label: '',
   title: 'Storico Label',
-  color: 'red',
+  color: '#81d4fa',
   condition: ({ referenceInstance }) =>
-    referenceInstance?.StudyInstanceUID &&
-    referenceInstance?.StudyInstanceUID !== window.nolexStudyInstanceUIDs,
+    (referenceInstance?.StudyInstanceUID &&
+      referenceInstance?.StudyInstanceUID !== window.nolexStudyInstanceUIDs) ||
+    window.sonoUnoStorico === true,
   contentF: ({ referenceInstance }) => 'STORICO',
 };
 

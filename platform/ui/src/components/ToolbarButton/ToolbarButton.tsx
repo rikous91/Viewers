@@ -41,7 +41,7 @@ const ToolbarButton = ({
         content={shouldShowDropdown ? dropdownContent : label}
         secondaryContent={disabled ? disabledText : null}
         tight={shouldShowDropdown}
-        className={toolTipClassNameToUse}
+        className={`${toolTipClassNameToUse} parent-${id}`}
         isDisabled={disableToolTip}
       >
         <IconButton

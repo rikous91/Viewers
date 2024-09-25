@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { LayoutSelector as OHIFLayoutSelector, ToolbarButton, LayoutPreset } from '@ohif/ui';
 
 let hpSelezionato = 'mpr';
+let hpSelezionatoStorico = 'mpr';
+let showLayoutPresetsForStorico = false;
 const defaultCommonPresets = [
   {
     icon: 'layout-common-1x1',
@@ -46,7 +48,6 @@ const _areSelectorsValid = (hp, displaySets, hangingProtocolService) => {
 };
 
 const generateAdvancedPresets = ({ servicesManager }: withAppTypes) => {
-  console.log(hpSelezionato);
   const { hangingProtocolService, viewportGridService, displaySetService } =
     servicesManager.services;
 
@@ -83,6 +84,50 @@ const generateAdvancedPresets = ({ servicesManager }: withAppTypes) => {
       };
     })
     .filter(preset => preset !== null);
+};
+
+const generateAdvancedPresetsStorico = ({ servicesManager }: withAppTypes) => {
+  const { hangingProtocolService, viewportGridService, displaySetService } =
+    servicesManager.services;
+
+  const hangingProtocols = Array.from(hangingProtocolService.protocols.values());
+
+  const viewportId = viewportGridService.getActiveViewportId();
+
+  if (!viewportId) {
+    return [];
+  }
+  const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
+
+  if (!displaySetInsaneUIDs) {
+    return [];
+  }
+
+  const displaySets = displaySetInsaneUIDs.map(uid => displaySetService.getDisplaySetByUID(uid));
+
+  return hangingProtocols
+    .map(hp => {
+      if (!hp.isPreset) {
+        return null;
+      }
+
+      const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
+
+      return {
+        icon: hp.icon,
+        title: hp.name,
+        commandOptions: {
+          protocolId: hp.id,
+        },
+        disabled: hpSelezionatoStorico === hp.id,
+      };
+    })
+    .filter(preset => preset !== null);
+};
+
+const onSelectionPresetStorico = preset => {
+  hpSelezionatoStorico = preset.commandOptions.protocolId;
+  document.getElementById('iframe-storico').contentWindow.postMessage(preset.title);
 };
 
 function ToolbarLayoutSelectorWithServices({
@@ -170,10 +215,13 @@ function LayoutSelector({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  showLayoutPresetsForStorico = document.getElementById('iframe-storico') ? true : false;
+
   const { customizationService } = servicesManager.services;
   const commonPresets = customizationService.get('commonPresets') || defaultCommonPresets;
   const advancedPresets =
     customizationService.get('advancedPresets') || generateAdvancedPresets({ servicesManager });
+  const advancedPresetsStorico = generateAdvancedPresetsStorico({ servicesManager });
 
   const closeOnOutsideClick = event => {
     if (isOpen && dropdownRef.current) {
@@ -200,6 +248,10 @@ function LayoutSelector({
   };
   const DropdownContent = isOpen ? OHIFLayoutSelector : null;
 
+  const onSelectionStudioStorico = layout => {
+    document.getElementById('iframe-storico').contentWindow.postMessage(layout);
+  };
+
   return (
     <ToolbarButton
       id="Layout"
@@ -217,7 +269,9 @@ function LayoutSelector({
           >
             <div className="bg-secondary-dark flex flex-col gap-2.5 p-2">
               <div className="standard-layout">
-                <div className="text-aqua-pale text-xs">Standard</div>
+                <div className="text-aqua-pale text-xs">
+                  {showLayoutPresetsForStorico ? 'Standard - Studio principale' : 'Standard'}
+                </div>
 
                 <div className="flex gap-4">
                   {commonPresets.map((preset, index) => (
@@ -235,7 +289,10 @@ function LayoutSelector({
               <div className="separatore-layout h-[2px] bg-black"></div>
 
               <div className="advanced-layout">
-                <div className="text-aqua-pale text-xs">Avanzato</div>
+                <div className="text-aqua-pale text-xs">
+                  {' '}
+                  {showLayoutPresetsForStorico ? 'Avanzato - Studio principale' : 'Avanzato'}
+                </div>
 
                 <div className="flex flex-col gap-2.5">
                   {advancedPresets.map((preset, index) => (
@@ -251,16 +308,74 @@ function LayoutSelector({
                   ))}
                 </div>
               </div>
+
+              {/* Griglia eventuale per storico nella stessa tab */}
+              {showLayoutPresetsForStorico && (
+                <div className="standard-layout-storico-same-tab">
+                  <div className="text-aqua-pale text-xs">Standard - Studio precedente</div>
+
+                  <div className="flex gap-4">
+                    {commonPresets.map((preset, index) => (
+                      <LayoutPreset
+                        key={index}
+                        classNames="hover:bg-primary-dark group p-1 cursor-pointer"
+                        icon={preset.icon}
+                        commandOptions={preset.commandOptions}
+                        onSelection={() => onSelectionStudioStorico(preset.icon)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {showLayoutPresetsForStorico && (
+                <div className="advanced-layout-storico-same-tab">
+                  <div className="text-aqua-pale text-xs">Avanzato - Studio precedente</div>
+
+                  <div className="flex flex-col gap-2.5">
+                    {advancedPresetsStorico.map((preset, index) => (
+                      <LayoutPreset
+                        key={index + commonPresets.length}
+                        classNames="hover:bg-primary-dark group flex gap-2 p-1 cursor-pointer"
+                        icon={preset.icon}
+                        title={preset.title}
+                        disabled={preset.disabled}
+                        commandOptions={preset.commandOptions}
+                        onSelection={() => onSelectionPresetStorico(preset)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="bg-primary-dark custom-layout flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
-              <div className="text-aqua-pale text-xs">Personalizzato</div>
+              <div className="text-aqua-pale text-xs">
+                {' '}
+                {showLayoutPresetsForStorico
+                  ? 'Personalizzato - Studio principale'
+                  : 'Personalizzato'}
+              </div>
               <DropdownContent
                 rows={rows}
                 columns={columns}
                 onSelection={onSelection}
               />
-              <p className="text-aqua-pale text-xs leading-tight">
+
+              {showLayoutPresetsForStorico && (
+                <>
+                  <div className="custom-layout-storico-same-tab">
+                    <div className="text-aqua-pale text-xs">Personalizzato - Studio precedente</div>
+                    <DropdownContent
+                      rows={rows}
+                      columns={columns}
+                      onSelection={e => onSelectionStudioStorico(`custom${e.numRows}x${e.numCols}`)}
+                    />
+                  </div>
+                </>
+              )}
+
+              <p className="tip-custom-layout text-aqua-pale text-xs leading-tight">
                 Seleziona un preset di<br></br>righe e colonne <br></br> Clicca per applicare
               </p>
             </div>
@@ -278,12 +393,6 @@ LayoutSelector.propTypes = {
   columns: PropTypes.number,
   onLayoutChange: PropTypes.func,
   servicesManager: PropTypes.object.isRequired,
-};
-
-LayoutSelector.defaultProps = {
-  columns: 4,
-  rows: 3,
-  onLayoutChange: () => { },
 };
 
 export default ToolbarLayoutSelectorWithServices;

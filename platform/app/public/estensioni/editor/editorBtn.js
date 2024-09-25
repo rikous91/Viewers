@@ -34,7 +34,7 @@ const createEditorFunc = () => {
     <div id="editor-tools">
         <div id="intestazione">
         <img id="chiudi-editor-button" style="width:22px" src="./assets/right-arrow.png" />
-        <p>Note</p>
+        <p>${window.sonoUnoStorico ? 'Note storico' : 'Note'}</p>
         </div>
          <div id="main-area-editor">
             <div id="area-note-salvate">
@@ -55,8 +55,14 @@ const createEditorFunc = () => {
 
   //Animazione comparsa editor-tools
   setTimeout(() => {
-    document.getElementById('editor-tools').style.left = '80%';
+    document.getElementById('editor-tools').style.left = `${window.sonoUnoStorico ? '60%' : '80%'}`;
     //Adatto la larghezza della griglia in base all'apertura del nuovo pannello
+    if (
+      document.body.classList.contains('storico-injected-iframe') ||
+      document.body.classList.contains('storico-same-tab')
+    ) {
+      return;
+    } //Non applico riadattamento se cìè uno storico sulla destra
     setTimeout(() => {
       const widthPannelloSx = parseFloat(
         window.getComputedStyle(document.querySelector('.nolex-new-panel')).width
