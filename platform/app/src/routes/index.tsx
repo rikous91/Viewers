@@ -65,6 +65,10 @@ const bakedInRoutes = [
     path: '/localbasic',
     children: Local.bind(null, { modePath: 'viewer/dicomlocal' }),
   },
+  {
+    path: `${window.portableVersion && ''}`,
+    children: Local.bind(null, { modePath: 'viewer/dicomlocal' }),
+  },
 ];
 
 // NOT FOUND (404)

@@ -12,9 +12,11 @@ import { useTrackedMeasurements } from '../../getContextModule';
 import { Separator } from '@ohif/ui-next';
 import { PanelStudyBrowserTrackingHeader } from './PanelStudyBrowserTrackingHeader';
 import { defaultActionIcons, defaultViewPresets } from './constants';
+import axios from 'axios';
 
 const { formatDate, createStudyBrowserTabs } = utils;
 let erroreStudiRemoti = false;
+const mostraPrimoStudioStorico = true;
 
 /**
  *
@@ -116,17 +118,13 @@ function PanelStudyBrowserTracking({
   const storicoRemoto = async qidoStudiesForPatient => {
     try {
       const qidoUrl = window.qidoUrlDefinitivo.replace('/qido/', '/qido-remoto/');
-      const apiResponse = await fetch(qidoUrl, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'omit',
+      const apiResponse = await axios.get(qidoUrl, {
+        // Non è necessario impostare il method a 'GET', perché è il default di axios.get
+        withCredentials: false, // Simile a credentials: 'omit'
       });
 
-      if (!apiResponse.ok) {
-        erroreStudiRemoti = true;
-        throw new Error(`Errore storico remoto: ${apiResponse.status}`);
-      }
-      const response = await apiResponse.json();
+      // La risposta è già convertita in JSON
+      const response = apiResponse.data;
       console.log('storico ', response);
 
       setTimeout(() => {
@@ -172,7 +170,7 @@ function PanelStudyBrowserTracking({
       }, 0); // Set timeout only for the push operation
     } catch (err) {
       erroreStudiRemoti = true;
-      console.error('Non è stato possibile recuperare lo storico remoto: ', err);
+      console.warn('Non è stato possibile recuperare lo storico remoto: ', err);
       return;
     }
   };
@@ -482,6 +480,19 @@ function PanelStudyBrowserTracking({
       if (document.querySelector('.ohif-scrollbar .bg-black')) {
         document.querySelector('.ohif-scrollbar .bg-black').style.display = 'block';
       }
+
+      //Mostro sempre il primo storico se clicco la relativa tab così da far vedere le anteprime
+
+      // if (clickedTabName === 'all' && mostraPrimoStudioStorico) {
+      //   setTimeout(() => {
+      //     const storicoItems = document.querySelectorAll('.ohif-scrollbar button');
+      //     if (storicoItems && storicoItems.length > 0) {
+      //       storicoItems[0].click();
+      //     }
+      //   }, 0);
+      //   mostraPrimoStudioStorico = false;
+      // }
+
       if (clickedTabName === 'remoteAll') {
         document.querySelector('.ohif-scrollbar').insertAdjacentHTML(
           'afterbegin',

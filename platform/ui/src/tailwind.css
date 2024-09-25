@@ -39,6 +39,10 @@ body {
   max-width: 200px;
 }
 
+.tip-custom-layout {
+  color: #bdbdbd !important;
+}
+
 .selettore-opzioni-tool {
   margin-left: -6px;
   margin-top: 10px;
@@ -383,6 +387,11 @@ input[type='range']::-webkit-slider-thumb {
   animation: spin 1s linear infinite;
 }
 
+.standard-layout-storico-same-tab {
+  border-top: 1px solid;
+  padding-top: 10px;
+}
+
 .nolex-new-panel {
   .Settings {
     display: none;
@@ -458,6 +467,17 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .ohif-scrollbar {
+    .accordion {
+      display: none;
+    }
+    [role='button'] {
+      cursor: none;
+      pointer-events: none;
+    }
+    [data-cy='study-browser-thumbnail'] {
+      pointer-events: all;
+      cursor: pointer;
+    }
     button {
       padding-top: 32px;
       padding-bottom: 32px;
@@ -512,6 +532,45 @@ input[type='range']::-webkit-slider-thumb {
       font-size: 0.7rem;
     }
   }
+  .open-storico-modes {
+    pointer-events: none;
+    background-color: #1e1e1e;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    button {
+      pointer-events: all;
+      padding-top: 2px;
+      padding-bottom: 2px;
+      transition: all 0.2s;
+      transform: scale(0.8);
+    }
+
+    #storico-same-window {
+      filter: invert(1);
+    }
+    #storico-same-window:hover,
+    #storico-same-window.active {
+      filter: invert(0);
+    }
+    #storico-expand:hover,
+    #storico-same-window:hover,
+    #storico-same-window.active,
+    #storico-new-window:hover {
+      g {
+        stroke: #8a1818;
+      }
+      path {
+        stroke: #8a1818 !important;
+      }
+    }
+    #storico-new-window:hover {
+      g {
+        fill: #8a1818;
+      }
+    }
+  }
 }
 
 #info-mpr-attivo {
@@ -532,10 +591,20 @@ input[type='range']::-webkit-slider-thumb {
   display: none;
 }
 
+.parent-Crosshairs,
+.parent-CrosshairsStorico,
+.parent-TrackballRotate {
+  display: none;
+}
+
 .hp-mpr-active {
   .standard-layout,
   .custom-layout {
     display: none;
+  }
+  .parent-Crosshairs,
+  .parent-TrackballRotate {
+    display: block;
   }
   .advanced-layout {
     display: block;
@@ -601,6 +670,24 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 0.25rem;
   font-size: 0.9rem;
   line-height: 1.2;
+}
+
+.parent-LayoutMPRStorico {
+  display: none;
+}
+
+.storico-injected-iframe {
+  .nolex-main-area {
+    border: 1px solid #2a2a2a;
+    padding: 1px 3px;
+  }
+  .parent-LayoutMPRStorico {
+    display: block;
+  }
+  .parent-Capture,
+  [data-cy='TagBrowser'] {
+    display: none;
+  }
 }
 
 @keyframes loading2 {

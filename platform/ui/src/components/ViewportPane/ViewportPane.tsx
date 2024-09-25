@@ -153,8 +153,8 @@ ViewportPane.propTypes = {
 
 const noop = () => { };
 
-ViewportPane.defaultProps = {
-  onInteraction: noop,
-};
+// ViewportPane.defaultProps = {
+//   onInteraction: noop,
+// };
 
 export default ViewportPane;

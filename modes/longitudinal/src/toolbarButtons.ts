@@ -389,6 +389,15 @@ const toolbarButtons: Button[] = [
       },
     },
   },
+  {
+    id: 'LayoutMPRStorico',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'mprDirect',
+      label: 'MPR Studio secondario',
+      commands: 'mprDirectClickForStorico',
+    },
+  },
 
   {
     id: 'storeState',

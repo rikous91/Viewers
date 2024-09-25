@@ -9,6 +9,7 @@
   transition: all 0.3s ease-in;
   border: 1px solid #2f2f2f;
   color: #fff;
+  z-index: 50;
 }
 
 #preferiti-tools img {

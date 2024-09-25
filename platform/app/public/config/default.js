@@ -1,5 +1,4 @@
 /** @type {AppTypes.Config} */
-
 // @ts-ignore
 let prefetch = new URLSearchParams(new URL(window.location.href).search).get('prefetch');
 let dicomLoad = new URLSearchParams(new URL(window.location.href).search).get('dicomload');
@@ -19,6 +18,7 @@ let origin = window.location.origin;
 
 window.isSuite = true;
 window.storicoRemoto = true;
+window.portableVersion = true;
 
 let qidoRoot = `${origin}/viewer/qido`;
 let wadoRoot = `${origin}/viewer/wado`;
@@ -42,7 +42,8 @@ if (
 }
 
 window.config = {
-  routerBasename: '/nuovo-visualizzatore',
+  // routerBasename: '/nuovo-visualizzatore',
+  routerBasename: `${window.portableVersion ? '/' : '/nuovo-visualizzatore'}`,
   // whiteLabeling: {},
   extensions: [],
   modes: [],
@@ -71,8 +72,8 @@ window.config = {
   /* Dynamic config allows user to pass "configUrl" query string this allows to load config without recompiling application. The regex will ensure valid configuration source */
   // dangerouslyUseDynamicConfig: {
   //   enabled: true,
-  //   // regex will ensure valid configuration source and default is /.*/ which matches any character. To use this, setup your own regex to choose a specific source of configuration only.
-  //   // Example 1, to allow numbers and letters in an absolute or sub-path only.
+  //    // regex will ensure valid configuration source and default is /.*/ which matches any character. To use this, setup your own regex to choose a specific source of configuration only.
+  //   //  Example 1, to allow numbers and letters in an absolute or sub-path only.
   //   // regex: /(0-9A-Za-z.]+)(\/[0-9A-Za-z.]+)*/
   //   // Example 2, to restricts to either hosptial.com or othersite.com.
   //   // regex: /(https:\/\/hospital.com(\/[0-9A-Za-z.]+)*)|(https:\/\/othersite.com(\/[0-9A-Za-z.]+)*)/

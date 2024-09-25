@@ -31,6 +31,19 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
 
         const toolName = toolbarService.getToolNameForButton(button);
 
+        if (
+          (toolName === 'Crosshairs' &&
+            document.body.classList.contains('storico-injected-iframe')) ||
+          (toolName === 'TrackballRotate' &&
+            document.body.classList.contains('storico-injected-iframe'))
+        ) {
+          return {
+            disabled: false,
+            className:
+              '!text-common-bright hover:!bg-primary-dark hover:!text-primary-light rounded',
+          };
+        }
+
         if (!toolGroup || (!toolGroup.hasTool(toolName) && !toolNames)) {
           return {
             disabled: true,
@@ -254,6 +267,9 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
         });
 
         if (!areReconstructable) {
+          if (window.location.href.includes('storico=same-tab')) {
+            window.parent.postMessage('disable-secondo-mpr', '*');
+          }
           return {
             disabled: true,
             className: '!text-common-bright ohif-disabled',
@@ -262,6 +278,11 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
         }
 
         const isMpr = protocol?.id === 'mpr';
+
+        //Se sono un iframe dico al genitore di attivare il secondo mpr
+        if (window.location.href.includes('storico=same-tab')) {
+          window.parent.postMessage('secondo-mpr', '*');
+        }
 
         return {
           disabled: false,

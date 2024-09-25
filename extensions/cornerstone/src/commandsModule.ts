@@ -319,6 +319,11 @@ function commandsModule({
       callLabelAutocompleteDialog(uiDialogService, callback, {}, labelConfig);
     },
     toggleCine: () => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage('cine');
+      }
+
       const { viewports } = viewportGridService.getState();
       const { isCineEnabled } = cineService.getState();
       cineService.setIsCineEnabled(!isCineEnabled);
@@ -394,6 +399,10 @@ function commandsModule({
       const toolName = itemId || value;
       toolGroupId = toolGroupId ?? _getActiveViewportToolGroupId();
 
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage(toolName);
+      }
+
       const toolGroup = toolGroupService.getToolGroup(toolGroupId);
       if (!toolGroup || !toolGroup.hasTool(toolName)) {
         return;
@@ -409,6 +418,11 @@ function commandsModule({
       const toolGroup = toolGroupService.getToolGroup(toolGroupId);
       if (!toolGroup || !toolGroup.hasTool(toolName)) {
         return;
+      }
+
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage(toolName);
       }
 
       const toolIsActive = [
@@ -433,6 +447,11 @@ function commandsModule({
     setToolActiveToolbar: ({ value, itemId, toolName, toolGroupIds = [] }) => {
       // Sometimes it is passed as value (tools with options), sometimes as itemId (toolbar buttons)
       toolName = toolName || itemId || value;
+
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage(toolName);
+      }
 
       toolGroupIds = toolGroupIds.length ? toolGroupIds : toolGroupService.getToolGroupIds();
 
@@ -519,6 +538,11 @@ function commandsModule({
       salvataggioHP();
     },
     hideInfoDicom: () => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage('hideInfoDicom');
+      }
+
       document.body.classList.toggle('hide-info-dicom');
     },
     mprDirectClick: () => {
@@ -531,10 +555,6 @@ function commandsModule({
         const { activeViewportId, viewports } = viewportGridService.getState();
         const activeViewport = viewports.get(activeViewportId);
         const activeDisplaySetInstanceUID = activeViewport.displaySetInstanceUIDs[0];
-        const thumbnailList = document.querySelector('#ohif-thumbnail-list');
-        if (!thumbnailList) {
-          return;
-        }
 
         // const enabledElement = _getActiveViewportEnabledElement();
         // if (!enabledElement) {
@@ -546,9 +566,13 @@ function commandsModule({
         if (window.mprIsActive) {
           // hangingProtocolService.setProtocol('default');
           document.body.classList.remove('hp-mpr-active');
-
           restoreState();
           window.mprIsActive = false;
+
+          //Se sono nell'iframe dello storico mando un messaggio al genitore dicendo che l'mpr è stato appena disabilitato
+          if (window.location.href.includes('storico=same-tab')) {
+            window.parent.postMessage('uscita-da-secondo-mpr', '*');
+          }
 
           // setTimeout(() => {
           //   if (ActiveThumbnail) {
@@ -633,7 +657,21 @@ function commandsModule({
         console.error('Errore attivazione MPR: ', err);
       }
     },
+    mprDirectClickForStorico: () => {
+      if (!document.getElementById('iframe-storico')) {
+        return;
+      }
+      document.body.classList.add('secondo-mpr-attivo');
+      document.getElementById('iframe-storico').contentWindow.postMessage('attiva-mpr');
+    },
     rotateViewport: ({ rotation }) => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document
+          .getElementById('iframe-storico')
+          .contentWindow.postMessage(`rotateViewport-${rotation.toString()}`);
+      }
+
       const enabledElement = _getActiveViewportEnabledElement();
       if (!enabledElement) {
         return;
@@ -657,6 +695,13 @@ function commandsModule({
       }
     },
     flipViewportHorizontal: () => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document
+          .getElementById('iframe-storico')
+          .contentWindow.postMessage('flipViewportHorizontal');
+      }
+
       const enabledElement = _getActiveViewportEnabledElement();
 
       if (!enabledElement) {
@@ -670,6 +715,11 @@ function commandsModule({
       viewport.render();
     },
     flipViewportVertical: () => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage('flipViewportVertical');
+      }
+
       const enabledElement = _getActiveViewportEnabledElement();
 
       if (!enabledElement) {
@@ -683,6 +733,11 @@ function commandsModule({
       viewport.render();
     },
     invertViewport: ({ element }) => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage('invertViewport');
+      }
+
       let enabledElement;
 
       if (element === undefined) {
@@ -722,6 +777,11 @@ function commandsModule({
       });
     },
     resetViewport: () => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage('resetViewport');
+      }
+
       const enabledElement = _getActiveViewportEnabledElement();
 
       if (!enabledElement) {
@@ -898,7 +958,6 @@ function commandsModule({
       if (debounceTimeout) {
         return;
       }
-
       // Imposta il timeout per ritardare la prossima chiamata
       debounceTimeout = setTimeout(() => {
         debounceTimeout = null; // Resetta il timeout dopo l'intervallo di debounce
@@ -1131,6 +1190,10 @@ function commandsModule({
     mprDirectClick: {
       commandFn: actions.mprDirectClick,
     },
+    mprDirectClickForStorico: {
+      commandFn: actions.mprDirectClickForStorico,
+    },
+
     setHPPreferiti: {
       commandFn: actions.setHPPreferiti,
     },
