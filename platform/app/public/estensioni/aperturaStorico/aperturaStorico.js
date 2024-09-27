@@ -46,6 +46,8 @@ const fixBlackViewportsMPR = () => {
   setTimeout(() => {
     document.body.classList.remove('loading-spinner-into-grid');
     window.instanceUIDMPRDaCliccare = null;
+    //A fine fix ritorno sempre e comunque nella tab dello storico da cui sono partito
+    document.querySelector('.storicosulcloud').click();
   }, 500);
 };
 
