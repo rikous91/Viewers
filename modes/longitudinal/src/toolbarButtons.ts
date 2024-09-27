@@ -398,6 +398,16 @@ const toolbarButtons: Button[] = [
       commands: 'mprDirectClickForStorico',
     },
   },
+  {
+    id: 'Reset',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'tool-reset',
+      label: 'Reimposta vista',
+      commands: 'resetViewport',
+      evaluate: 'evaluate.action',
+    },
+  },
 
   {
     id: 'storeState',

@@ -52,9 +52,10 @@ const storicoLabelItem = {
   title: 'Storico Label',
   color: '#81d4fa',
   condition: ({ referenceInstance }) =>
-    (referenceInstance?.StudyInstanceUID &&
+    ((referenceInstance?.StudyInstanceUID &&
       referenceInstance?.StudyInstanceUID !== window.nolexStudyInstanceUIDs) ||
-    window.sonoUnoStorico === true,
+      window.sonoUnoStorico === true) &&
+    !window.portableVersion,
   contentF: ({ referenceInstance }) => 'STORICO',
 };
 

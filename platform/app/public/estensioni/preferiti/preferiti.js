@@ -143,8 +143,10 @@ const createPreferitiFunc = () => {
 };
 
 // Ogni volta che il pannello si apre/chiude perdo l'estensione creata. Intercetto l'evento apertura/chiusura e ricreo
-window.addEventListener('panelOpen', function (event) {
-  if (!event.detail.isOpen && event.detail.side !== 'left') {
-    preferitiInitInterval();
-  }
-});
+if (!window.portableVersion) {
+  window.addEventListener('panelOpen', function (event) {
+    if (!event.detail.isOpen && event.detail.side !== 'left') {
+      preferitiInitInterval();
+    }
+  });
+}

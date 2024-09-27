@@ -210,6 +210,7 @@ import MRMIP from './../../assets/icons/MR-MIP.png';
 import MRT2Brain from './../../assets/icons/MR-T2-Brain.png';
 import VolumeRendering from './../../assets/icons/VolumeRendering.png';
 
+import logoNolex from './../../assets/icons/logo_nolex.png';
 import hpIcon from './../../assets/icons/hp.png';
 import preferiti from './../../assets/icons/preferiti.png';
 import preferitiActive from './../../assets/icons/preferiti-active.png';
@@ -434,6 +435,7 @@ const ICONS = {
   'storico-new-window': storicoNewWindow,
   preferiti: preferiti,
   preferitiActive: preferitiActive,
+  logoNolex: logoNolex,
   hpIcon: hpIcon,
   mprDirect: mprDirect,
 

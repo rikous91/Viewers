@@ -176,6 +176,8 @@ function ToolbarLayoutSelectorWithServices({
       );
 
       hangingProtocolService.setProtocol(hpSelezionato);
+      //Memorizzo globalmente il preset selezionato così da riapplicare lo stesso eventualmente alla riattivazione dell'mpr (mprDirectClick)
+      window.nolexProtocolToApply = hpSelezionato;
 
       setTimeout(() => {
         if (ActiveThumbnail) {

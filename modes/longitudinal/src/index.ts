@@ -103,35 +103,58 @@ function modeFactory({ modeConfiguration }) {
       initToolGroups(extensionManager, toolGroupService, commandsManager, this.labelConfig);
 
       toolbarService.addButtons([...toolbarButtons, ...moreTools]);
-      toolbarService.createButtonSection('primary', [
-        'WindowLevel',
-        'Pan',
-        'ZoomTools',
-        'TransformTools',
-        'Magnify',
-        'MeasurementTools',
-        'StackScroll',
-        // 'Zoom',
-        'Layout',
-        'LayoutMPR',
-        'LayoutMPRStorico',
-        'Crosshairs',
-        'TrackballRotate',
-        'gestioneHP',
-        'invert',
-        'polygon',
-        'Probe',
-        'Cine',
-        'Capture',
-        'hideInfoDicom',
-        'ReferenceLines',
-        'MoreTools',
-        // 'setCamera',
-        // 'storeState',
-        // 'restoreState',
-        // 'jumpIndex',
-        // 'setHPPreferiti',
-      ]);
+      //Versione normale
+      if (!window.portableVersion) {
+        toolbarService.createButtonSection('primary', [
+          'WindowLevel',
+          'Pan',
+          'ZoomTools',
+          'TransformTools',
+          'Magnify',
+          'MeasurementTools',
+          'StackScroll',
+          // 'Zoom',
+          'Layout',
+          'LayoutMPR',
+          'LayoutMPRStorico',
+          'Crosshairs',
+          'TrackballRotate',
+          'gestioneHP',
+          'invert',
+          'polygon',
+          'Probe',
+          'Cine',
+          'Capture',
+          'hideInfoDicom',
+          'ReferenceLines',
+          'MoreTools',
+          // 'setCamera',
+          // 'storeState',
+          // 'restoreState',
+          // 'jumpIndex',
+          // 'setHPPreferiti',
+        ]);
+      } else {
+        //Versione portable
+        toolbarService.createButtonSection('primary', [
+          'WindowLevel',
+          'Pan',
+          'ZoomTools',
+          'TransformTools',
+          'Magnify',
+          'MeasurementTools',
+          'StackScroll',
+          'Layout',
+          'invert',
+          'polygon',
+          'Probe',
+          'Cine',
+          'Capture',
+          'hideInfoDicom',
+          // 'ReferenceLines',  //Controllare linee riferimento per versione portable, eventuale modifica al modulo cornerstone
+          'Reset',
+        ]);
+      }
 
       customizationService.addModeCustomizations([
         {
