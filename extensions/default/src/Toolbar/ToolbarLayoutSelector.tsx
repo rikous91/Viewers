@@ -182,8 +182,8 @@ function ToolbarLayoutSelectorWithServices({
       setTimeout(() => {
         if (ActiveThumbnail) {
           ActiveThumbnail.click();
-          document.body.classList.remove('caricamento-layout-mpr');
         }
+        document.body.classList.remove('caricamento-layout-mpr');
       }, 500);
     } catch (err) {
       console.error('Errore attivazione MPR: ', err);
