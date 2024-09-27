@@ -13,7 +13,7 @@ import ProgressLoadingBar from '../ProgressLoadingBar';
 function LoadingIndicatorProgress({ className, textBlock, progress }) {
   const [_progress, setProgress] = useState<number | undefined>(0);
   useEffect(() => {
-    const updateProgress = () => {
+    const updateFakeProgress = () => {
       setProgress(prevProgress => {
         if (prevProgress === undefined) {
           return 0;
@@ -28,11 +28,13 @@ function LoadingIndicatorProgress({ className, textBlock, progress }) {
 
       // Imposta un intervallo casuale tra 100ms e 500ms per il prossimo aggiornamento
       const randomInterval = Math.floor(Math.random() * 401) + 100;
-      setTimeout(updateProgress, randomInterval);
+      setTimeout(updateFakeProgress, randomInterval);
     };
 
-    // Avvia l'aggiornamento del progresso
-    updateProgress();
+    // Avvia l'aggiornamento del progresso fake, mentre reale se caricamento file da locale dove ho una percentuale effettiva
+    if (!window.portableVersion) {
+      updateFakeProgress();
+    }
 
     // Non c'è bisogno di pulire setTimeout come si fa con setInterval
   }, []);
@@ -44,12 +46,12 @@ function LoadingIndicatorProgress({ className, textBlock, progress }) {
         className
       )}
     >
-      <Icon
+      {/* <Icon
         name="lodading-ohif-mark"
         className="loading-indicator h-12 w-12 text-white"
-      />
+      /> */}
       <div className="w-48">
-        <ProgressLoadingBar progress={_progress} />
+        <ProgressLoadingBar progress={window.portableVersion ? progress : _progress} />
       </div>
       {textBlock}
     </div>

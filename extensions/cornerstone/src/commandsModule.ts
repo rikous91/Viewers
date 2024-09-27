@@ -636,12 +636,34 @@ function commandsModule({
             }
             //Dopo il click della tab corretta applico un timeout
             setTimeout(() => {
-              const ActiveThumbnail = document.querySelector(
+              let ActiveThumbnail = document.querySelector(
                 `#thumbnail-${activeDisplaySetInstanceUID} img`
               ); //Attivo l'mpr sulla serie attualmente attiva
 
+              //Se da qualche altra parte specifico window.instanceUIDMPRDaCliccare (es. attivazione storico da iframe, do priorità a questo)
+              if (window.instanceUIDMPRDaCliccare) {
+                ActiveThumbnail = document.querySelector(
+                  `#thumbnail-${window.instanceUIDMPRDaCliccare} img`
+                );
+                if (!ActiveThumbnail) {
+                  //Se non trovo ActiveThumbnail, è probabile che non mi trovo nella tab corrispondente
+                  //(o sono in storico sul cloud o studio attuale) e ActiveThumbnail si potrebbe trovare in una delle due (tab inattiva)
+                  document.querySelector('.inactive-tab-study').click();
+                  setTimeout(() => {
+                    ActiveThumbnail = document.querySelector(
+                      `#thumbnail-${window.instanceUIDMPRDaCliccare} img`
+                    );
+                  }, 0);
+                }
+              }
+
               isMprClicked = true;
-              hangingProtocolService.setProtocol('mpr');
+              let protocolToApply = 'mpr';
+              //Se trovo in memoria un altro protocol da applicare lo applico
+              if (window.nolexProtocolToApply) {
+                protocolToApply = window.nolexProtocolToApply;
+              }
+              hangingProtocolService.setProtocol(protocolToApply);
               window.mprIsActive = true;
               document.body.classList.add('hp-mpr-active');
               setTimeout(() => {
@@ -649,7 +671,7 @@ function commandsModule({
                   ActiveThumbnail.click();
                 }
                 isMprClicked = false;
-              }, 0);
+              }, 100);
             }, 0);
           })
           .filter(preset => preset !== null);

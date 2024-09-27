@@ -151,7 +151,7 @@ const Thumbnail = ({
 
   const renderListPreset = () => {
     return (
-      <div className="flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]">
+      <div className="flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[8px] pb-[4px]">
         <div className="relative flex h-full items-center gap-[8px]">
           <div
             className={classnames(
@@ -161,16 +161,12 @@ const Thumbnail = ({
             )}
           ></div>
           <div className="flex h-full flex-col">
-            <div className="flex items-center gap-[7px]">
-              <div className="text-[13px] text-white">{modality}</div>
-
-              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
-                {description}
-              </div>
-            </div>
-
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
+              <div className="text-muted-foreground text-[12px]">
+                {' '}
+                <span>S:</span>
+                {seriesNumber}
+              </div>
               <div className="text-muted-foreground text-[12px]">
                 <div className="flex items-center gap-[4px]">
                   {' '}
@@ -182,7 +178,20 @@ const Thumbnail = ({
                   <div>{numInstances}</div>
                 </div>
               </div>
+
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
+                {description}
+              </div>
             </div>
+
+            {/* <div className="flex items-center gap-[7px]">
+              <div className="text-[13px] text-white">{modality}</div>
+
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
+                {description}
+              </div>
+            </div> */}
+
             <div className="relative my-2">
               {imageSrc ? (
                 <img

@@ -30,9 +30,33 @@ const createPreloader = () => {
   return preloader;
 };
 
+const fixBlackViewportsMPR = () => {
+  //Disattivo e riattivo mpr salvando la serie attualmente attiva
+  const { viewportGridService } = window.servicesManager.services;
+  const { activeViewportId, viewports } = viewportGridService.getState();
+  const activeViewport = viewports.get(activeViewportId);
+  const activeDisplaySetInstanceUID = activeViewport.displaySetInstanceUIDs[0];
+  document.querySelector('[data-cy="LayoutMPR"]').click(); //Disattivo MPR
+  window.instanceUIDMPRDaCliccare = activeDisplaySetInstanceUID;
+  document.body.classList.add('loading-spinner-into-grid'); //Non mostro il cambio vista griglia ma metto uno spinner
+
+  setTimeout(() => {
+    document.querySelector('[data-cy="LayoutMPR"]').click(); //Riattivo MPR
+  }, 0);
+  setTimeout(() => {
+    document.body.classList.remove('loading-spinner-into-grid');
+    window.instanceUIDMPRDaCliccare = null;
+  }, 500);
+};
+
 function split2Studies(urlToOpen) {
   if (document.getElementById('iframe-storico')) {
     document.getElementById('iframe-storico').remove(); //Sovrascrivo sempre
+  }
+  //Se è attivo l'mpr lo disabilito e lo riabilito quando lo schermo è già diviso in quanto il ridimensionamento
+  //della finestra lo farebbe sfasare random, abilitandolo invece a schermo già diviso non da problemi
+  if (document.body.classList.contains('hp-mpr-active')) {
+    fixBlackViewportsMPR();
   }
   document.body.classList.add('storico-injected-iframe');
   document.body.classList.remove('secondo-mpr-attivo');

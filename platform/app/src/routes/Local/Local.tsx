@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
 import { useNavigate } from 'react-router-dom';
 import { DicomMetadataStore, MODULE_TYPES } from '@ohif/core';
@@ -8,7 +8,8 @@ import filesToStudies from './filesToStudies';
 
 import { extensionManager } from '../../App.tsx';
 
-import { Icon, Button, LoadingIndicatorProgress } from '@ohif/ui';
+import { Icon, Button, LoadingIndicatorProgress, LoadingIndicatorTotalPercent } from '@ohif/ui';
+let totalFiles = 0;
 
 const getLoadButton = (onDrop, text, isDir) => {
   return (
@@ -48,10 +49,11 @@ type LocalProps = {
 };
 
 function Local({ modePath }: LocalProps) {
-  console.log('caricamento in locale');
   const navigate = useNavigate();
   const dropzoneRef = useRef();
   const [dropInitiated, setDropInitiated] = React.useState(false);
+
+  const [percentComplete, setPercentComplete] = useState(0);
 
   // Initializing the dicom local dataSource
   const dataSourceModules = extensionManager.modules[MODULE_TYPES.DATA_SOURCE];
@@ -71,6 +73,51 @@ function Local({ modePath }: LocalProps) {
   const microscopyExtensionLoaded = extensionManager.registeredExtensionIds.includes(
     '@ohif/extension-dicom-microscopy'
   );
+
+  const getFileNumber = async () => {
+    const response = await fetch(`http://localhost:8088/getFileNumber`);
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const numeroFile = await response.json(); // Ottieni i dati in JSON
+    totalFiles = numeroFile.totalFiles;
+    return totalFiles;
+  };
+
+  const fetchLocalFile = async () => {
+    //Recupero il numero di file su cui eseguire le singole chiamate
+    const numeroFile = await getFileNumber();
+    const files = [];
+    for (let i = 0; i < numeroFile; i++) {
+      try {
+        const response = await fetch(`http://localhost:8088/getFileByIndex/${i}`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const arrayBuffer = await response.arrayBuffer(); // Ottieni i dati binari come ArrayBuffer
+        const uint8Array = new Uint8Array(arrayBuffer);
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const match = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+        const fileName = match ? match[1] : `file_${i}.dcm`; // Ottieni il nome del file dall'header
+
+        const file = new File([uint8Array], fileName); // Crea un oggetto File con Uint8Array e nome file
+        files.push(file); // Aggiungi il file alla lista
+        const progress = Math.round(((i + 1) / numeroFile) * 100);
+        setPercentComplete(progress); // Aggiorna la percentuale completata
+      } catch (error) {
+        console.error('Fetch error:', error);
+      }
+    }
+    onDrop(files);
+  };
+
+  // Funzione per convertire Uint8Array in File
+  const uint8ArrayToFile = (uint8Array, filename) => {
+    const blob = new Blob([uint8Array], { type: 'application/dicom' });
+    return new File([blob], filename, { type: blob.type });
+  };
 
   const onDrop = async acceptedFiles => {
     const studies = await filesToStudies(acceptedFiles, dataSource);
@@ -110,7 +157,28 @@ function Local({ modePath }: LocalProps) {
     };
   }, []);
 
-  return (
+  useEffect(() => {
+    if (window.window.portableVersion) {
+      fetchLocalFile();
+    }
+  }, []);
+
+  return window.portableVersion ? (
+    <div className="absolute top-0 left-0 z-50 flex h-full w-full flex-col items-center justify-center space-y-5">
+      <Icon
+        style={{ marginBottom: '90px' }}
+        name="logoNolex"
+        className="h-14"
+      />
+      <LoadingIndicatorTotalPercent
+        className="h-full w-full"
+        totalNumbers={totalFiles}
+        percentComplete={percentComplete}
+        loadingText="Caricamento dello studio in corso..."
+        targetText="File"
+      />
+    </div>
+  ) : (
     <Dropzone
       ref={dropzoneRef}
       onDrop={acceptedFiles => {
@@ -128,8 +196,8 @@ function Local({ modePath }: LocalProps) {
             <div className="bg-secondary-dark mx-auto space-y-2 rounded-lg py-8 px-8 drop-shadow-md">
               <div className="flex items-center justify-center">
                 <Icon
-                  name="logo-dark-background"
-                  className="h-28"
+                  name="logoNolex"
+                  className="h-14"
                 />
               </div>
               <div className="space-y-2 pt-4 text-center">
@@ -139,20 +207,20 @@ function Local({ modePath }: LocalProps) {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <p className="text-base text-blue-300">
-                      Note: You data is not uploaded to any server, it will stay in your local
-                      browser application
+                    {/* <p className="text-base text-blue-300">
+                        Note: Your data is not uploaded to any server; it will stay in your local
+                        browser application
+                      </p> */}
+                    <p className="text-primary-active pt-6 text-lg font-semibold">
+                      Trascina i file DICOM qui
                     </p>
-                    <p className="text-xg text-primary-active pt-6 font-semibold">
-                      Drag and Drop DICOM files here to load them in the Viewer
-                    </p>
-                    <p className="text-lg text-blue-300">Or click to </p>
+                    <p className="text-lg text-blue-300">O clicca </p>
                   </div>
                 )}
               </div>
               <div className="flex justify-around pt-4">
-                {getLoadButton(onDrop, 'Load files', false)}
-                {getLoadButton(onDrop, 'Load folders', true)}
+                {getLoadButton(onDrop, 'Carica file', false)}
+                {getLoadButton(onDrop, "Carica l'intera cartella", true)}
               </div>
             </div>
           </div>
