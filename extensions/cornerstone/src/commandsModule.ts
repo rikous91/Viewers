@@ -66,29 +66,26 @@ function commandsModule({
 
   //Salvo lo stato attuale
   const storeState = () => {
+    if (
+      document.body.classList.contains('hp-mpr-active') ||
+      document.body.classList.contains('loading-spinner-into-grid')
+    ) {
+      return;
+    } //Salvo lo stato solo in modalità NON MPR
     window.storedState = true;
     const viewportGridState = viewportGridService.getState();
     stateSyncService.store({
       toggleOneUpViewportGridStore: viewportGridState,
     });
-
-    const clearToggleOneUpViewportGridStore = () => {
-      const toggleOneUpViewportGridStore = {};
-      stateSyncService.store({
-        toggleOneUpViewportGridStore,
-      });
-    };
-    const { subscribeToNextViewportGridChange } = utils;
-
-    // subscribeToNextViewportGridChange(viewportGridService, clearToggleOneUpViewportGridStore);
   };
 
   const restoreState = () => {
     if (!window.storedState) {
       return;
     }
-    window.storedState = false; //Permetto di ripristinare lo stato una volta sola, per ripristinarlo una seconda volta occorre fare un nuovo storeState
-    // Restore the previous layout including the active viewport.
+    //Permetto di ripristinare lo stato una volta sola, per ripristinarlo una seconda volta occorre fare un nuovo storeState
+
+    // window.storedState = false;
 
     const { toggleOneUpViewportGridStore } = stateSyncService.getState();
 
@@ -563,11 +560,25 @@ function commandsModule({
         // const viewport = enabledElement.viewport;
 
         //Verifico di non essere già in modalità MPR, se lo sono già torno alla visualizzazione default
-        if (window.mprIsActive) {
+        if (document.body.classList.contains('hp-mpr-active')) {
           // hangingProtocolService.setProtocol('default');
+          //Ripulisco classi body
           document.body.classList.remove('hp-mpr-active');
+          // const listaPresetAvanzati = [
+          //   'mpr',
+          //   'fourUp',
+          //   'main3D',
+          //   'primaryAxial',
+          //   'only3D',
+          //   'primary3D',
+          // ];
+          // listaPresetAvanzati.forEach(preset => {
+          //   if (document.body.classList.contains(preset)) {
+          //     document.body.classList.remove(preset);
+          //   }
+          // });
           restoreState();
-          window.mprIsActive = false;
+          // window.mprIsActive = false;
 
           //Se sono nell'iframe dello storico mando un messaggio al genitore dicendo che l'mpr è stato appena disabilitato
           if (window.location.href.includes('storico=same-tab')) {
@@ -656,7 +667,7 @@ function commandsModule({
                   }, 0);
                 }
               }
-
+              window.instanceUIDMPRDaCliccare = null;
               isMprClicked = true;
               let protocolToApply = 'mpr';
               //Se trovo in memoria un altro protocol da applicare lo applico
