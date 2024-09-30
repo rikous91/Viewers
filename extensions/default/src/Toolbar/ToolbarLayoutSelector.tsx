@@ -127,7 +127,7 @@ const generateAdvancedPresetsStorico = ({ servicesManager }: withAppTypes) => {
 
 const onSelectionPresetStorico = preset => {
   hpSelezionatoStorico = preset.commandOptions.protocolId;
-  document.getElementById('iframe-storico').contentWindow.postMessage(preset.title);
+  document.getElementById('iframe-storico').contentWindow.postMessage(hpSelezionatoStorico);
 };
 
 function ToolbarLayoutSelectorWithServices({
@@ -163,8 +163,18 @@ function ToolbarLayoutSelectorWithServices({
 
   const onSelectionPreset = preset => {
     try {
+      const listaPresetAvanzati = ['fourUp', 'main3D', 'primaryAxial', 'only3D', 'primary3D'];
       document.body.classList.add('caricamento-layout-mpr');
-      hpSelezionato = preset.commandOptions.protocolId;
+      //Ripulisco ad ogni scelta preset classi precedentemente memorizzate
+      listaPresetAvanzati.forEach(preset => {
+        if (document.body.classList.contains(preset)) {
+          document.body.classList.remove(preset);
+        }
+      });
+      const presetIDSelezionato = preset.commandOptions.protocolId;
+      document.body.classList.add(presetIDSelezionato);
+
+      hpSelezionato = presetIDSelezionato;
       const { hangingProtocolService, viewportGridService } = servicesManager.services;
 
       const { activeViewportId, viewports } = viewportGridService.getState();
@@ -174,10 +184,11 @@ function ToolbarLayoutSelectorWithServices({
       const ActiveThumbnail = document.querySelector(
         `#thumbnail-${activeDisplaySetInstanceUID} img`
       );
+      window.instanceUIDMPRDaCliccare = activeDisplaySetInstanceUID;
 
       hangingProtocolService.setProtocol(hpSelezionato);
       //Memorizzo globalmente il preset selezionato così da riapplicare lo stesso eventualmente alla riattivazione dell'mpr (mprDirectClick)
-      window.nolexProtocolToApply = hpSelezionato;
+      window.nolexProtocolToApply = presetIDSelezionato;
 
       setTimeout(() => {
         if (ActiveThumbnail) {

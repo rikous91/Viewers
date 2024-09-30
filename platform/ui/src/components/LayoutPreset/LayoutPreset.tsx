@@ -23,7 +23,8 @@ function LayoutPreset({
         className="group-hover:text-primary-light"
       />
       {title && (
-        <div className={`font-inter text-sm text-white ${title.replace(/\s+/g, '-')}`}>{title}</div>
+        // <div className={`font-inter text-sm text-white ${title.replace(/\s+/g, '-')}`}>{title}</div>
+        <div className={`font-inter text-sm text-white ${commandOptions.protocolId}`}>{title}</div>
       )}
     </div>
   );

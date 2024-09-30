@@ -30,14 +30,18 @@ const createPreloader = () => {
   return preloader;
 };
 
-const fixBlackViewportsMPR = () => {
-  //Disattivo e riattivo mpr salvando la serie attualmente attiva
+const salvaSerieDaRicliccare = () => {
   const { viewportGridService } = window.servicesManager.services;
   const { activeViewportId, viewports } = viewportGridService.getState();
   const activeViewport = viewports.get(activeViewportId);
   const activeDisplaySetInstanceUID = activeViewport.displaySetInstanceUIDs[0];
-  document.querySelector('[data-cy="LayoutMPR"]').click(); //Disattivo MPR
   window.instanceUIDMPRDaCliccare = activeDisplaySetInstanceUID;
+};
+
+const fixlayoutViewportsMPR = () => {
+  //Disattivo e riattivo mpr salvando la serie attualmente attiva
+  salvaSerieDaRicliccare();
+  document.querySelector('[data-cy="LayoutMPR"]').click(); //Disattivo MPR
   document.body.classList.add('loading-spinner-into-grid'); //Non mostro il cambio vista griglia ma metto uno spinner
 
   setTimeout(() => {
@@ -45,7 +49,9 @@ const fixBlackViewportsMPR = () => {
   }, 0);
   setTimeout(() => {
     document.body.classList.remove('loading-spinner-into-grid');
-    window.instanceUIDMPRDaCliccare = null;
+
+    // window.instanceUIDMPRDaCliccare = null;
+
     //A fine fix ritorno sempre e comunque nella tab dello storico da cui sono partito
     document.querySelector('.storicosulcloud').click();
   }, 500);
@@ -58,7 +64,7 @@ function split2Studies(urlToOpen) {
   //Se è attivo l'mpr lo disabilito e lo riabilito quando lo schermo è già diviso in quanto il ridimensionamento
   //della finestra lo farebbe sfasare random, abilitandolo invece a schermo già diviso non da problemi
   if (document.body.classList.contains('hp-mpr-active')) {
-    fixBlackViewportsMPR();
+    fixlayoutViewportsMPR();
   }
   document.body.classList.add('storico-injected-iframe');
   document.body.classList.remove('secondo-mpr-attivo');
@@ -463,52 +469,52 @@ function activateCommandOnIframe(command) {
     case 'MPR':
       document.querySelector('[data-cy="Layout"]').click();
       setTimeout(() => {
-        document.querySelector('.MPR').click();
+        document.querySelector('.mpr').click();
         setTimeout(() => {
           document.querySelector('.nolex-selected').click();
         }, 0);
       }, 0);
       break;
-    case 'Volume 3D a destra':
+    case 'fourUp':
       document.querySelector('[data-cy="Layout"]').click();
       setTimeout(() => {
-        document.querySelector('.Volume-3D-a-destra').click();
+        document.querySelector('.fourUp').click();
         setTimeout(() => {
           document.querySelector('.nolex-selected').click();
         }, 0);
       }, 0);
       break;
-    case 'Volume 3D principale in alto':
+    case 'main3D':
       document.querySelector('[data-cy="Layout"]').click();
       setTimeout(() => {
-        document.querySelector('.Volume-3D-principale-in-alto').click();
+        document.querySelector('.main3D').click();
         setTimeout(() => {
           document.querySelector('.nolex-selected').click();
         }, 0);
       }, 0);
       break;
-    case 'Piano Assiale primario':
+    case 'primaryAxial':
       document.querySelector('[data-cy="Layout"]').click();
       setTimeout(() => {
-        document.querySelector('.Piano-Assiale-primario').click();
+        document.querySelector('.primaryAxial').click();
         setTimeout(() => {
           document.querySelector('.nolex-selected').click();
         }, 0);
       }, 0);
       break;
-    case 'Solo Volume 3D':
+    case 'only3D':
       document.querySelector('[data-cy="Layout"]').click();
       setTimeout(() => {
-        document.querySelector('.Solo-Volume-3D').click();
+        document.querySelector('.only3D').click();
         setTimeout(() => {
           document.querySelector('.nolex-selected').click();
         }, 0);
       }, 0);
       break;
-    case 'Volume 3D principale a sx':
+    case 'primary3D':
       document.querySelector('[data-cy="Layout"]').click();
       setTimeout(() => {
-        document.querySelector('.Volume-3D-principale-a-sx').click();
+        document.querySelector('.primary3D').click();
         setTimeout(() => {
           document.querySelector('.nolex-selected').click();
         }, 0);
@@ -524,18 +530,45 @@ function listenerEvent(event) {
     return;
   }
 
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+  const fix3DOnClosedIframe = async () => {
+    document.body.classList.add('loading-spinner-into-grid');
+    document.querySelector('[data-cy="LayoutMPR"]').click();
+    await wait(0); // Attendi per evitare l'annidamento dei timeout
+
+    document.querySelector('[data-cy="LayoutMPR"]').click();
+    setTimeout(() => {
+      document.body.classList.remove('loading-spinner-into-grid');
+    }, 0);
+  };
+
+  const closeStoricoIframe = () => {
+    document.body.classList.remove('storico-injected-iframe');
+    document.body.classList.remove('secondo-mpr-attivo');
+    document.getElementById('iframe-storico').remove();
+    document.querySelector('.nolex-main-area').style.width = '100%';
+
+    for (const a of document.querySelectorAll('#storico-same-window')) {
+      a.classList.remove('active');
+    }
+    //Fix mpr 3D - quando si passa dallo schermo diviso al pieno schermo e ho un 3d Attivo, questo viene tagliato. Metto il preset mpr e poi
+    //riattivo il preset 3d precedente
+    const listaPreset3D = ['fourUp', 'main3D', 'only3D', 'primary3D'];
+
+    listaPreset3D.forEach(preset3D => {
+      if (document.body.classList.contains(preset3D)) {
+        salvaSerieDaRicliccare();
+        fix3DOnClosedIframe();
+      }
+    });
+  };
+
   const messaggioRicevuto = event.data;
   console.log(messaggioRicevuto);
   switch (messaggioRicevuto) {
     case 'chiudi-iframe-storico':
-      document.body.classList.remove('storico-injected-iframe');
-      document.body.classList.remove('secondo-mpr-attivo');
-      document.getElementById('iframe-storico').remove();
-      document.querySelector('.nolex-main-area').style.width = '100%';
-
-      for (const a of document.querySelectorAll('#storico-same-window')) {
-        a.classList.remove('active');
-      }
+      closeStoricoIframe();
       break;
     case 'secondo-mpr':
       document.querySelector('[data-cy="LayoutMPRStorico"]').style.pointerEvents = 'all';
