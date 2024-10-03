@@ -725,6 +725,14 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
+#reset-3d-rotation-btn {
+  font-size: 0.9rem;
+  background: #b72424;
+  padding: 0 4px;
+  position: relative;
+  top: -2px;
+}
+
 .storico-injected-iframe {
   .div-icone-right-viewport {
     .all-in-one-menu {
@@ -747,6 +755,42 @@ input[type='range']::-webkit-slider-thumb {
 @keyframes loading2 {
   100% {
     width: 100%;
+  }
+}
+
+/* Divido la toolbar in due o più righe */
+@media only screen and (max-width: 1300px) {
+  .toolbar-child-flex {
+    flex-wrap: wrap;
+  }
+  .logo {
+    max-width: 18vw;
+  }
+}
+
+@media only screen and (max-width: 915px) {
+  .nolex-main-area {
+    height: calc(-137px + 100vh);
+  }
+  .nolex-bar {
+    height: 136px;
+  }
+  .toolbar-child-flex {
+    top: 45px;
+  }
+}
+@media only screen and (min-width: 916px) and (max-width: 1300px) {
+  .nolex-main-area {
+    height: calc(-91px + 100vh);
+  }
+
+  .toolbar-child-flex {
+    flex-wrap: wrap;
+    top: 23px;
+    padding: 20px;
+  }
+  .nolex-bar {
+    height: 90px;
   }
 }
 

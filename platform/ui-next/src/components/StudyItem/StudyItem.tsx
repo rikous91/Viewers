@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
+import { Icon, Tooltip } from '@ohif/ui';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import openStorico from '../../../../app/public/estensioni/aperturaStorico/aperturaStorico.js';

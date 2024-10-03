@@ -828,6 +828,7 @@ function commandsModule({
 
       viewport.render();
     },
+    Reset3DRotate: () => { },
     scaleViewport: ({ direction }) => {
       const enabledElement = _getActiveViewportEnabledElement();
       const scaleFactor = direction > 0 ? 0.9 : 1.1;
@@ -1265,6 +1266,9 @@ function commandsModule({
     },
     resetViewport: {
       commandFn: actions.resetViewport,
+    },
+    Reset3DRotate: {
+      commandFn: actions.Reset3DRotate,
     },
     scaleUpViewport: {
       commandFn: actions.scaleViewport,

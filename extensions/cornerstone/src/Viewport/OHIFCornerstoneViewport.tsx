@@ -331,6 +331,10 @@ const OHIFCornerstoneViewport = React.memo((props: withAppTypes) => {
         viewportOptions.needsRerendering = false;
       }
 
+      if (document.getElementById('reset-3d-rotation-btn')) {
+        document.getElementById('reset-3d-rotation-btn').remove();
+      }
+
       cornerstoneViewportService.setViewportData(
         viewportId,
         viewportData,
