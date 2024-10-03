@@ -357,6 +357,16 @@ const toolbarButtons: Button[] = [
     },
   },
   {
+    id: 'Reset3DRotate',
+    uiType: 'ohif.radioGroup',
+    props: {
+      icon: 'tool-capture',
+      label: 'Reset 3D Rotate',
+      commands: 'Reset3DRotate',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
     id: 'Capture',
     uiType: 'ohif.radioGroup',
     props: {
