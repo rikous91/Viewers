@@ -49,7 +49,7 @@ function ViewportPane({
       return;
     }
 
-    iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti.png';
+    iconaStella.src = '/nolexviewer/assets/images/preferiti.png';
     const { viewportGridService } = window.servicesManager.services;
     const { cornerstoneViewportService } = window.servicesManager.services;
     const { displaySetService } = window.servicesManager.services;
@@ -77,7 +77,7 @@ function ViewportPane({
       ) {
         console.log('è tra i preferiti');
         //Cambio la classe alla stellina
-        iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti-active.png';
+        iconaStella.src = '/nolexviewer/assets/images/preferiti-active.png';
       }
     });
   };

@@ -410,7 +410,7 @@ async function creaDIV() {
   closeHPDivBtn.addEventListener('click', () => {
     document.getElementById('menu-hp').remove();
   });
-  preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
+  preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
   if (!preferenzeRemote || !preferenzeRemote.json) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
@@ -420,7 +420,7 @@ async function creaDIV() {
 async function componiHP(modalita) {
   //modalita='specificStudy', 'descrizioneEsame', 'modality'
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
+  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
   if (!preferenzeRemote) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
@@ -445,7 +445,7 @@ async function componiHP(modalita) {
       '[title="Series description"]'
     )?.textContent;
     //Estraggo SeriesInstanceUID
-    const imageId = viewport.csImage?.imageId;
+    const imageId = viewport.csImage?.imageId || '';
     const match = imageId.match(/series\/([^\/]+)/);
     const seriesInstanceUID = match ? match[1] : null;
     // // //
@@ -642,7 +642,7 @@ async function deleteConfigSpecificStudy() {
     return;
   }
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
+  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
   if (!preferenzeRemote || !preferenzeRemote.json) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
@@ -669,7 +669,7 @@ async function deleteConfigExam() {
     return;
   }
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
+  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
   if (!preferenzeRemote || !preferenzeRemote.json) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
@@ -698,7 +698,7 @@ async function deleteConfigModality() {
     return;
   }
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUIDs);
+  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
   if (!preferenzeRemote || !preferenzeRemote.json) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
@@ -722,7 +722,7 @@ async function deleteConfigModality() {
 }
 
 async function scritturaPreferenzeAPI(aetitle, username, body) {
-  const apiUrl = `https://suite.nolex.it/viewer/userdata/${aetitle}/?user=${username}`;
+  const apiUrl = `${window.location.origin}/viewer/userdata/${aetitle}/?user=${username}`;
   const datiDaInviare = {
     username: username,
     json: body,

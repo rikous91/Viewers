@@ -213,9 +213,9 @@ export function Preferiti({
   setTimeout(() => {
     const iconaStella = document.querySelector('.nolex-selected .preferiti-btn img');
     if (iconaStella.src.includes('preferiti-active')) {
-      iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti.png';
+      iconaStella.src = '/nolexviewer/assets/images/preferiti.png';
     } else {
-      iconaStella.src = '/nuovo-visualizzatore/assets/images/preferiti-active.png';
+      iconaStella.src = '/nolexviewer/assets/images/preferiti-active.png';
     }
   }, 0);
 
