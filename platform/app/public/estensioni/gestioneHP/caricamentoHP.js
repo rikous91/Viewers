@@ -33,7 +33,7 @@ const caricamentoHP = async () => {
   }
   //Verifico che ci siano già delle preferenze nella localStorage. Se non fosse così è la prima volta che richiedo le preferenze quindi le chiedo al server
   if (!localStorage.getItem(`preferenzeUtente-${aetitle}`)) {
-    preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUID);
+    preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUID);
     if (!preferenzeRemote || !preferenzeRemote.json) {
       return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
     }
@@ -124,7 +124,7 @@ const caricamentoHP = async () => {
   }
 
   //A fine caricamento rinnovo la localStorage per avere dati sempre freschi e aggiornati
-  preferenzeRemote = await letturaPreferenzeAPI(aetitle, studyInstanceUID);
+  preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUID);
   if (!preferenzeRemote || !preferenzeRemote.json) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
@@ -132,8 +132,8 @@ const caricamentoHP = async () => {
   localStorage.setItem(`preferenzeUtente-${aetitle}`, JSON.stringify(preferenzeRemote.json));
 };
 
-async function letturaPreferenzeAPI(aetitle, studyInstanceUID) {
-  const apiUrl = `https://suite.nolex.it/viewer/userdata/${aetitle}/?user=admin&StudyInstanceUIDs=${studyInstanceUID}&cacheBuster=${new Date().getTime()}`;
+async function letturaPreferenzeAPI(aetitle, username, studyInstanceUID) {
+  const apiUrl = `${window.location.origin}/viewer/userdata/${aetitle}/?user=${username}&StudyInstanceUIDs=${studyInstanceUID}&cacheBuster=${new Date().getTime()}`;
 
   try {
     const apiResponse = await fetch(apiUrl, {

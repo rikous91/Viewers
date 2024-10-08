@@ -86,37 +86,40 @@ function Local({ modePath }: LocalProps) {
   };
 
   const fetchLocalFile = async () => {
-    //Recupero il numero di file su cui eseguire le singole chiamate
     const numeroFile = await getFileNumber();
-    const files = [];
-    for (let i = 0; i < numeroFile; i++) {
-      try {
-        const response = await fetch(`http://localhost:8088/getFileByIndex/${i}`);
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
+    try {
+      let completedRequests = 0; // Conta il numero di richieste completate
+      const promises = [];
 
-        const arrayBuffer = await response.arrayBuffer(); // Ottieni i dati binari come ArrayBuffer
-        const uint8Array = new Uint8Array(arrayBuffer);
-        const contentDisposition = response.headers.get('Content-Disposition');
-        const match = contentDisposition && contentDisposition.match(/filename="(.+)"/);
-        const fileName = match ? match[1] : `file_${i}.dcm`; // Ottieni il nome del file dall'header
+      for (let i = 0; i < numeroFile; i++) {
+        promises.push(
+          fetch(`http://localhost:8088/getFileByIndex/${i}`).then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.arrayBuffer().then(arrayBuffer => {
+              const uint8Array = new Uint8Array(arrayBuffer);
+              const contentDisposition = response.headers.get('Content-Disposition');
+              const match = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+              const fileName = match ? match[1] : `file_${i}.dcm`;
 
-        const file = new File([uint8Array], fileName); // Crea un oggetto File con Uint8Array e nome file
-        files.push(file); // Aggiungi il file alla lista
-        const progress = Math.round(((i + 1) / numeroFile) * 100);
-        setPercentComplete(progress); // Aggiorna la percentuale completata
-      } catch (error) {
-        console.error('Fetch error:', error);
+              // Aggiorna il progresso quando una richiesta è completata
+              completedRequests++;
+              const progress = Math.round((completedRequests / numeroFile) * 100);
+              setPercentComplete(progress); // Aggiorna la percentuale completata
+
+              return new File([uint8Array], fileName);
+            });
+          })
+        );
       }
-    }
-    onDrop(files);
-  };
 
-  // Funzione per convertire Uint8Array in File
-  const uint8ArrayToFile = (uint8Array, filename) => {
-    const blob = new Blob([uint8Array], { type: 'application/dicom' });
-    return new File([blob], filename, { type: blob.type });
+      const files = await Promise.all(promises);
+      onDrop(files); // Esegui una volta completato
+      setPercentComplete(100); // Imposta la percentuale finale al 100%
+    } catch (error) {
+      console.error('Fetch error:', error);
+    }
   };
 
   const onDrop = async acceptedFiles => {

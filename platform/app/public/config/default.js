@@ -16,8 +16,8 @@ window.nolexUsername = new URLSearchParams(new URL(window.location.href).search)
 window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
 let origin = window.location.origin;
 
-window.isSuite = false;
-window.storicoRemoto = true;
+window.isSuite = true;
+window.storicoRemoto = false;
 window.portableVersion = false;
 
 let qidoRoot = `${origin}/viewer/qido`;
@@ -42,8 +42,8 @@ if (
 }
 
 window.config = {
-  // routerBasename: '/nuovo-visualizzatore',
-  routerBasename: `${window.portableVersion ? '/' : '/nuovo-visualizzatore'}`,
+  //routerBasename:  '/viewer',
+  routerBasename: `${window.portableVersion ? '/' : '/nolexviewer'}`,
   // whiteLabeling: {},
   extensions: [],
   modes: [],

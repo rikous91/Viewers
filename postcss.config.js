@@ -6,6 +6,7 @@ module.exports = function (ctx) {
     map: ctx.env === 'development' ? ctx.map : false,
     plugins: {
       'postcss-import': {},
+      'postcss-nested': {}, // Aggiunto supporto per regole nidificate
       'postcss-preset-env': {},
       cssnano: ctx.env === 'production' ? {} : false,
     },

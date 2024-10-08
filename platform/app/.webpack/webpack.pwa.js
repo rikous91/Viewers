@@ -1,9 +1,13 @@
 // https://developers.google.com/web/tools/workbox/guides/codelabs/webpack
 // ~~ WebPack
+const fs = require('fs');
 const path = require('path');
+const moment = require('moment');
+const formattedDateTime = moment().format('YYYYMMDD-HHmmss');
 const { merge } = require('webpack-merge');
 const webpack = require('webpack');
 const webpackBase = require('./../../../.webpack/webpack.base.js');
+const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 // ~~ Plugins
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
@@ -24,6 +28,9 @@ const OHIF_PORT = Number(process.env.OHIF_PORT || 3000);
 const ENTRY_TARGET = process.env.ENTRY_TARGET || `${SRC_DIR}/index.js`;
 const Dotenv = require('dotenv-webpack');
 const writePluginImportFile = require('./writePluginImportsFile.js');
+let version_number = fs.readFileSync(path.join(__dirname, '../../../version.txt'), 'utf8') || '';
+version_number = `${version_number.replace('beta', 'prod')}-${formattedDateTime}`
+fs.writeFileSync(path.join(__dirname, '../../../version.txt'), version_number, 'utf8');
 
 const copyPluginFromExtensions = writePluginImportFile(SRC_DIR, DIST_DIR);
 
@@ -81,6 +88,13 @@ module.exports = (env, argv) => {
       ],
     },
     plugins: [
+      new WebpackShellPluginNext({
+        onBuildEnd: {
+          scripts: [`echo "Version: ${version_number}" > dist/version.txt`],
+          blocking: false,
+          parallel: true,
+        },
+      }),
       new Dotenv(),
       // Clean output.path
       new CleanWebpackPlugin(),
