@@ -73,6 +73,7 @@
     "execa": "^8.0.1",
     "lodash": "^4.17.21",
     "patch-package": "^8.0.0",
+    "react-shepherd": "^6.1.1",
     "tailwindcss-animate": "^1.0.7",
     "webpack-shell-plugin-next": "^2.3.2"
   },
