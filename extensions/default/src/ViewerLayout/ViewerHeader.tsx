@@ -47,6 +47,7 @@ function ViewerHeader({
   const { show, hide } = useModal();
   const { hotkeyDefinitions, hotkeyDefaults } = hotkeysManager;
   const versionNumber = process.env.VERSION_NUMBER;
+  version_number = `${version_number.replace('beta', 'prod')}-${formattedDateTime}`;
   const commitHash = process.env.COMMIT_HASH;
 
   const menuOptions = [

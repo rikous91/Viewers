@@ -7,7 +7,6 @@ const formattedDateTime = moment().format('YYYYMMDD-HHmmss');
 const { merge } = require('webpack-merge');
 const webpack = require('webpack');
 const webpackBase = require('./../../../.webpack/webpack.base.js');
-const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 // ~~ Plugins
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
@@ -29,8 +28,28 @@ const ENTRY_TARGET = process.env.ENTRY_TARGET || `${SRC_DIR}/index.js`;
 const Dotenv = require('dotenv-webpack');
 const writePluginImportFile = require('./writePluginImportsFile.js');
 let version_number = fs.readFileSync(path.join(__dirname, '../../../version.txt'), 'utf8') || '';
-version_number = `${version_number.replace('beta', 'prod')}-${formattedDateTime}`
+if (version_number.includes('_')) {
+  version_number = version_number.split('_')[0]
+}
+version_number = `${version_number.replace('beta', 'prod')}_${formattedDateTime}`;
 fs.writeFileSync(path.join(__dirname, '../../../version.txt'), version_number, 'utf8');
+
+class WriteVersionPlugin {
+  apply(compiler) {
+    compiler.hooks.done.tap('WriteVersionPlugin', () => {
+      const fs = require('fs');
+      const path = require('path');
+      const versionFilePath = path.join(__dirname, '../dist/version.txt');
+
+      // Assicurati che la cartella 'dist' esista
+      fs.mkdirSync(path.dirname(versionFilePath), { recursive: true });
+
+      // Scrivi il numero di versione nel file version.txt
+      fs.writeFileSync(versionFilePath, `Version: ${version_number}`, 'utf8');
+      console.log('Versione aggiornata:', version_number);
+    });
+  }
+}
 
 const copyPluginFromExtensions = writePluginImportFile(SRC_DIR, DIST_DIR);
 
@@ -88,13 +107,7 @@ module.exports = (env, argv) => {
       ],
     },
     plugins: [
-      new WebpackShellPluginNext({
-        onBuildEnd: {
-          scripts: [`echo "Version: ${version_number}" > dist/version.txt`],
-          blocking: false,
-          parallel: true,
-        },
-      }),
+      new WriteVersionPlugin(),
       new Dotenv(),
       // Clean output.path
       new CleanWebpackPlugin(),
