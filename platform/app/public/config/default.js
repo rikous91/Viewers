@@ -35,14 +35,14 @@ if (
   window.location.href.includes('&hangingProtocolId=nolexhp')
 ) {
   let newUrl = window.location.href;
-  // newUrl = newUrl.replace('https://test2.nolex.it/', 'http://195.231.5.156/');
+  // newUrl = newUrl.replace('https://test2.nolex.it/', 'http://195.231.5.156/') ;
   newUrl = newUrl.replace('&study', '&StudyInstanceUIDs');
   newUrl = newUrl.replace(/&hangingProtocolId=nolexhp/g, '');
   window.location.href = newUrl;
 }
 
 window.config = {
-  //routerBasename:  '/viewer',
+  //routerBasename: '/viewer',
   routerBasename: `${window.portableVersion ? '/' : '/nolexviewer'}`,
   // whiteLabeling: {},
   extensions: [],
