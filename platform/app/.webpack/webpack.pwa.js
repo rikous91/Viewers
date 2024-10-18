@@ -28,11 +28,6 @@ const ENTRY_TARGET = process.env.ENTRY_TARGET || `${SRC_DIR}/index.js`;
 const Dotenv = require('dotenv-webpack');
 const writePluginImportFile = require('./writePluginImportsFile.js');
 let version_number = fs.readFileSync(path.join(__dirname, '../../../version.txt'), 'utf8') || '';
-if (version_number.includes('_')) {
-  version_number = version_number.split('_')[0]
-}
-version_number = `${version_number.replace('beta', 'prod')}_${formattedDateTime}`;
-fs.writeFileSync(path.join(__dirname, '../../../version.txt'), version_number, 'utf8');
 
 class WriteVersionPlugin {
   apply(compiler) {
@@ -75,6 +70,14 @@ module.exports = (env, argv) => {
   const isProdBuild = process.env.NODE_ENV === 'production';
   const hasProxy = PROXY_TARGET && PROXY_DOMAIN;
 
+  if (isProdBuild) {
+    if (version_number.includes('_')) {
+      version_number = version_number.split('_')[0]
+    }
+    version_number = `${version_number.replace('beta', 'prod')}_${formattedDateTime}`;
+    fs.writeFileSync(path.join(__dirname, '../../../version.txt'), version_number, 'utf8');
+  }
+
   const mergedConfig = merge(baseConfig, {
     entry: {
       app: ENTRY_TARGET,
@@ -108,6 +111,9 @@ module.exports = (env, argv) => {
     },
     plugins: [
       new WriteVersionPlugin(),
+      new webpack.DefinePlugin({
+        'process.env.VERSION_NUMBER': JSON.stringify(version_number),
+      }),
       new Dotenv(),
       // Clean output.path
       new CleanWebpackPlugin(),
