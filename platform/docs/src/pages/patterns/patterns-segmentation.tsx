@@ -1,20 +1,15 @@
 import React, { useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import '../tailwind.css';
 
-import { Button } from '../components/Button';
+import { DataRow } from '../../../../ui-next/src/components/DataRow';
+import { Button } from '../../../../ui-next/src/components/Button';
 import {
   Select,
-  SelectGroup,
   SelectValue,
   SelectTrigger,
   SelectContent,
-  SelectLabel,
   SelectItem,
-  SelectSeparator,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
-} from '../components/Select';
+} from '../../../../ui-next/src/components/Select';
+import { Icons } from '../../../../ui-next/src/components/Icons';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -26,24 +21,19 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuPortal,
-} from '../components/DropdownMenu';
-import { Icons } from '../components/Icons/Icons';
-import DataRow from '../_prototypes/DataRow/DataRow';
-import dataList from '../_prototypes/DataRow/dataList.json';
-import actionOptionsMap from '../_prototypes/DataRow/actionOptionsMap';
+} from '../../../../ui-next/src/components/DropdownMenu';
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
-} from '../components/Accordion/Accordion';
-import { Slider } from '../components/Slider';
-import { Switch } from '../components/Switch';
-import { Label } from '../components/Label';
-import { Input } from '../components/Input';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/Tabs';
-
-import { ChevronDownIcon } from '@radix-ui/react-icons';
+} from '../../../../ui-next/src/components/Accordion';
+import { Slider } from '../../../../ui-next/src/components/Slider';
+import { Switch } from '../../../../ui-next/src/components/Switch';
+import { Label } from '../../../../ui-next/src/components/Label';
+import { Input } from '../../../../ui-next/src/components/Input';
+import { Tabs, TabsList, TabsTrigger } from '../../../../ui-next/src/components/Tabs';
+import { actionOptionsMap, dataList } from '../../../../ui-next/assets/data';
 
 interface DataItem {
   id: number;
@@ -60,7 +50,7 @@ interface ListGroup {
   items: DataItem[];
 }
 
-function Patterns() {
+export default function SegmentationPanel() {
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<string>('Fill & Outline');
   const handleAction = (id: string, action: string) => {
@@ -82,12 +72,11 @@ function Patterns() {
   }
 
   return (
-    <div className="my-4 flex max-w-6xl justify-end py-6">
+    <div className="my-4 flex h-full w-full max-w-6xl justify-end bg-black py-6">
       <div className="w-64 space-y-0">
         <Accordion
           type="multiple"
           defaultValue={['segmentation-tools', 'segmentation-list']}
-          collapsible
         >
           {/* Segmentation Tools */}
           <AccordionItem value="segmentation-tools">
@@ -123,14 +112,14 @@ function Patterns() {
                         <span className="pl-2">Create New Segmentation</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuLabel>Current Segmentation</DropdownMenuLabel>
+                      <DropdownMenuLabel>Manage Current Segmentation</DropdownMenuLabel>
+                      <DropdownMenuItem>
+                        <Icons.Series className="text-foreground" />
+                        <span className="pl-2">Remove from Viewport</span>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Icons.Rename className="text-foreground" />
                         <span className="pl-2">Rename</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Icons.Delete className="text-foreground" />
-                        <span className="pl-2">Delete</span>
                       </DropdownMenuItem>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
@@ -145,6 +134,11 @@ function Patterns() {
                           </DropdownMenuSubContent>
                         </DropdownMenuPortal>
                       </DropdownMenuSub>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Icons.Delete className="text-red-600" />
+                        <span className="pl-2 text-red-600">Delete</span>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <Select>
@@ -197,7 +191,7 @@ function Patterns() {
                         </Tabs>
                       </div>
                       {/* Opacity Slider */}
-                      <div className="my-2 flex items-center ">
+                      <div className="my-2 flex items-center">
                         <Label className="text-muted-foreground mx-1 w-14 flex-none whitespace-nowrap text-xs">
                           Opacity
                         </Label>
@@ -244,7 +238,7 @@ function Patterns() {
                         </Label>
                       </div>
                       {/* Additional Opacity Slider */}
-                      <div className="my-2 flex items-center ">
+                      <div className="my-2 flex items-center">
                         <Label className="text-muted-foreground mx-1 w-14 flex-none whitespace-nowrap text-xs">
                           Opacity
                         </Label>
@@ -284,10 +278,10 @@ function Patterns() {
               {/* Data Rows */}
               <div className="space-y-px">
                 {organSegmentationGroup.items.map((item, index) => {
-                  const compositeId = `${organSegmentationGroup.type}-${item.id}-panel`;
+                  const compositeId = `${organSegmentationGroup.type}-${item.id}-panel`; // Ensure unique composite ID
                   return (
                     <DataRow
-                      key={`panel-${compositeId}`}
+                      key={`panel-${compositeId}`} // Prefix to ensure uniqueness
                       number={index + 1}
                       title={item.title}
                       description={item.description}
@@ -310,7 +304,3 @@ function Patterns() {
     </div>
   );
 }
-
-const container = document.getElementById('root');
-const root = createRoot(container!);
-root.render(<Patterns />);
