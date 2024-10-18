@@ -752,6 +752,23 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
+.shepherd-element {
+  .shepherd-title,
+  button.shepherd-button,
+  .shepherd-progress {
+    color: #ff8e8e !important;
+  }
+  background-color: rgb(138, 24, 24) !important;
+  color: #fff !important;
+  .shepherd-header {
+    background-color: rgb(138, 24, 24) !important;
+    color: #fff !important;
+  }
+  .shepherd-arrow::before {
+    background-color: rgb(138, 24, 24) !important;
+  }
+}
+
 @keyframes loading2 {
   100% {
     width: 100%;

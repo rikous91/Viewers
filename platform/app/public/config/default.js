@@ -16,7 +16,7 @@ window.nolexUsername = new URLSearchParams(new URL(window.location.href).search)
 window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
 let origin = window.location.origin;
 
-window.isSuite = false;
+window.isSuite = true;
 window.storicoRemoto = false;
 window.portableVersion = false;
 
@@ -359,13 +359,13 @@ window.config = {
   tours: [
     {
       id: 'basicViewerTour',
-      // route: '/viewer',
-      route: '/null',
+      route: '/viewer',
+      // route: '/null',
       steps: [
         {
           id: 'scroll',
-          title: 'Scrolling Through Images',
-          text: 'You can scroll through the images using the mouse wheel or scrollbar.',
+          title: 'Scorrere le Immagini',
+          text: 'Puoi scorrere le immagini utilizzando la rotellina del mouse o la barra di scorrimento',
           attachTo: {
             element: '.viewport-element',
             on: 'top',
@@ -378,8 +378,8 @@ window.config = {
         },
         {
           id: 'zoom',
-          title: 'Zooming In and Out',
-          text: 'You can zoom the images using the right click.',
+          title: 'Zoomare In e Out',
+          text: 'Puoi zoomare sulle immagini utilizzando il clic destro del mouse.',
           attachTo: {
             element: '.viewport-element',
             on: 'left',
@@ -392,8 +392,8 @@ window.config = {
         },
         {
           id: 'pan',
-          title: 'Panning the Image',
-          text: 'You can pan the images using the middle click.',
+          title: "Spostare l'Immagine",
+          text: 'Puoi spostare le immagini utilizzando il clic centrale del mouse.',
           attachTo: {
             element: '.viewport-element',
             on: 'top',
@@ -406,8 +406,8 @@ window.config = {
         },
         {
           id: 'windowing',
-          title: 'Adjusting Window Level',
-          text: 'You can modify the window level using the left click.',
+          title: 'Regolare il Livello della Finestra',
+          text: 'Puoi modificare il livello della finestra utilizzando il clic sinistro del mouse.',
           attachTo: {
             element: '.viewport-element',
             on: 'left',
@@ -420,8 +420,8 @@ window.config = {
         },
         {
           id: 'length',
-          title: 'Using the Measurement Tools',
-          text: 'You can measure the length of a region using the Length tool.',
+          title: 'Utilizzo degli Strumenti di Misurazione',
+          text: 'Puoi misurare la lunghezza di una regione utilizzando lo strumento Lunghezza.',
           attachTo: {
             element: '[data-cy="MeasurementTools-split-button-primary"]',
             on: 'bottom',
@@ -431,12 +431,12 @@ window.config = {
             event: 'click',
           },
           beforeShowPromise: () =>
-            waitForElement('[data-cy="MeasurementTools-split-button-primary]'),
+            waitForElement('[data-cy="MeasurementTools-split-button-primary"]'),
         },
         {
           id: 'drawAnnotation',
-          title: 'Drawing Length Annotations',
-          text: 'Use the length tool on the viewport to measure the length of a region.',
+          title: 'Disegnare Annotazioni di Lunghezza',
+          text: 'Usa lo strumento lunghezza sul viewport per misurare la lunghezza di una regione.',
           attachTo: {
             element: '.viewport-element',
             on: 'right',
@@ -448,23 +448,9 @@ window.config = {
           beforeShowPromise: () => waitForElement('.viewport-element'),
         },
         {
-          id: 'trackMeasurement',
-          title: 'Tracking Measurements in the Panel',
-          text: 'Click yes to track the measurements in the measurement panel.',
-          attachTo: {
-            element: '[data-cy="prompt-begin-tracking-yes-btn"]',
-            on: 'bottom',
-          },
-          advanceOn: {
-            selector: '[data-cy="prompt-begin-tracking-yes-btn"]',
-            event: 'click',
-          },
-          beforeShowPromise: () => waitForElement('[data-cy="prompt-begin-tracking-yes-btn"]'),
-        },
-        {
           id: 'openMeasurementPanel',
-          title: 'Opening the Measurements Panel',
-          text: 'Click the measurements button to open the measurements panel.',
+          title: 'Aprire il Pannello delle Misurazioni',
+          text: 'Clicca sul pulsante delle misurazioni per aprire il pannello delle misurazioni.',
           attachTo: {
             element: '#trackedMeasurements-btn',
             on: 'left-start',
@@ -477,8 +463,8 @@ window.config = {
         },
         {
           id: 'scrollAwayFromMeasurement',
-          title: 'Scrolling Away from a Measurement',
-          text: 'Scroll the images using the mouse wheel away from the measurement.',
+          title: 'Scorrere Lontano da una Misurazione',
+          text: 'Scorri le immagini usando la rotellina del mouse lontano dalla misurazione.',
           attachTo: {
             element: '.viewport-element',
             on: 'left',
@@ -489,24 +475,24 @@ window.config = {
           },
           beforeShowPromise: () => waitForElement('.viewport-element'),
         },
-        {
-          id: 'jumpToMeasurement',
-          title: 'Jumping to Measurements in the Panel',
-          text: 'Click the measurement in the measurement panel to jump to it.',
-          attachTo: {
-            element: '[data-cy="measurement-item"]',
-            on: 'left-start',
-          },
-          advanceOn: {
-            selector: '[data-cy="measurement-item"]',
-            event: 'click',
-          },
-          beforeShowPromise: () => waitForElement('[data-cy="measurement-item"]'),
-        },
+        // {
+        //   id: 'jumpToMeasurement',
+        //   title: 'Saltare alle Misurazioni nel Pannello',
+        //   text: 'Clicca sulla misurazione nel pannello delle misurazioni per saltare ad essa.',
+        //   attachTo: {
+        //     element: '[data-cy="measurement-item"]',
+        //     on: 'left-start',
+        //   },
+        //   advanceOn: {
+        //     selector: '[data-cy="measurement-item"]',
+        //     event: 'click',
+        //   },
+        //   beforeShowPromise: () => waitForElement('[data-cy="measurement-item"]'),
+        // },
         {
           id: 'changeLayout',
-          title: 'Changing Layout',
-          text: 'You can change the layout of the viewer using the layout button.',
+          title: 'Cambiare il Layout',
+          text: 'Puoi cambiare il layout del visualizzatore usando il pulsante di layout.',
           attachTo: {
             element: '[data-cy="Layout"]',
             on: 'bottom',
@@ -518,26 +504,41 @@ window.config = {
           beforeShowPromise: () => waitForElement('[data-cy="Layout"]'),
         },
         {
-          id: 'selectLayout',
-          title: 'Selecting the MPR Layout',
-          text: 'Select the MPR layout to view the images in MPR mode.',
+          id: 'selectMPRSeries',
+          title: 'Selezionare una serie ricostruibile per appicare il Layout MPR',
+          text: 'Selezionare una serie ricostruibile per appicare il Layout MPR',
           attachTo: {
-            element: '[data-cy="MPR"]',
+            element: '.mpr-thumbnail',
             on: 'left-start',
           },
           advanceOn: {
-            selector: '[data-cy="MPR"]',
+            selector: '.mpr-thumbnail',
             event: 'click',
           },
-          beforeShowPromise: () => waitForElement('[data-cy="MPR"]'),
+          beforeShowPromise: () => waitForElement('.mpr-thumbnail'),
+        },
+        {
+          id: 'selectLayout',
+          title: 'Selezionare il Layout MPR',
+          text: 'Seleziona il layout MPR per visualizzare le immagini in modalità MPR.',
+          attachTo: {
+            element: '[data-cy="LayoutMPR"]',
+            on: 'left-start',
+          },
+          advanceOn: {
+            selector: '[data-cy="LayoutMPR"]',
+            event: 'click',
+          },
+          beforeShowPromise: () => waitForElement('[data-cy="LayoutMPR"]'),
         },
       ],
+
       tourOptions: {
         useModalOverlay: true,
         defaultStepOptions: {
           buttons: [
             {
-              text: 'Skip all',
+              text: 'Salta tutto',
               action() {
                 this.complete();
               },
