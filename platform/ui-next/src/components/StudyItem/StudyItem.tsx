@@ -23,7 +23,8 @@ const StudyItem = ({
   onClickUntrack,
   viewPreset = 'thumbnails',
   isStorico,
-}) => {
+  onThumbnailContextMenu,
+}: withAppTypes) => {
   const isStudyUIDDefined =
     studyInstanceUID !== undefined && studyInstanceUID !== null && studyInstanceUID !== '';
 
@@ -47,12 +48,12 @@ const StudyItem = ({
             <div className="flex w-full flex-row items-center justify-between">
               <div className="flex flex-col items-start text-[13px]">
                 <div className="text-white">{date}</div>
-                <div className="text-muted-foreground _truncate _whitespace-nowrap max-w-[160px] overflow-hidden">
+                <div className="text-muted-foreground _truncate _whitespace-nowrap h-[18px] max-w-[160px] overflow-hidden">
                   {description}
                 </div>
               </div>
               <div className="text-muted-foreground mr-2 flex flex-col items-end text-[12px]">
-                <div>{modalities}</div>
+                <div className="max-w-[150px] overflow-hidden text-ellipsis">{modalities}</div>
                 <div>{numInstances}</div>
               </div>
             </div>
@@ -132,6 +133,7 @@ const StudyItem = ({
               onThumbnailDoubleClick={onDoubleClickThumbnail}
               onClickUntrack={onClickUntrack}
               viewPreset={viewPreset}
+              onThumbnailContextMenu={onThumbnailContextMenu}
             />
           )}
         </AccordionContent>
