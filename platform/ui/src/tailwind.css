@@ -478,6 +478,9 @@ input[type='range']::-webkit-slider-thumb {
       padding-top: 32px;
       padding-bottom: 32px;
     }
+    svg {
+      color: #8a1818;
+    }
   }
   #status-warning {
     display: none;
