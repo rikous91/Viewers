@@ -74,7 +74,7 @@ module.exports = (env, argv) => {
     if (version_number.includes('_')) {
       version_number = version_number.split('_')[0]
     }
-    version_number = `${version_number.replace('beta', 'prod')}_${formattedDateTime}`;
+    version_number = `${version_number.replace(/\s+/g, '').replace('beta', 'prod')}_${formattedDateTime}`;
     fs.writeFileSync(path.join(__dirname, '../../../version.txt'), version_number, 'utf8');
   }
 
