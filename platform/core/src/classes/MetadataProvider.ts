@@ -199,6 +199,17 @@ class MetadataProvider {
         const windowCenter = Array.isArray(WindowCenter) ? WindowCenter : [WindowCenter];
         const windowWidth = Array.isArray(WindowWidth) ? WindowWidth : [WindowWidth];
 
+        if (instance.WindowCenter && instance.WindowWidth) {
+          if (!window.NolexDicomLuts) {
+            window.NolexDicomLuts = {};
+          }
+          if (!window.NolexDicomLuts[instance.SeriesInstanceUID]) {
+            window.NolexDicomLuts[instance.SeriesInstanceUID] = {};
+            window.NolexDicomLuts[instance.SeriesInstanceUID].WindowCenter = instance.WindowCenter;
+            window.NolexDicomLuts[instance.SeriesInstanceUID].WindowWidth = instance.WindowWidth;
+          }
+        }
+
         metadata = {
           windowCenter: toNumber(windowCenter),
           windowWidth: toNumber(windowWidth),

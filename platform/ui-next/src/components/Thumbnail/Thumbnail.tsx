@@ -136,7 +136,9 @@ const Thumbnail = ({
               )}
             </div>
             {/* bottom right */}
-            <div className="absolute bottom-0 right-0 flex items-center gap-[4px] p-[4px]">
+
+            {/* Disattivato - pulsane accanto thumbnail serie */}
+            {/* <div className="absolute bottom-0 right-0 flex items-center gap-[4px] p-[4px]">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -164,13 +166,11 @@ const Thumbnail = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="flex h-[52px] w-[128px] flex-col">
-          <div className="min-h-[18px] w-[128px] overflow-hidden text-ellipsis text-[12px] text-white">
-            {description}
-          </div>
+          <div className="text-[12px] text-white">{description}</div>
           <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
             <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
             <div className="text-muted-foreground text-[12px]">
@@ -406,7 +406,7 @@ const Thumbnail = ({
         className,
         `bg-muted hover:bg-primary/30 group flex cursor-pointer select-none flex-col outline-none ${isActive && 'series-is-active'} ${countIcon && countIcon === 'icon-mpr' ? 'mpr-thumbnail' : 'no-mpr-thumbnail'}`,
         viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
-        viewPreset === 'list' && 'col-span-2 h-[40px] w-[275px]'
+        viewPreset === 'list' && 'w-[275px]'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
       data-cy={

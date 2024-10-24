@@ -224,7 +224,7 @@ export function WindowLevelActionMenu({
             </AllInOneMenu.SubMenu>
           )}
 
-          {presets && presets.length > 0 && !is3DVolume && (
+          {((presets && presets.length > 0) || window.NolexDicomLuts) && !is3DVolume && (
             <AllInOneMenu.SubMenu
               key="windowLevelPresets"
               itemLabel={t('Modality Window Presets')}
