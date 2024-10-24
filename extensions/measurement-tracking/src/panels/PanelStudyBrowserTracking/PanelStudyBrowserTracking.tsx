@@ -48,7 +48,7 @@ function PanelStudyBrowserTracking({
   const [{ activeViewportId, viewports, isHangingProtocolLayout }, viewportGridService] =
     useViewportGrid();
   const [trackedMeasurements, sendTrackedMeasurementsEvent] = useTrackedMeasurements();
-  const [activeTabName, setActiveTabName] = useState('all');
+  const [activeTabName, setActiveTabName] = useState('primary');
   const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState([
     ...StudyInstanceUIDs,
   ]);

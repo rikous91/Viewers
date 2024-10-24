@@ -18,11 +18,15 @@ export function getWindowLevelActionMenu({
     'cornerstone.3dVolumeRendering'
   );
 
-  const displaySetPresets = displaySets
-    .filter(displaySet => presets[displaySet.Modality])
-    .map(displaySet => {
-      return { [displaySet.Modality]: presets[displaySet.Modality] };
-    });
+  //Filtro i preset per modality
+  // const displaySetPresets = displaySets
+  //   .filter(displaySet => presets[displaySet.Modality])
+  //   .map(displaySet => {
+  //     return { [displaySet.Modality]: presets[displaySet.Modality] };
+  //   });
+
+  //Restituisco tutti i preset a prescindere dalla modality
+  const displaySetPresets = [presets];
 
   return (
     <WindowLevelActionMenu
