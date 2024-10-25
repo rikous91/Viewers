@@ -1,9 +1,10 @@
-import React, { ReactElement, useCallback } from 'react';
-import { AllInOneMenu } from '@ohif/ui';
+import React, { ReactElement, useCallback, useState } from 'react';
+import { AllInOneMenu, SwitchButton } from '@ohif/ui';
 import { WindowLevelPreset } from '../../types/WindowLevel';
 import { CommandsManager } from '@ohif/core';
 import { useTranslation } from 'react-i18next';
 import ottieniDisplaySetSerieAttiva from '../../../../../platform/core/src/utils/ottieniDisplaySetSerieAttiva';
+import ottieniWLViewportSerieAttiva from '../../../../../platform/core/src/utils/ottieniWLViewportAttiva';
 
 export type WindowLevelProps = {
   viewportId: string;
@@ -16,10 +17,11 @@ export function WindowLevel({
   commandsManager,
   presets,
 }: WindowLevelProps): ReactElement {
+  const [showPreview, setShowPreview] = useState(false);
   const { t } = useTranslation('WindowLevelActionMenu');
-  //Al click recupero la seriesIstanceUID della serie selezionata
+  //Al click recupero la seriesIstanceUID della serie selezionata e la wl attualmente impostata
+  const wlAttuale = ottieniWLViewportSerieAttiva();
   const { SeriesInstanceUID } = ottieniDisplaySetSerieAttiva();
-  console.log(SeriesInstanceUID);
   const dicomPreset = [];
   if (SeriesInstanceUID && window.NolexDicomLuts && window.NolexDicomLuts[SeriesInstanceUID]) {
     const dicomWHWC = window.NolexDicomLuts[SeriesInstanceUID];
@@ -55,34 +57,6 @@ export function WindowLevel({
     }
   }
 
-  // const dicomPreset = [
-  //   {
-  //     description: 'Soft tissue',
-  //     window: '400',
-  //     level: '40',
-  //   },
-  //   {
-  //     description: 'Lung',
-  //     window: '1500',
-  //     level: '-600',
-  //   },
-  //   {
-  //     description: 'Liver',
-  //     window: '150',
-  //     level: '90',
-  //   },
-  //   {
-  //     description: 'Bone',
-  //     window: '2500',
-  //     level: '480',
-  //   },
-  //   {
-  //     description: 'Brain',
-  //     window: '80',
-  //     level: '40',
-  //   },
-  // ];
-
   const onSetWindowLevel = useCallback(
     props => {
       commandsManager.run({
@@ -97,42 +71,69 @@ export function WindowLevel({
     [commandsManager, viewportId]
   );
 
-  return (
-    <AllInOneMenu.ItemPanel>
-      {presets.map((modalityPresets, modalityIndex) => (
-        <React.Fragment key={modalityIndex}>
-          {Object.entries(modalityPresets).map(([modality, presetsArray]) => (
-            <React.Fragment key={modality}>
-              {dicomPreset.length > 0 && (
-                <>
-                  <AllInOneMenu.HeaderItem>Preset DICOM</AllInOneMenu.HeaderItem>
-                  {dicomPreset.map((preset, index) => (
-                    <AllInOneMenu.Item
-                      key={`${modality}-${index}`}
-                      label={preset.description}
-                      secondaryLabel={`${preset.window} / ${preset.level}`}
-                      onClick={() => onSetWindowLevel(preset)}
-                    />
-                  ))}
-                </>
-              )}
+  const onSetWindowLevelPreview = preset => {
+    if (!showPreview) {
+      return;
+    }
+    onSetWindowLevel(preset);
+  };
 
-              <AllInOneMenu.HeaderItem>
-                {/* {t('Preset Modality', { modality })} */}
-                Preset {modality}
-              </AllInOneMenu.HeaderItem>
-              {presetsArray.map((preset, index) => (
-                <AllInOneMenu.Item
-                  key={`${modality}-${index}`}
-                  label={preset.description}
-                  secondaryLabel={`${preset.window} / ${preset.level}`}
-                  onClick={() => onSetWindowLevel(preset)}
-                />
-              ))}
-            </React.Fragment>
-          ))}
-        </React.Fragment>
-      ))}
-    </AllInOneMenu.ItemPanel>
+  const onLeaveWindowLevelPreview = preset => {
+    if (!showPreview) {
+      return;
+    }
+    onSetWindowLevel(preset);
+  };
+
+  return (
+    <>
+      <SwitchButton
+        label="Anteprima live"
+        checked={showPreview}
+        onChange={checked => {
+          setShowPreview(checked);
+        }}
+      />
+      <AllInOneMenu.ItemPanel>
+        {presets.map((modalityPresets, modalityIndex) => (
+          <React.Fragment key={modalityIndex}>
+            {Object.entries(modalityPresets).map(([modality, presetsArray]) => (
+              <React.Fragment key={modality}>
+                {dicomPreset.length > 0 && (
+                  <>
+                    <AllInOneMenu.HeaderItem>Preset DICOM</AllInOneMenu.HeaderItem>
+                    {dicomPreset.map((preset, index) => (
+                      <AllInOneMenu.Item
+                        key={`${modality}-${index}`}
+                        label={preset.description}
+                        secondaryLabel={`${preset.window} / ${preset.level}`}
+                        onClick={() => onSetWindowLevel(preset)}
+                        onMouseEnter={() => onSetWindowLevelPreview(preset)}
+                        onMouseLeave={() => onLeaveWindowLevelPreview(wlAttuale)}
+                      />
+                    ))}
+                  </>
+                )}
+
+                <AllInOneMenu.HeaderItem>
+                  {/* {t('Preset Modality', { modality })} */}
+                  Preset {modality}
+                </AllInOneMenu.HeaderItem>
+                {presetsArray.map((preset, index) => (
+                  <AllInOneMenu.Item
+                    key={`${modality}-${index}`}
+                    label={preset.description}
+                    secondaryLabel={`${preset.window} / ${preset.level}`}
+                    onClick={() => onSetWindowLevel(preset)}
+                    onMouseEnter={() => onSetWindowLevelPreview(preset)}
+                    onMouseLeave={() => onLeaveWindowLevelPreview(wlAttuale)}
+                  />
+                ))}
+              </React.Fragment>
+            ))}
+          </React.Fragment>
+        ))}
+      </AllInOneMenu.ItemPanel>
+    </>
   );
 }

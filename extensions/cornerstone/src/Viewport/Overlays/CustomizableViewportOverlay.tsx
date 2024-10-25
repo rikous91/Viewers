@@ -537,9 +537,9 @@ function VOIOverlayItem({ voi, customization }: OverlayItemProps) {
       style={{ color: customization?.color }}
     >
       <span className="mr-1 shrink-0">W:</span>
-      <span className="ml-1 mr-2 shrink-0">{windowWidth.toFixed(0)}</span>
+      <span className="windowWidth-viewport ml-1 mr-2 shrink-0">{windowWidth.toFixed(0)}</span>
       <span className="mr-1 shrink-0">L:</span>
-      <span className="ml-1 shrink-0">{windowCenter.toFixed(0)}</span>
+      <span className="windowCenter-viewport ml-1 shrink-0">{windowCenter.toFixed(0)}</span>
     </div>
   );
 }
