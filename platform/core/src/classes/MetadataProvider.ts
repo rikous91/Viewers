@@ -200,14 +200,20 @@ class MetadataProvider {
         const windowWidth = Array.isArray(WindowWidth) ? WindowWidth : [WindowWidth];
 
         if (instance.WindowCenter && instance.WindowWidth) {
-          if (!window.NolexDicomLuts) {
-            window.NolexDicomLuts = {};
-          }
-          if (!window.NolexDicomLuts[instance.SeriesInstanceUID]) {
-            window.NolexDicomLuts[instance.SeriesInstanceUID] = {};
-            window.NolexDicomLuts[instance.SeriesInstanceUID].WindowCenter = instance.WindowCenter;
-            window.NolexDicomLuts[instance.SeriesInstanceUID].WindowWidth = instance.WindowWidth;
-          }
+          // inizializzo window.NolexDicomLuts se non esiste
+          window.NolexDicomLuts ??= {};
+
+          const dicomLuts = window.NolexDicomLuts;
+          const seriesUID = instance.SeriesInstanceUID;
+
+          // se non esiste un oggetto per la SeriesInstanceUID lo creo
+          dicomLuts[seriesUID] ??= {
+            WindowCenter: instance.WindowCenter,
+            WindowWidth: instance.WindowWidth,
+            ...(instance.WindowCenterWidthExplanation && {
+              WindowCenterWidthExplanation: instance.WindowCenterWidthExplanation,
+            }),
+          };
         }
 
         metadata = {

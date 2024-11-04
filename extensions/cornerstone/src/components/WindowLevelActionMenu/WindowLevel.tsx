@@ -79,7 +79,7 @@ export function WindowLevel({
   };
 
   const onLeaveWindowLevelPreview = preset => {
-    if (!showPreview) {
+    if (!showPreview || !preset) {
       return;
     }
     onSetWindowLevel(preset);
@@ -87,13 +87,16 @@ export function WindowLevel({
 
   return (
     <>
-      <SwitchButton
-        label="Anteprima live"
-        checked={showPreview}
-        onChange={checked => {
-          setShowPreview(checked);
-        }}
-      />
+      <div className="all-in-one-menu-item flex w-full justify-center">
+        <SwitchButton
+          label="Anteprima live"
+          checked={showPreview}
+          onChange={checked => {
+            setShowPreview(checked);
+          }}
+        />
+      </div>
+      <AllInOneMenu.DividerItem />
       <AllInOneMenu.ItemPanel>
         {presets.map((modalityPresets, modalityIndex) => (
           <React.Fragment key={modalityIndex}>
