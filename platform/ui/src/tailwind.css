@@ -679,7 +679,7 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 .nolex-scrolling-loading-p {
-  display: none !important;
+  /* display: none !important; */
   top: 54px;
   right: 20px;
   position: absolute;
