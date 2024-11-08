@@ -330,7 +330,7 @@ export function WindowLevelActionMenu({
             {
               <Preferiti
                 viewportId={viewportId}
-                displaySets={displaySets.filter(ds => !nonImageModalities.includes(ds.Modality))}
+                displaySets={displaySets.filter(ds => !nonWLModalities.includes(ds.Modality))}
                 commandsManager={commandsManager}
                 servicesManager={servicesManager}
                 colorbarProperties={colorbarProperties}

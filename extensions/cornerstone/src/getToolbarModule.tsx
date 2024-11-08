@@ -360,7 +360,7 @@ function _evaluateToggle({
     return {
       disabled: true,
       className: '!text-common-bright ohif-disabled',
-      disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
+      disabledText: disabledText ?? 'Not available on the current viewport',
     };
   }
 

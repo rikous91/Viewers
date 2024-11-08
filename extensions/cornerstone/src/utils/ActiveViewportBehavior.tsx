@@ -1,6 +1,7 @@
 import { useEffect, useState, memo } from 'react';
 
-const MODALITIES_REQUIRING_CINE_AUTO_MOUNT = ['OT', 'US'];
+// const MODALITIES_REQUIRING_CINE_AUTO_MOUNT = ['OT', 'US'];
+const MODALITIES_REQUIRING_CINE_AUTO_MOUNT = ['ggdff'];
 
 const ActiveViewportBehavior = memo(
   ({ servicesManager, viewportId }: withAppTypes<{ viewportId: string }>) => {

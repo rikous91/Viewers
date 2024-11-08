@@ -17,9 +17,10 @@ const formatWithEllipsis = (str, maxLength) => {
 };
 
 function HeaderPatientInfo({ servicesManager, appConfig }: withAppTypes) {
-  const initialExpandedState =
-    appConfig.showPatientInfo === PatientInfoVisibility.VISIBLE ||
-    appConfig.showPatientInfo === PatientInfoVisibility.VISIBLE_READONLY;
+  // const initialExpandedState =
+  //   appConfig.showPatientInfo === PatientInfoVisibility.VISIBLE ||
+  //   appConfig.showPatientInfo === PatientInfoVisibility.VISIBLE_READONLY;
+  const initialExpandedState = true;
   const [expanded, setExpanded] = useState(initialExpandedState);
   const { patientInfo, isMixedPatients } = usePatientInfo(servicesManager);
 
@@ -62,7 +63,7 @@ function HeaderPatientInfo({ servicesManager, appConfig }: withAppTypes) {
           </>
         ) : (
           <div className="text-primary-active self-center text-[13px]">
-            {isMixedPatients ? 'Multiple Patients' : 'Patient'}
+            {isMixedPatients ? 'Pazienti multipli' : 'Paziente'}
           </div>
         )}
       </div>
