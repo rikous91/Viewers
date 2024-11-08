@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   getEnabledElement,
   StackViewport,
@@ -12,7 +13,7 @@ import {
   utilities as cstUtils,
   ReferenceLinesTool,
 } from '@cornerstonejs/tools';
-
+import { useToggleOneUpViewportGridStore } from '@ohif/extension-default';
 import { Types as OhifTypes } from '@ohif/core';
 import {
   callLabelAutocompleteDialog,
@@ -57,7 +58,6 @@ function commandsModule({
     hangingProtocolService,
     displaySetService,
     syncGroupService,
-    stateSyncService,
   } = servicesManager.services;
 
   const { measurementServiceSource } = this;
@@ -83,12 +83,58 @@ function commandsModule({
     } //Salvo lo stato solo in modalità NON MPR
     window.storedState = true;
     const viewportGridState = viewportGridService.getState();
-    stateSyncService.store({
-      toggleOneUpViewportGridStore: viewportGridState,
-    });
+    const { setToggleOneUpViewportGridStore } = useToggleOneUpViewportGridStore.getState();
+    setToggleOneUpViewportGridStore(viewportGridState);
   };
 
   const restoreState = () => {
+    if (!window.storedState) {
+      return;
+    }
+    const viewportGridState = viewportGridService.getState();
+    const { activeViewportId, viewports, layout, isHangingProtocolLayout } = viewportGridState;
+    const { displaySetInstanceUIDs, displaySetOptions, viewportOptions } =
+      viewports.get(activeViewportId);
+    //Permetto di ripristinare lo stato una volta sola, per ripristinarlo una seconda volta occorre fare un nuovo storeState
+
+    const { toggleOneUpViewportGridStore } = useToggleOneUpViewportGridStore.getState();
+
+    if (!toggleOneUpViewportGridStore) {
+      return;
+    }
+    // There is a state to toggle back to. The viewport that was
+    // originally toggled to one up was the former active viewport.
+    const viewportIdToUpdate = toggleOneUpViewportGridStore.activeViewportId;
+
+    // We are restoring the previous layout but taking into the account that
+    // the current one up viewport might have a new displaySet dragged and dropped on it.
+    // updatedViewportsViaHP below contains the viewports applicable to the HP that existed
+    // prior to the toggle to one-up - including the updated viewports if a display
+    // set swap were to have occurred.
+    const layoutOptions = viewportGridService.getLayoutOptionsFromState(
+      toggleOneUpViewportGridStore
+    );
+
+    const findOrCreateViewport = (position: number, positionId: string) => {
+      // Find the viewport for the given position prior to the toggle to one-up.
+      const preOneUpViewport = Array.from(toggleOneUpViewportGridStore.viewports.values()).find(
+        viewport => viewport.positionId === positionId
+      );
+
+      return preOneUpViewport;
+    };
+
+    viewportGridService.setLayout({
+      numRows: toggleOneUpViewportGridStore.layout.numRows,
+      numCols: toggleOneUpViewportGridStore.layout.numCols,
+      activeViewportId: viewportIdToUpdate,
+      layoutOptions,
+      findOrCreateViewport,
+      isHangingProtocolLayout: false,
+    });
+  }
+
+  const _restoreState = () => {
     if (!window.storedState) {
       return;
     }

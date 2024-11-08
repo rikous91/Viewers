@@ -722,7 +722,8 @@ async function deleteConfigModality() {
 }
 
 async function scritturaPreferenzeAPI(aetitle, username, body) {
-  const apiUrl = `${window.location.origin}/viewer/userdata/${aetitle}/?user=${username}`;
+  const origin = window.isSuite ? 'https://suite.nolex.it' : window.location.origin;
+  const apiUrl = `${origin}/viewer/userdata/${aetitle}/?user=${username}`;
   const datiDaInviare = {
     username: username,
     json: body,

@@ -133,7 +133,8 @@ const caricamentoHP = async () => {
 };
 
 async function letturaPreferenzeAPI(aetitle, username, studyInstanceUID) {
-  const apiUrl = `${window.location.origin}/viewer/userdata/${aetitle}/?user=${username}&StudyInstanceUIDs=${studyInstanceUID}&cacheBuster=${new Date().getTime()}`;
+  const origin = window.isSuite ? 'https://suite.nolex.it' : window.location.origin;
+  const apiUrl = `${origin}/viewer/userdata/${aetitle}/?user=${username}&StudyInstanceUIDs=${studyInstanceUID}&cacheBuster=${new Date().getTime()}`;
 
   try {
     const apiResponse = await fetch(apiUrl, {

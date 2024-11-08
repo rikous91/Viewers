@@ -4,8 +4,9 @@ import { LoadingIndicatorTotalPercent, useViewportGrid, ViewportActionArrows } f
 import createSEGToolGroupAndAddTools from '../utils/initSEGToolGroup';
 import promptHydrateSEG from '../utils/promptHydrateSEG';
 import _getStatusComponent from './_getStatusComponent';
-import { useSegmentationPresentationStore } from '@ohif/extension-cornerstone';
-import { SegmentationRepresentations } from '@cornerstonejs/tools/enums';
+import { Enums } from '@cornerstonejs/tools';
+
+const { SegmentationRepresentations } = Enums;
 
 const SEG_TOOLGROUP_BASE_NAME = 'SEGToolGroup';
 

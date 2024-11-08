@@ -7,6 +7,7 @@ import { useAppConfig } from '@state';
 import ViewerHeader from './ViewerHeader';
 import SidePanelWithServices from '../Components/SidePanelWithServices';
 import { Onboarding } from '@ohif/ui-next';
+import { ErrorBoundary } from '@ohif/ui-next';
 
 function ViewerLayout({
   // From Extension Module Params

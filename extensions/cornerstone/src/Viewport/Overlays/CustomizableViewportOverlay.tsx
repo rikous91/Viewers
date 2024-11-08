@@ -146,22 +146,18 @@ const topRightItems = {
 const bottomLeftItems = {
   id: 'cornerstoneOverlayBottomLeft',
   items: [
-    id: 'cornerstoneOverlayBottomLeft',
-    items: [
-      {
-        id: 'WindowLevel',
-        customizationType: 'ohif.overlayItem.windowLevel',
-      },
-      {
-        id: 'ZoomLevel',
-        customizationType: 'ohif.overlayItem.zoomLevel',
-        condition: props => {
-          condition: props => {
-            const activeToolName = props.toolGroupService.getActiveToolForViewport(props.viewportId);
-            return activeToolName === 'Zoom';
-          },
+    {
+      id: 'WindowLevel',
+      customizationType: 'ohif.overlayItem.windowLevel',
     },
-  ],
+    {
+      id: 'ZoomLevel',
+      customizationType: 'ohif.overlayItem.zoomLevel',
+      condition: props => {
+        const activeToolName = props.toolGroupService.getActiveToolForViewport(props.viewportId);
+        return activeToolName === 'Zoom';
+      },
+    },
   ],
 };
 
@@ -172,7 +168,6 @@ const bottomRightItems = {
       id: 'InstanceNumber',
       customizationType: 'ohif.overlayItem.instanceNumber',
     },
-  ],
   ],
 };
 
@@ -224,18 +219,6 @@ function CustomizableViewportOverlay({
   // append functionality.  This code enables the historical usage, but
   // the recommended functionality is to append to the default values in
   // cornerstoneOverlay rather than defining individual items.
-  const topLeftCustomization =
-    customizationService.getCustomization('cornerstoneOverlayTopLeft') ||
-    cornerstoneOverlay?.topLeftItems;
-  const topRightCustomization =
-    customizationService.getCustomization('cornerstoneOverlayTopRight') ||
-    cornerstoneOverlay?.topRightItems;
-  const bottomLeftCustomization =
-    customizationService.getCustomization('cornerstoneOverlayBottomLeft') ||
-    cornerstoneOverlay?.bottomLeftItems;
-  const bottomRightCustomization =
-    customizationService.getCustomization('cornerstoneOverlayBottomRight') ||
-    cornerstoneOverlay?.bottomRightItems;
   const topLeftCustomization =
     customizationService.getCustomization('cornerstoneOverlayTopLeft') ||
     cornerstoneOverlay?.topLeftItems;
@@ -424,9 +407,6 @@ function getDisplaySets(viewportData, displaySetService) {
   if (!viewportData?.data?.length) {
     return null;
   }
-  const displaySets = viewportData.data
-    .map(datum => displaySetService.getDisplaySetByUID(datum.displaySetInstanceUID))
-    .filter(it => !!it);
   const displaySets = viewportData.data
     .map(datum => displaySetService.getDisplaySetByUID(datum.displaySetInstanceUID))
     .filter(it => !!it);
