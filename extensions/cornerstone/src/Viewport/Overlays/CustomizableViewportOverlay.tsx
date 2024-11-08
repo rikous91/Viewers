@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { vec3 } from 'gl-matrix';
 import PropTypes from 'prop-types';
 import { metaData, Enums, utilities } from '@cornerstonejs/core';
-import { ImageSliceData } from '@cornerstonejs/core/dist/esm/types';
+import type { ImageSliceData } from '@cornerstonejs/core/types';
 import { ViewportOverlay } from '@ohif/ui';
-import { InstanceMetadata } from '@ohif/core/src/types';
+import type { InstanceMetadata } from '@ohif/core/src/types';
 import { formatPN, formatDICOMDate, formatDICOMTime, formatNumberPrecision } from './utils';
 import { StackViewportData, VolumeViewportData } from '../../types/CornerstoneCacheService';
 
@@ -146,18 +146,22 @@ const topRightItems = {
 const bottomLeftItems = {
   id: 'cornerstoneOverlayBottomLeft',
   items: [
-    {
-      id: 'WindowLevel',
-      customizationType: 'ohif.overlayItem.windowLevel',
-    },
-    {
-      id: 'ZoomLevel',
-      customizationType: 'ohif.overlayItem.zoomLevel',
-      condition: props => {
-        const activeToolName = props.toolGroupService.getActiveToolForViewport(props.viewportId);
-        return activeToolName === 'Zoom';
+    id: 'cornerstoneOverlayBottomLeft',
+    items: [
+      {
+        id: 'WindowLevel',
+        customizationType: 'ohif.overlayItem.windowLevel',
       },
+      {
+        id: 'ZoomLevel',
+        customizationType: 'ohif.overlayItem.zoomLevel',
+        condition: props => {
+          condition: props => {
+            const activeToolName = props.toolGroupService.getActiveToolForViewport(props.viewportId);
+            return activeToolName === 'Zoom';
+          },
     },
+  ],
   ],
 };
 
@@ -168,6 +172,7 @@ const bottomRightItems = {
       id: 'InstanceNumber',
       customizationType: 'ohif.overlayItem.instanceNumber',
     },
+  ],
   ],
 };
 
@@ -231,6 +236,18 @@ function CustomizableViewportOverlay({
   const bottomRightCustomization =
     customizationService.getCustomization('cornerstoneOverlayBottomRight') ||
     cornerstoneOverlay?.bottomRightItems;
+  const topLeftCustomization =
+    customizationService.getCustomization('cornerstoneOverlayTopLeft') ||
+    cornerstoneOverlay?.topLeftItems;
+  const topRightCustomization =
+    customizationService.getCustomization('cornerstoneOverlayTopRight') ||
+    cornerstoneOverlay?.topRightItems;
+  const bottomLeftCustomization =
+    customizationService.getCustomization('cornerstoneOverlayBottomLeft') ||
+    cornerstoneOverlay?.bottomLeftItems;
+  const bottomRightCustomization =
+    customizationService.getCustomization('cornerstoneOverlayBottomRight') ||
+    cornerstoneOverlay?.bottomRightItems;
 
   const instanceNumber = useMemo(
     () =>
@@ -250,7 +267,7 @@ function CustomizableViewportOverlay({
     return {
       displaySets,
       displaySet,
-      instance: instances[imageIndex],
+      instance: instances?.[imageIndex],
       instances,
       referenceInstance,
     };
@@ -410,6 +427,9 @@ function getDisplaySets(viewportData, displaySetService) {
   const displaySets = viewportData.data
     .map(datum => displaySetService.getDisplaySetByUID(datum.displaySetInstanceUID))
     .filter(it => !!it);
+  const displaySets = viewportData.data
+    .map(datum => displaySetService.getDisplaySetByUID(datum.displaySetInstanceUID))
+    .filter(it => !!it);
   if (!displaySets.length) {
     return null;
   }
@@ -473,6 +493,11 @@ function _getInstanceNumberFromVolume(
 
   // Todo: support fusion of acquisition plane which has instanceNumber
   const { volume } = volumes[0];
+
+  if (!volume) {
+    return;
+  }
+
   const { direction, imageIds } = volume;
 
   const cornerstoneViewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
@@ -516,6 +541,7 @@ function OverlayItem(props) {
       style={{ color, background }}
       title={title}
     >
+      {label ? <span className="mr-1 shrink-0">{label}</span> : null}
       {label ? <span className="mr-1 shrink-0">{label}</span> : null}
       <span className="ml-1 mr-2 shrink-0">{value}</span>
     </div>

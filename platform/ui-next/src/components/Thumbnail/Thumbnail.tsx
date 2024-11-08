@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { useDrag } from 'react-dnd';
 import { Icons } from '../Icons';
 import { DisplaySetMessageListTooltip } from '../DisplaySetMessageListTooltip';
-import { TooltipTrigger, TooltipContent, TooltipProvider, Tooltip } from '../Tooltip';
+import { TooltipTrigger, TooltipContent, Tooltip } from '../Tooltip';
 import { Button } from '../Button';
 import {
   DropdownMenu,
@@ -67,7 +67,12 @@ const Thumbnail = ({
 
   const renderThumbnailPreset = () => {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]">
+      <div
+        className={classnames(
+          'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]',
+          isActive && 'bg-popover'
+        )}
+      >
         <div className="h-[114px] w-[128px]">
           <div className="relative">
             {imageSrc ? (
@@ -82,7 +87,7 @@ const Thumbnail = ({
             )}
 
             {/* bottom left */}
-            <div className="bg-muted absolute bottom-0 left-0 flex h-[14px] items-center gap-[4px] rounded-tr pt-[10px] pb-[8px] pr-[6px] pl-[3px]">
+            <div className="absolute bottom-0 left-0 flex h-[14px] items-center gap-[4px] rounded-tr pt-[10px] pb-[8px] pr-[6px] pl-[3px]">
               <div
                 className={classnames(
                   'h-[10px] w-[10px] rounded-[2px]',
@@ -99,40 +104,32 @@ const Thumbnail = ({
                 messages={messages}
                 id={`display-set-tooltip-${displaySetInstanceUID}`}
               />
-              {canReject && (
-                <Icons.Trash
-                  className="h-[20px] w-[20px] text-red-500"
-                  onClick={onReject}
-                />
-              )}
               {isTracked && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <div className="group">
-                        <Icons.StatusTracking className="text-primary-light h-[20px] w-[20px] group-hover:hidden" />
-                        <Icons.Cancel
-                          className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
-                          onClick={onClickUntrack}
-                        />
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="group">
+                      <Icons.StatusTracking className="text-primary-light h-[20px] w-[20px] group-hover:hidden" />
+                      <Icons.Cancel
+                        className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                        onClick={onClickUntrack}
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    <div className="flex flex-1 flex-row">
+                      <div className="flex-2 flex items-center justify-center pr-4">
+                        <Icons.InfoLink className="text-primary-active" />
                       </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <div className="flex flex-1 flex-row">
-                        <div className="flex-2 flex items-center justify-center pr-4">
-                          <Icons.InfoLink className="text-primary-active" />
-                        </div>
-                        <div className="flex flex-1 flex-col">
-                          <span>
-                            <span className="text-white">
-                              {isTracked ? 'Series is tracked' : 'Series is untracked'}
-                            </span>
+                      <div className="flex flex-1 flex-col">
+                        <span>
+                          <span className="text-white">
+                            {isTracked ? 'Series is tracked' : 'Series is untracked'}
                           </span>
-                        </div>
+                        </span>
                       </div>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
             {/* bottom right */}
@@ -150,8 +147,8 @@ const Thumbnail = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  asChild
                   hideWhenDetached
+                  align="start"
                 >
                   <DropdownMenuItem
                     onSelect={() => {
@@ -164,6 +161,17 @@ const Thumbnail = ({
                     <Icons.DicomTagBrowser />
                     Tag Browser
                   </DropdownMenuItem>
+                  {canReject && (
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        onReject();
+                      }}
+                      className="gap-[6px]"
+                    >
+                      <Icons.Trash className="h-5 w-5 text-red-500" />
+                      Delete Report
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div> */}
@@ -175,7 +183,6 @@ const Thumbnail = ({
             <div className="text-muted-foreground pl-1 text-[11px]"> S:{seriesNumber}</div>
             <div className="text-muted-foreground text-[11px]">
               <div className="flex items-center gap-[4px]">
-                {' '}
                 {countIcon ? (
                   React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
                 ) : (
@@ -298,22 +305,18 @@ const Thumbnail = ({
         <div className="relative flex h-[32px] items-center gap-[8px]">
           <div
             className={classnames(
-              'h-[32px] w-[4px] rounded-[2px]',
+              'h-full w-[4px] rounded-[2px]',
               isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
               loadingProgress && loadingProgress < 1 && 'bg-primary/25'
             )}
           ></div>
           <div className="flex h-full flex-col">
-            <div className="flex items-center gap-[7px]">
-              <div className="text-[13px] font-semibold text-white">{modality}</div>
-
-              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] font-normal text-white">
-                {description}
-              </div>
-            </div>
-
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
+              <div className="text-muted-foreground text-[12px]">
+                {' '}
+                <span>S:</span>
+                {seriesNumber}
+              </div>
               <div className="text-muted-foreground text-[12px]">
                 <div className="flex items-center gap-[4px]">
                   {' '}
@@ -325,6 +328,31 @@ const Thumbnail = ({
                   <div>{numInstances}</div>
                 </div>
               </div>
+
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
+                {description}
+              </div>
+            </div>
+
+            {/* <div className="flex items-center gap-[7px]">
+              <div className="text-[13px] text-white">{modality}</div>
+
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
+                {description}
+              </div>
+            </div> */}
+
+            <div className="relative my-2">
+              {imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt={imageAltText}
+                  className="h-[114px] w-[128px] rounded"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <div className="bg-background h-[114px] w-[128px] rounded"></div>
+              )}
             </div>
           </div>
         </div>
@@ -368,6 +396,85 @@ const Thumbnail = ({
               </Tooltip>
             </TooltipProvider>
           )}
+        </div>
+      </div>
+    );
+  };
+
+  const _oldrenderListPreset = () => {
+    return (
+      <div
+        className={classnames(
+          'flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]',
+          isActive && 'bg-popover'
+        )}
+      >
+        <div className="relative flex h-[32px] items-center gap-[8px]">
+          <div
+            className={classnames(
+              'h-[32px] w-[4px] rounded-[2px]',
+              isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
+              loadingProgress && loadingProgress < 1 && 'bg-primary/25'
+            )}
+          ></div>
+          <div className="flex h-full flex-col">
+            <div className="flex items-center gap-[7px]">
+              <div className="text-[13px] font-semibold text-white">{modality}</div>
+
+              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] font-normal text-white">
+                {description}
+              </div>
+            </div>
+
+            <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
+              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
+              <div className="text-muted-foreground text-[12px]">
+                <div className="flex items-center gap-[4px]">
+                  {' '}
+                  {countIcon ? (
+                    React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
+                  ) : (
+                    <Icons.InfoSeries className="w-3" />
+                  )}
+                  <div>{numInstances}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex h-full items-center gap-[4px]">
+          <DisplaySetMessageListTooltip
+            messages={messages}
+            id={`display-set-tooltip-${displaySetInstanceUID}`}
+          />
+
+          {isTracked && (
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="group">
+                  <Icons.StatusTracking className="text-primary-light h-[20px] w-[20px] group-hover:hidden" />
+                  <Icons.Cancel
+                    className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                    onClick={onClickUntrack}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="flex flex-1 flex-row">
+                  <div className="flex-2 flex items-center justify-center pr-4">
+                    <Icons.InfoLink className="text-primary-active" />
+                  </div>
+                  <div className="flex flex-1 flex-col">
+                    <span>
+                      <span className="text-white">
+                        {isTracked ? 'Series is tracked' : 'Series is untracked'}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -378,10 +485,7 @@ const Thumbnail = ({
                 <Icons.More />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent
-              asChild
-              hideWhenDetached
-            >
+            <DropdownMenuContent hideWhenDetached>
               <DropdownMenuItem
                 onSelect={() => {
                   onThumbnailContextMenu('openDICOMTagViewer', {
@@ -393,6 +497,17 @@ const Thumbnail = ({
                 <Icons.DicomTagBrowser />
                 Tag Browser
               </DropdownMenuItem>
+              {canReject && (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    onReject();
+                  }}
+                  className="gap-[6px]"
+                >
+                  <Icons.Trash className="h-5 w-5 text-red-500" />
+                  Delete Report
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

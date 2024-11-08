@@ -6,6 +6,12 @@ const getToggledClassName = (isToggled: boolean) => {
     : '!text-common-bright hover:!bg-primary-dark hover:text-primary-light';
 };
 
+const getDisabledState = (disabledText?: string) => ({
+  disabled: true,
+  className: '!text-common-bright ohif-disabled',
+  disabledText: disabledText ?? 'Not available on the current viewport',
+});
+
 export default function getToolbarModule({ commandsManager, servicesManager }: withAppTypes) {
   const {
     toolGroupService,
@@ -20,6 +26,52 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
   return [
     // functions/helpers to be used by the toolbar buttons to decide if they should
     // enabled or not
+    {
+      name: 'evaluate.viewport.supported',
+      evaluate: ({ viewportId, unsupportedViewportTypes, disabledText }) => {
+        const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+
+        if (viewport && unsupportedViewportTypes?.includes(viewport.type)) {
+          return getDisabledState(disabledText);
+        }
+
+        return undefined;
+      },
+    },
+    {
+      name: 'evaluate.modality.supported',
+      evaluate: ({ viewportId, unsupportedModalities, supportedModalities, disabledText }) => {
+        const displaySetUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
+
+        if (!displaySetUIDs?.length) {
+          return;
+        }
+
+        const displaySets = displaySetUIDs.map(displaySetService.getDisplaySetByUID);
+
+        // Check for unsupported modalities (exclusion)
+        if (unsupportedModalities?.length) {
+          const hasUnsupportedModality = displaySets.some(displaySet =>
+            unsupportedModalities.includes(displaySet?.Modality)
+          );
+
+          if (hasUnsupportedModality) {
+            return getDisabledState(disabledText);
+          }
+        }
+
+        // Check for supported modalities (inclusion)
+        if (supportedModalities?.length) {
+          const hasAnySupportedModality = displaySets.some(displaySet =>
+            supportedModalities.includes(displaySet?.Modality)
+          );
+
+          if (!hasAnySupportedModality) {
+            return getDisabledState(disabledText || 'Tool not available for this modality');
+          }
+        }
+      },
+    },
     {
       name: 'evaluate.cornerstoneTool',
       evaluate: ({ viewportId, button, toolNames, disabledText }) => {
@@ -45,11 +97,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
         }
 
         if (!toolGroup || (!toolGroup.hasTool(toolName) && !toolNames)) {
-          return {
-            disabled: true,
-            className: '!text-common-bright ohif-disabled',
-            disabledText: disabledText ?? 'Non disponibile nella viewport attiva',
-          };
+          return getDisabledState(disabledText);
         }
 
         const isPrimaryActive = toolNames
