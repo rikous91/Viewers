@@ -1,4 +1,10 @@
 import React from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../DropdownMenu/DropdownMenu';
 
 export function StudyBrowserViewOptions({ tabs, onSelectTab, activeTabName }: withAppTypes) {
   const handleTabChange = (tabName: string) => {

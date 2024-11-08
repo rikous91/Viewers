@@ -28,7 +28,6 @@ const ThumbnailList = ({
             loadingProgress,
             modality,
             componentType,
-            seriesDate,
             countIcon,
             isTracked,
             canReject,

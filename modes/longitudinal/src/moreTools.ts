@@ -68,12 +68,18 @@ const moreTools = [
             },
           },
           listeners: {
-            [EVENTS.STACK_VIEWPORT_NEW_STACK]: {
+            [EVENTS.VIEWPORT_NEW_IMAGE_SET]: {
               commandName: 'toggleImageSliceSync',
               commandOptions: { toggledState: true },
             },
           },
-          evaluate: ['evaluate.cornerstone.synchronizer', 'evaluate.not3D'],
+          evaluate: [
+            'evaluate.cornerstone.synchronizer',
+            {
+              name: 'evaluate.viewport.supported',
+              unsupportedViewportTypes: ['video', 'volume3d'],
+            },
+          ],
         }),
         // createButton({
         //   id: 'ReferenceLines',
@@ -93,7 +99,13 @@ const moreTools = [
           label: 'Image Overlay',
           tooltip: 'Toggle Image Overlay',
           commands: 'toggleEnabledDisabledToolbar',
-          evaluate: 'evaluate.cornerstoneTool.toggle',
+          evaluate: [
+            'evaluate.cornerstoneTool.toggle',
+            {
+              name: 'evaluate.viewport.supported',
+              unsupportedViewportTypes: ['video'],
+            },
+          ],
         }),
         // createButton({
         //   id: 'StackScroll',
@@ -157,7 +169,13 @@ const moreTools = [
           label: 'Calibrazione',
           tooltip: 'Calibration Line',
           commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
+          evaluate: [
+            'evaluate.cornerstoneTool',
+            {
+              name: 'evaluate.viewport.supported',
+              unsupportedViewportTypes: ['video'],
+            },
+          ],
         }),
         createButton({
           id: 'TagBrowser',
@@ -172,7 +190,13 @@ const moreTools = [
           label: "Sonda con lente d'ingrandimento",
           tooltip: 'Magnify Probe',
           commands: 'toggleActiveDisabledToolbar',
-          evaluate: 'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',
+          evaluate: [
+            'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',
+            {
+              name: 'evaluate.viewport.supported',
+              unsupportedViewportTypes: ['video'],
+            },
+          ],
         }),
         // createButton({
         //   id: 'UltrasoundDirectionalTool',
@@ -188,7 +212,13 @@ const moreTools = [
           label: 'Window Level Region',
           tooltip: 'Window Level Region',
           commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
+          evaluate: [
+            'evaluate.cornerstoneTool',
+            {
+              name: 'evaluate.viewport.supported',
+              unsupportedViewportTypes: ['video'],
+            },
+          ],
         }),
       ],
     },
