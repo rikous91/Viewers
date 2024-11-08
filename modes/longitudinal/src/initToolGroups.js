@@ -206,6 +206,7 @@ function initMPRToolGroup(extensionManager, toolGroupService, commandsManager, m
         toolName: toolNames.StackScroll,
         bindings: [{ mouseButton: Enums.MouseBindings.Wheel }],
       },
+      { toolName: toolNames.ReferenceLines },
     ],
     passive: [
       { toolName: toolNames.Length },
