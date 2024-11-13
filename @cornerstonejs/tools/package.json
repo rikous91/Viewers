@@ -1,6 +1,6 @@
 {
   "name": "@cornerstonejs/tools",
-  "version": "2.1.17",
+  "version": "2.2.1",
   "description": "Cornerstone3D Tools",
   "types": "./dist/esm/index.d.ts",
   "module": "./dist/esm/index.js",
@@ -104,7 +104,7 @@
     "canvas": "^2.11.2"
   },
   "peerDependencies": {
-    "@cornerstonejs/core": "^2.1.17",
+    "@cornerstonejs/core": "^2.2.1",
     "@kitware/vtk.js": "32.1.0",
     "@types/d3-array": "^3.0.4",
     "@types/d3-interpolate": "^3.0.1",
@@ -123,5 +123,5 @@
     "type": "individual",
     "url": "https://ohif.org/donate"
   },
-  "gitHead": "b5d10ad761e36b40c53de1bf3cbbf751bf6e8a87"
+  "gitHead": "0fa3e29d97908f58933e38f4acf128aff1f523d0"
 }

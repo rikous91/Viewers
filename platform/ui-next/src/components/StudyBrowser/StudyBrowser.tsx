@@ -74,8 +74,11 @@ const StudyBrowser = ({
   };
 
   return (
-    <>
-      <div data-cy={'studyBrowser-panel'}>
+    <div
+      className="ohif-scrollbar invisible-scrollbar bg-bkg-low flex flex-1 flex-col gap-[4px] overflow-auto"
+      data-cy={'studyBrowser-panel'}
+    >
+      <div>
         {/* {showSettings && ( */}
         {true && (
           <div className="w-100 bg-bkg-low flex h-[48px] items-center justify-center gap-[10px] px-[8px] py-[10px]">
@@ -89,9 +92,6 @@ const StudyBrowser = ({
             </>
           </div>
         )}
-      </div>
-
-      <div className="ohif-scrollbar invisible-scrollbar bg-bkg-low flex flex-1 flex-col gap-[4px] overflow-auto">
         {getTabContent()}
       </div>
     </>
