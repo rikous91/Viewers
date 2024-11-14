@@ -646,10 +646,11 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
       if (flipHorizontal) {
         viewport.setCamera({ flipHorizontal: true });
       }
-      //Applico le camera settings se presenti nell'hanging protocol
+
       if (!window.viewportsAlreadyHPApplied) {
         window.viewportsAlreadyHPApplied = [];
       }
+      //Sperimentale - Applico le camera settings se presenti nell'hanging protocol
       if (
         viewport.id &&
         window.cameraSettingsFromHPNolex &&

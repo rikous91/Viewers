@@ -18,6 +18,10 @@ const getTrackedSeries = displaySets => {
 
 const noop = () => { };
 
+const disableMPRView = () => {
+  document.querySelector('[data-cy="LayoutMPR"').click();
+};
+
 const StudyBrowser = ({
   tabs,
   activeTabName,
@@ -74,25 +78,39 @@ const StudyBrowser = ({
   };
 
   return (
-    <div
-      className="ohif-scrollbar invisible-scrollbar bg-bkg-low flex flex-1 flex-col gap-[4px] overflow-auto"
-      data-cy={'studyBrowser-panel'}
-    >
-      <div>
-        {/* {showSettings && ( */}
-        {true && (
-          <div className="w-100 bg-bkg-low flex h-[48px] items-center justify-center gap-[10px] px-[8px] py-[10px]">
+    <>
+      <div
+        className="ohif-scrollbar invisible-scrollbar bg-bkg-low flex flex-1 flex-col gap-[4px] overflow-auto"
+        data-cy={'studyBrowser-panel'}
+      >
+        <div>
+          {/* {showSettings && ( */}
+          {true && (
             <>
-              <StudyBrowserViewOptions
-                tabs={tabs}
-                onSelectTab={onClickTab}
-                activeTabName={activeTabName}
-              />
-              <StudyBrowserSort servicesManager={servicesManager} />
+              <div className="tab-studio-nolex w-100 bg-bkg-low flex h-[48px] items-center justify-center gap-[10px] py-[10px]">
+                <>
+                  <StudyBrowserViewOptions
+                    tabs={tabs}
+                    onSelectTab={onClickTab}
+                    activeTabName={activeTabName}
+                  />
+                  <StudyBrowserSort servicesManager={servicesManager} />
+                </>
+              </div>
+              <div id="info-mpr-attivo">
+                🟢 Vista MPR{' '}
+                <span
+                  onClick={() => disableMPRView()}
+                  className="chiudi-modalita-mpr float-right"
+                >
+                  Chiudi
+                </span>
+              </div>
             </>
-          </div>
-        )}
-        {getTabContent()}
+
+          )}
+          {getTabContent()}
+        </div>
       </div>
     </>
   );

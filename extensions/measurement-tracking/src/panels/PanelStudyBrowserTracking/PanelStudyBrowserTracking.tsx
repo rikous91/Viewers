@@ -633,12 +633,12 @@ function PanelStudyBrowserTracking({
         viewPresets={viewPresets}
         onThumbnailContextMenu={onThumbnailContextMenu}
       />
-      <PanelStudyBrowserTrackingHeader
+      {/* <PanelStudyBrowserTrackingHeader
         viewPresets={viewPresets}
         updateViewPresetValue={updateViewPresetValue}
         actionIcons={actionIcons}
         updateActionIconValue={updateActionIconValue}
-      />
+      /> */}
       <Separator
         orientation="horizontal"
         className="bg-black"
