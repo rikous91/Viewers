@@ -462,6 +462,19 @@ input[type='range']::-webkit-slider-thumb {
   padding-top: 10px;
 }
 
+[data-radix-popper-content-wrapper] {
+  .bg-popover {
+    background-color: hsl(0deg 0% 7.09%) !important;
+    border-color: #8a1818 !important;
+  }
+  [role='menuitem'] {
+    cursor: pointer;
+  }
+  [role='menuitem']:hover {
+    background-color: #8a1818 !important;
+  }
+}
+
 .nolex-new-panel {
   .Settings {
     display: none;
@@ -826,6 +839,22 @@ input[type='range']::-webkit-slider-thumb {
   [data-cy='TagBrowser'] {
     display: none;
   }
+}
+
+.tab-studio-nolex {
+}
+
+.qualestudio-btn {
+  padding: 10px !important;
+}
+
+.nolex-panel-header {
+  position: absolute;
+  background-color: #121212 !important;
+}
+
+.group\/pane:hover .group-hover\/pane\:border-primary-light\/70 {
+  border-color: rgb(135 135 135 / 70%) !important;
 }
 
 .shepherd-element {

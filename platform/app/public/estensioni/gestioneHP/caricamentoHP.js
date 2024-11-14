@@ -1,3 +1,112 @@
+const _nolexhp = {
+  id: 'nolexhp',
+  description: 'Has various hanging protocol grid layouts',
+  name: '2x2',
+  protocolMatchingRules: [],
+  displaySetSelectors: {
+    DisplaySet0: {
+      seriesMatchingRules: [
+        {
+          attribute: 'SeriesInstanceUID',
+          constraint: {
+            contains: '1.3.76.2.1.1.4.1.3.7471.776535301',
+          },
+        },
+      ],
+    },
+    DisplaySet1: {
+      seriesMatchingRules: [
+        {
+          attribute: 'SeriesInstanceUID',
+          constraint: {
+            contains: '1.3.76.2.1.1.4.1.3.7471.776535351',
+          },
+        },
+      ],
+    },
+    DisplaySet2: {
+      seriesMatchingRules: [
+        {
+          attribute: 'SeriesInstanceUID',
+          constraint: {
+            contains: '1.3.76.2.1.1.4.1.3.7471.776535708',
+          },
+        },
+      ],
+    },
+    DisplaySet3: {
+      seriesMatchingRules: [
+        {
+          attribute: 'SeriesInstanceUID',
+          constraint: {
+            contains: '1.3.76.2.1.1.4.1.3.7471.776536010',
+          },
+        },
+      ],
+    },
+  },
+  stages: [
+    {
+      id: '2x2',
+      name: '2x2',
+      viewportStructure: {
+        layoutType: 'grid',
+        properties: {
+          rows: 2,
+          columns: 2,
+        },
+      },
+      viewports: [
+        {
+          viewportOptions: {
+            toolGroupId: 'default',
+            viewportType: 'stack',
+          },
+          displaySets: [
+            {
+              id: 'DisplaySet0',
+            },
+          ],
+        },
+        {
+          viewportOptions: {
+            toolGroupId: 'default',
+            viewportType: 'stack',
+          },
+          displaySets: [
+            {
+              id: 'DisplaySet1',
+            },
+          ],
+        },
+        {
+          viewportOptions: {
+            toolGroupId: 'default',
+            viewportType: 'stack',
+          },
+          displaySets: [
+            {
+              id: 'DisplaySet2',
+            },
+          ],
+        },
+        {
+          viewportOptions: {
+            toolGroupId: 'default',
+            viewportType: 'stack',
+          },
+          displaySets: [
+            {
+              id: 'DisplaySet3',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  numberOfPriorsReferenced: -1,
+};
+
 const intervalCaricamentoHP = setInterval(() => {
   // if (window.servicesManager) {
   if (window.nolexAllReady && !window.caricamentoHP) {
@@ -105,14 +214,13 @@ const caricamentoHP = async () => {
     // cameraSettings = Object.values(cameraSettings);
   }
 
-  window.cameraSettingsFromHPNolex = cameraSettings;
+  // window.cameraSettingsFromHPNolex = cameraSettings;
 
   //Applico HP letti
   if (nolexhp) {
-    const { hangingProtocolService, cornerstoneViewportService, viewportGridService } =
-      window.servicesManager.services;
-    // hangingProtocolService.addProtocol(nolexhp.id, nolexhp);
+    const { hangingProtocolService } = window.servicesManager.services;
     hangingProtocolService.addProtocol(nolexhp.id, nolexhp);
+    // hangingProtocolService.addProtocol(nolexhp.id, frameView3x3);
 
     hangingProtocolService.setProtocol('nolexhp');
     const uiNotificationService = window.servicesManager.services.uiNotificationService;

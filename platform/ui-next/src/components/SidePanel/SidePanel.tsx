@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Icons } from '../Icons';
 import { TooltipTrigger, TooltipContent, TooltipProvider, Tooltip } from '../Tooltip';
 import { Separator } from '../Separator';
+import { PanelStudyBrowserHeader } from './PanelStudyBrowserHeader';
 
 type StyleMap = {
   open: {
@@ -365,11 +366,11 @@ const SidePanel = ({
         <div className="bg-bkg-med flex h-[40px] flex-shrink-0 select-none rounded-t p-2">
           {tabs.length === 1 ? getOneTabComponent() : getTabGridComponent()}
         </div>
-        <Separator
+        {/* <Separator
           orientation="horizontal"
           className="bg-black"
           thickness="2px"
-        />
+        /> */}
       </>
     );
   };

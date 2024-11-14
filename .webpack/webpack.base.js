@@ -94,6 +94,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
       children: false,
       warnings: true,
     },
+    // cache: false,
     cache: {
       type: 'filesystem',
     },
@@ -103,15 +104,15 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
         ...(isProdBuild
           ? []
           : [
-              {
-                test: /\.[jt]sx?$/,
-                exclude: /node_modules/,
-                loader: 'babel-loader',
-                options: {
-                  plugins: ['react-refresh/babel'],
-                },
+            {
+              test: /\.[jt]sx?$/,
+              exclude: /node_modules/,
+              loader: 'babel-loader',
+              options: {
+                plugins: ['react-refresh/babel'],
               },
-            ]),
+            },
+          ]),
         {
           test: /\.svg?$/,
           oneOf: [

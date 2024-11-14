@@ -11,9 +11,7 @@ export function StudyBrowserViewOptions({ tabs, onSelectTab, activeTabName }: wi
     onSelectTab(tabName);
   };
 
-  const disableMPRView = () => {
-    document.querySelector('[data-cy="LayoutMPR"').click();
-  };
+
 
   // return (
   //   <div className="border-inputfield-main focus:border-inputfield-main flex h-[26px] w-[125px] items-center justify-center rounded border bg-black p-2">
@@ -65,15 +63,6 @@ export function StudyBrowserViewOptions({ tabs, onSelectTab, activeTabName }: wi
               </button>
             );
           })}
-        </div>
-        <div id="info-mpr-attivo">
-          🟢 Vista MPR{' '}
-          <span
-            onClick={() => disableMPRView()}
-            className="chiudi-modalita-mpr float-right"
-          >
-            Chiudi
-          </span>
         </div>
       </div>
     )

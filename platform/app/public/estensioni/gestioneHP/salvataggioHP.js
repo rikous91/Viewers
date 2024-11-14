@@ -110,7 +110,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -121,7 +120,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -132,7 +130,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -143,7 +140,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -154,7 +150,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -165,7 +160,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -176,7 +170,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -187,7 +180,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -198,7 +190,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -209,7 +200,6 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
           },
           displaySets: [
             {
@@ -220,7 +210,7 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
+
             // initialImageOptions: {
             //   preset: 'middle',
             // },
@@ -234,7 +224,7 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
+
             // initialImageOptions: {
             //   preset: 'middle',
             // },
@@ -248,7 +238,7 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
+
             // initialImageOptions: {
             //   preset: 'middle',
             // },
@@ -262,7 +252,7 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
+
             // initialImageOptions: {
             //   preset: 'middle',
             // },
@@ -276,7 +266,7 @@ let nolexHP = {
         {
           viewportOptions: {
             viewportType: 'stack',
-            orientation: 'sagittal',
+
             // initialImageOptions: {
             //   preset: 'middle',
             // },
@@ -462,7 +452,7 @@ async function componiHP(modalita) {
       },
     ];
 
-    nolexHP.stages[0].viewports[i].viewportOptions.viewportId = `nolexhp-${i}`;
+    // nolexHP.stages[0].viewports[i].viewportOptions.viewportId = `nolexhp-${i}`;
 
     nolexHP.stages[0].viewports[i].viewportOptions.initialImageOptions = {
       index: numeroIstanza,
