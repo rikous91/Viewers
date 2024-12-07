@@ -40,6 +40,7 @@ const ActiveViewportBehavior = memo(
       }
 
       const modalities = displaySets.map(displaySet => displaySet?.Modality);
+      const isDynamicVolume = displaySets.some(displaySet => displaySet?.isDynamicVolume);
 
       const { modalities: sourceModalities } = customizationService.getModeCustomization(
         'autoCineModalities',
@@ -51,7 +52,7 @@ const ActiveViewportBehavior = memo(
 
       const requiresCine = modalities.some(modality => sourceModalities.includes(modality));
 
-      if (requiresCine && !cineService.getState().isCineEnabled) {
+      if ((requiresCine || isDynamicVolume) && !cineService.getState().isCineEnabled) {
         cineService.setIsCineEnabled(true);
       }
     }, [
