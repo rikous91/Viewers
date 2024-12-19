@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** @type {AppTypes.Config} */
 // @ts-ignore
 let prefetch = new URLSearchParams(new URL(window.location.href).search).get('prefetch');
@@ -16,7 +17,7 @@ window.nolexUsername = new URLSearchParams(new URL(window.location.href).search)
 window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
 let origin = window.location.origin;
 
-window.isSuite = false;
+window.isSuite = true;
 window.storicoRemoto = true;
 window.portableVersion = false;
 
@@ -39,6 +40,10 @@ if (
   newUrl = newUrl.replace('&study', '&StudyInstanceUIDs');
   newUrl = newUrl.replace(/&hangingProtocolId=nolexhp/g, '');
   window.location.href = newUrl;
+}
+
+if (modality && modality === 'MG') {
+  prefetch = 1;
 }
 
 window.config = {
