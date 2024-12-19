@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
 import { Icon, Tooltip } from '@ohif/ui';
+import { Icons } from '@ohif/ui-next';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import openStorico from '../../../../app/public/estensioni/aperturaStorico/aperturaStorico.js';
@@ -37,7 +38,7 @@ const StudyItem = ({
       type="single"
       collapsible
       onClick={onClick}
-      onKeyDown={() => {}}
+      onKeyDown={() => { }}
       role="button"
       tabIndex={0}
       defaultValue={isActive ? 'study-item' : undefined}
@@ -72,7 +73,7 @@ const StudyItem = ({
               >
                 <Icon
                   style={{ transform: isExpanded && 'rotate(180deg)' }}
-                  name="storico-expand"
+                  name="storicoExpand"
                 ></Icon>
               </button>
             </Tooltip>
@@ -85,7 +86,7 @@ const StudyItem = ({
                 onClick={e => openStorico(e, 'stessaScheda', studyInstanceUID)}
               >
                 {/* <Icon name="storico-same-window"></Icon> */}
-                <Icon name="layout-common-1x2"></Icon>
+                <Icons.LayoutCommon1x2 />
               </button>
             </Tooltip>
             <Tooltip
@@ -96,7 +97,7 @@ const StudyItem = ({
                 id="storico-new-window"
                 onClick={e => openStorico(e, 'nuovaScheda', studyInstanceUID)}
               >
-                <Icon name="storico-new-window"></Icon>
+                <Icon name="storicoNewWindow"></Icon>
               </button>
             </Tooltip>
           </div>

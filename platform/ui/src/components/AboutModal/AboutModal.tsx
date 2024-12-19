@@ -4,7 +4,7 @@ import detect from 'browser-detect';
 import { useTranslation } from 'react-i18next';
 
 import Typography from '../Typography';
-import Icon from '../Icon';
+import { Icons } from '@ohif/ui-next';
 
 const Link = ({ href, children, showIcon = false }) => {
   return (
@@ -20,12 +20,7 @@ const Link = ({ href, children, showIcon = false }) => {
         className="flex items-center"
       >
         {children}
-        {!!showIcon && (
-          <Icon
-            name="external-link"
-            className="ml-2 w-5 text-white"
-          />
-        )}
+        {!!showIcon && <Icons.ExternalLink className="ml-2 w-5 text-white" />}
       </Typography>
     </a>
   );
@@ -75,6 +70,33 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
   );
   return (
     <div>
+      {renderRowTitle(t('Important links'))}
+      <div className="mb-8 flex">
+        <Link
+          href="https://community.ohif.org/"
+          showIcon={true}
+        >
+          {t('Visit the forum')}
+        </Link>
+        <span className="ml-4">
+          <Link
+            href="https://github.com/OHIF/Viewers/issues/new/choose"
+            showIcon={true}
+          >
+            {t('Report an issue')}
+          </Link>
+        </span>
+        <span className="ml-4">
+          <Link
+            href="https://ohif.org/"
+            showIcon={true}
+          >
+            {t('More details')}
+          </Link>
+        </span>
+      </div>
+
+      {renderRowTitle(t('Version information'))}
       <div className="flex flex-col">
         <img
           style={{ width: '130px', marginBottom: '20px' }}
