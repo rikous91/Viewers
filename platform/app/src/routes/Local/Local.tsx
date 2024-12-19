@@ -8,7 +8,8 @@ import filesToStudies from './filesToStudies';
 
 import { extensionManager } from '../../App.tsx';
 
-import { Icon, Button, LoadingIndicatorProgress, LoadingIndicatorTotalPercent } from '@ohif/ui';
+import { Button, Icon, LoadingIndicatorProgress, LoadingIndicatorTotalPercent } from '@ohif/ui';
+import { Icons } from '@ohif/ui-next';
 let totalFiles = 0;
 
 const getLoadButton = (onDrop, text, isDir) => {
@@ -23,7 +24,7 @@ const getLoadButton = (onDrop, text, isDir) => {
             rounded="full"
             variant="contained" // outlined
             disabled={false}
-            endIcon={<Icon name="launch-arrow" />} // launch-arrow | launch-info
+            endIcon={<Icons.LaunchArrow />}
             className={classnames('font-medium', 'ml-2')}
             onClick={() => { }}
           >

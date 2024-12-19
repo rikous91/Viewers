@@ -1,9 +1,8 @@
 import React, { useState, useEffect, ReactElement } from 'react';
 import classNames from 'classnames';
 
-import Icon from '../Icon';
 import ProgressLoadingBar from '../ProgressLoadingBar';
-
+import { Icons } from '@ohif/ui-next';
 /**
  *  A React component that renders a loading indicator.
  * if progress is not provided, it will render an infinite loading indicator

@@ -53,7 +53,7 @@ export default function PanelStudyBrowserTracking({
   const navigate = useNavigate();
   const { mode: studyMode } = customizationService.getCustomization('PanelStudyBrowser.studyMode', {
     id: 'default',
-    mode: 'all',
+    mode: 'primary',
   });
 
   const { t } = useTranslation('Common');
@@ -530,14 +530,14 @@ export default function PanelStudyBrowserTracking({
         );
         // if (studiRemoti[0].description === 'Nessuno storico remoto') {
         if (window.studiRemoti[0].description === 'Nessuno storico remoto') {
-          setTimeout(() => {
-            if (document.querySelector('.ohif-scrollbar .bg-black')) {
-              document.querySelector('.ohif-scrollbar .bg-black').style.display = 'none';
-            } //Nascondo lo studio fake presente di default nello storico remoto
-            if (document.querySelector('.ohif-scrollbar button')) {
-              document.querySelector('.ohif-scrollbar button').style.display = 'none';
-            } //Nascondo lo studio fake presente di default nello storico remoto
-          }, 0);
+          // setTimeout(() => {
+          //   if (document.querySelector('.ohif-scrollbar .bg-black')) {
+          //     document.querySelector('.ohif-scrollbar .bg-black').style.display = 'none';
+          //   } //Nascondo lo studio fake presente di default nello storico remoto
+          //   if (document.querySelector('.ohif-scrollbar button')) {
+          //     document.querySelector('.ohif-scrollbar button').style.display = 'none';
+          //   } //Nascondo lo studio fake presente di default nello storico remoto
+          // }, 0);
         }
       }
     } catch (err) {
