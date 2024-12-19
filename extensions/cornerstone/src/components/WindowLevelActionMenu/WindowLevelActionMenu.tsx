@@ -180,7 +180,7 @@ export function WindowLevelActionMenu({
   return (
     <>
       <AllInOneMenu.IconMenu
-        icon={isMPR ? 'settings-bars' : 'viewport-window-level'}
+        icon={isMPR ? 'icon-settings' : 'viewport-window-level'}
         verticalDirection={verticalDirection}
         horizontalDirection={horizontalDirection}
         iconClassName={classNames(
