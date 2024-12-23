@@ -1,0 +1,165 @@
+#monitor-tools {
+  position: fixed;
+  top: 0;
+  width: 20%;
+  height: 100%;
+  left: 100%;
+  background: #1a1a1a;
+  padding: 60px 8px;
+  transition: all 0.3s ease-in;
+  border: 1px solid #2f2f2f;
+  color: #fff;
+  z-index: 50;
+}
+
+#monitor-tools img {
+  cursor: pointer;
+}
+
+#monitor-tools .rimuovi-preferito-btn {
+  background: #b71c1c;
+  width: 100%;
+  margin-top: 2px;
+}
+
+#monitor-tools #intestazione {
+  display: flex;
+}
+
+#monitor-tools #intestazione img {
+  margin-right: 15px;
+}
+
+#monitor-tools #intestazione p {
+  background: #252525;
+  color: #fff;
+  text-transform: uppercase;
+  padding: 0 7px;
+  width: 100%;
+}
+
+#monitor-tools #checkMonitorButton,
+#monitor-tools #salvaConfigMonitor {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #607d8b;
+  width: 91%;
+  font-size: 0.9rem;
+  border-radius: 3px;
+}
+
+#monitor-tools #checkMonitorButton {
+  bottom: 40px;
+}
+
+#monitor-tools #salvaConfigMonitor {
+  bottom: 10px;
+}
+
+#avvisi-gestione-monitor {
+  padding: 5px;
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  display: none;
+}
+
+#monitor-rilevati {
+  display: none;
+  grid-template-columns: repeat(2, 1fr); /* 2 colonne di larghezza uguale */
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.monitor-div {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  text-align: center;
+  color: #000;
+  font-size: 0.8rem;
+}
+
+.monitor-div label {
+  display: none;
+}
+
+.monitor-attuale-div {
+  position: relative;
+  padding-top: 25px;
+}
+
+.monitor-attuale-div label {
+  display: block;
+  position: absolute;
+  top: -1px;
+  width: 101%;
+  left: -1px;
+  background: #b71c1c;
+  color: #fff;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.monitor-div:nth-child(1) {
+  background-color: #e0f7fa; /* Azzurro chiaro */
+}
+
+.monitor-div:nth-child(2) {
+  background-color: #e8f5e9; /* Verde menta */
+}
+
+.monitor-div:nth-child(3) {
+  background-color: #fce4ec; /* Rosa pastello */
+}
+
+.monitor-div:nth-child(4) {
+  background-color: #fff3e0; /* Arancione tenue */
+}
+
+.pulse {
+  -webkit-animation-name: pulse;
+  animation-name: pulse;
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+#main-area-monitor {
+  margin-top: 20px;
+  height: 100vh;
+}
+
+@-webkit-keyframes pulse {
+  0% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    -webkit-transform: scale3d(1.2, 1.2, 1.2);
+    transform: scale3d(1.2, 1.2, 1.2);
+  }
+  100% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
+@keyframes pulse {
+  0% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    -webkit-transform: scale3d(1.2, 1.2, 1.2);
+    transform: scale3d(1.2, 1.2, 1.2);
+  }
+  100% {
+    -webkit-transform: scale3d(1, 1, 1);
+    transform: scale3d(1, 1, 1);
+  }
+}
