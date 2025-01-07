@@ -86,19 +86,20 @@ function _askSaveDiscardOrCancel(
   UIViewportDialogService: AppTypes.UIViewportDialogService,
   viewportId
 ) {
+  return;
   return new Promise(function (resolve, reject) {
     const message =
-      'Measurements cannot span across multiple studies. Do you want to save your tracked measurements?';
+      'Le misurazioni non possono estendersi su più studi. Vuoi salvare le misurazioni tracciate?';
     const actions = [
-      { type: 'cancel', text: 'Cancel', value: RESPONSE.CANCEL },
+      { type: 'cancel', text: 'Annulla', value: RESPONSE.CANCEL },
       {
         type: 'secondary',
-        text: 'No, discard previously tracked series & measurements',
+        text: 'No, elimina le serie e le misurazioni precedentemente tracciate.',
         value: RESPONSE.SET_STUDY_AND_SERIES,
       },
       {
         type: 'primary',
-        text: 'Yes',
+        text: 'Sì',
         value: RESPONSE.CREATE_REPORT,
       },
     ];

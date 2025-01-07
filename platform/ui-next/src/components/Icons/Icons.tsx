@@ -183,6 +183,7 @@ import ArrowLeftBold from './Sources/ArrowLeftBold';
 import Pencil from './Sources/Pencil';
 //
 /** Nolex **/
+import notificationWarning from '../../../assets/icons/warning.png';
 import mprDirect from '../../../assets/icons/mpr.png';
 import toolStackScroll from '../../../assets/icons/tool-stack-scroll.svg';
 import hideInfoDicom from '../../../assets/icons/tool-hide-info-dicom.svg';
@@ -222,8 +223,8 @@ export const Icons = {
   ),
   hideInfoDicom: (props: ImageIconProps) => (
     <ImageWrapper
-      src={mprDirect}
-      {...hideInfoDicom}
+      src={hideInfoDicom}
+      {...props}
     />
   ),
   storicoExpand: (props: ImageIconProps) => (
@@ -268,6 +269,13 @@ export const Icons = {
       {...props}
     />
   ),
+  'notificationwarning-diamond': (props: ImageIconProps) => (
+    <ImageWrapper
+      src={notificationWarning}
+      {...props}
+    />
+  ),
+
   'CT-AAA': (props: ImageIconProps) => (
     <ImageWrapper
       src={CTAAA}

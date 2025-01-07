@@ -544,6 +544,8 @@ function listenerEvent(event) {
   };
 
   const closeStoricoIframe = () => {
+    const studioPrincipale = document.querySelector('.nolex-main-area');
+    studioPrincipale.style.maxWidth = 'none';
     document.body.classList.remove('storico-injected-iframe');
     document.body.classList.remove('secondo-mpr-attivo');
     document.getElementById('iframe-storico').remove();

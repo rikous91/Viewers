@@ -1,18 +1,39 @@
+/* eslint-disable no-inner-declarations */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+import { riadattaFinestraSuPiuMonitor } from './riadattaFinestraSuPiuMonitor';
+import { ripristinoVisualizzazioneSuUnMonitor } from './ripristinoVisualizzazioneSuUnMonitor';
+
+let estensioneMonitorControllata = false;
+let versioneEstensioneInstallata = '';
+let monitors = [];
+let configAttuale;
+let abilitaPulsanteEliminazione = true;
+
 const gestioneMonitorInitInterval = () => {
-  const intervalEditorExt = setInterval(() => {
+  if (!estensioneMonitorControllata) {
+    estensioneMonitorControllata = true;
+    isExtensionInstalled();
+    // caricaConfigurazioneMonitor();
+  }
+
+  const intervalMonitorExt = setInterval(() => {
     if (document.getElementById('trackedMeasurements-btn')) {
-      clearInterval(intervalEditorExt);
+      clearInterval(intervalMonitorExt);
       injectMonitorBtn();
     }
   }, 100);
 
   //A prescindere blocco l'intervallo check dopo un tot per performance
   setTimeout(() => {
-    clearInterval(intervalEditorExt);
+    clearInterval(intervalMonitorExt);
   }, 10000);
 };
 
 const injectMonitorBtn = () => {
+  if (document.getElementById('monitor-btn')) {
+    return;
+  }
   //Attacco pulsante sotto quello delle misurazioni nel pannello a dx
   document.getElementById('trackedMeasurements-btn').parentElement.insertAdjacentHTML(
     'afterend',
@@ -44,18 +65,35 @@ async function monitorMainFunc() {
         <p>Gestione monitor</p>
         </div>
            <div id="main-area-monitor">
+           <p style="${versioneEstensioneInstallata !== '' ? 'display:block' : 'display:none'}" id="info-versione-estensione">Versione estensione Nolex: ${versioneEstensioneInstallata}</p>
             <p id="avvisi-gestione-monitor"></p>
             <button id="checkMonitorButton">Rileva monitor</button>
-            <button id="salvaConfigMonitor">Salva configurazione</button>
+            <button id="salvaConfigMonitor">Salva visualizzazione attuale</button>
         </div>
     </div>
   `;
 
   document.body.insertAdjacentHTML('beforeend', monitorToolsHtml);
-  await window.checkMonitor();
+  if (versioneEstensioneInstallata === '') {
+    showWarning(
+      "La gestione della visualizzazione su più schermi è una funzionalità avanzata che richiede l'installazione della nostra estensione Chrome. Installala da qui e ricarica la pagina"
+    );
+  }
 
-  document.getElementById('checkMonitorButton').addEventListener('click', async () => {
-    await window.checkMonitor();
+  if (monitors.length > 1) {
+    disegnaMonitorInterfaccia(monitors);
+  } else if (versioneEstensioneInstallata !== '') {
+    showWarning('Rilevato un solo monitor');
+  }
+
+  // await window.checkMonitor();
+
+  // document.getElementById('checkMonitorButton').addEventListener('click', async () => {
+  //   await window.checkMonitor();
+  // });
+
+  document.getElementById('salvaConfigMonitor').addEventListener('click', () => {
+    window.salvaConfigMonitor();
   });
 
   //Animazione comparsa monitor-tools
@@ -92,9 +130,9 @@ async function monitorMainFunc() {
 
 let permissionStatus = null;
 let screenDetails = null;
+let schermi = null;
 
 window.checkMonitor = async () => {
-  let schermi = null;
   permissionStatus = await navigator.permissions.query({ name: 'window-management' }).catch(e => {
     console.error(e);
     showWarning(e.message);
@@ -147,7 +185,14 @@ window.checkMonitor = async () => {
   if (schermi && schermi.length > 1) {
     disegnaMonitorInterfaccia(schermi);
   }
+
+  leggiConfigurazioneAttuale();
 };
+
+function isExtensionInstalled() {
+  //Mi serve per capire se l'estensione è installata/attiva/funzionante oltre che ricevere il numero versione
+  window.postMessage({ type: 'fromPage', data: 'Info versione' }, '*');
+}
 
 function disegnaMonitorInterfaccia(schermi) {
   //Aggiorno ogni volta rimuovendo il precedente se presente
@@ -157,8 +202,14 @@ function disegnaMonitorInterfaccia(schermi) {
   if (document.getElementById('lista-monitor')) {
     document.getElementById('lista-monitor').remove();
   }
-  document.getElementById('main-area-monitor').insertAdjacentHTML(
-    'afterbegin',
+  if (document.getElementById('configurazione-div')) {
+    document.getElementById('configurazione-div').remove();
+  }
+  if (document.getElementById('imposta-configurazione-div')) {
+    document.getElementById('imposta-configurazione-div').remove();
+  }
+  document.getElementById('info-versione-estensione').insertAdjacentHTML(
+    'afterend',
     `
     <div id="monitor-rilevati">
 
@@ -167,28 +218,297 @@ function disegnaMonitorInterfaccia(schermi) {
   );
   const sezioneMonitorRilevati = document.getElementById('monitor-rilevati');
   document
-    .getElementById('main-area-monitor')
+    .getElementById('info-versione-estensione')
     .insertAdjacentHTML(
-      'afterbegin',
+      'afterend',
       `<p id="lista-monitor">Monitor presenti: ${schermi.length}</p>`
     );
   sezioneMonitorRilevati.style.display = 'grid';
   for (let i = 0; i < schermi.length; i++) {
-    sezioneMonitorRilevati.insertAdjacentHTML(
-      'beforeend',
+    const isPrimaryScreen = schermi[i].isPrimary;
+
+    // Creazione dell'HTML base
+    const monitorDiv = document.createElement('div');
+    // monitorDiv.className = `monitor-div ${isPrimaryScreen ? 'monitor-attuale-div' : ''}`;
+    monitorDiv.className = 'monitor-div';
+    monitorDiv.innerHTML = `
+        <label style="display:none">Monitor corrente</label>
+        <p style="font-weight: 800;">[${i + 1}] - ${schermi[i].name} ${schermi[i].isPrimary ? '- PRIMARIO' : ''}</p>
+        <p>${isPrimaryScreen ? 'Monitor primario' : ''}</p>
+        <p>ID: ${schermi[i].id}</p>
+        <p>${schermi[i].bounds.left},${schermi[i].bounds.top}  ${schermi[i].bounds.width}x${schermi[i].bounds.height}</p>
+        <p>dpiX: ${schermi[i].dpiX}, dpiY: ${schermi[i].dpiY}</p>
+    `;
+
+    // Aggiunta del pulsante
+
+    // if (!isPrimaryScreen) {
+    //   const button = document.createElement('button');
+    //   button.className = 'sposta-su-monitor-btn';
+    //   button.textContent = 'Sposta qui';
+    //   button.addEventListener('click', async () => spostaVisualizzatoreSuMonitor(schermi[i]));
+    //   monitorDiv.appendChild(button);
+    // }
+
+    // Inserimento nella sezione
+    sezioneMonitorRilevati.appendChild(monitorDiv);
+  }
+  //Parte HTML Lettura Configurazione
+
+  const configurazioneDiv = document.createElement('div');
+  configurazioneDiv.id = 'configurazione-div';
+  if (!configAttuale) {
+    configurazioneDiv.innerHTML = `
+        <label>Configurazione attuale:</label>
+        <p class="nessuna-configurazione-salvata">Nessuna configurazione salvata</p>
+    `;
+  } else {
+    //In base alla larghezza e alle coordinate della finestra salvata, indico su quali monitor è attiva
+    const testoCalcoloMonitorOccupati = calcoloMonitorOccupati();
+    configurazioneDiv.innerHTML = `
+    <label>Configurazione attuale:</label>
+    <p style="font-size: 0.8rem; color: #b4f1d1">Visualizzazione in ${configAttuale.width}x${configAttuale.height} / left: ${configAttuale.left}, top: ${configAttuale.top}</p>
+    <p style="display:none;font-size: 0.8rem; color: #b4f1d1">${testoCalcoloMonitorOccupati}</p>
+`;
+    // Aggiungo un pulsante per rimuovere eventualmente la configurazione attuale
+    aggiungiPulsanteEliminaConfigurazione();
+  }
+
+  const mainMonitorAreaDiv = document.getElementById('main-area-monitor');
+  mainMonitorAreaDiv.appendChild(configurazioneDiv);
+
+  //Parte HTML Imposta una Configurazione
+
+  // const impostaConfigurazioneDiv = document.createElement('div');
+  // impostaConfigurazioneDiv.id = 'imposta-configurazione-div';
+  // impostaConfigurazioneDiv.innerHTML = `
+  // <label>Monitor predefinito per apertura Visualizzatore Nolex:</label>
+  //   <select id="select-monitor">
+  //   </select>
+  //   <p id="configurazione-salvata">Configurazione salvata</p>
+  // `;
+  // mainMonitorAreaDiv.appendChild(impostaConfigurazioneDiv);
+
+  // const selectMonitor = document.getElementById('select-monitor');
+
+  // const placeholderOption = document.createElement('option');
+  // placeholderOption.value = ''; // Valore vuoto
+  // placeholderOption.textContent = 'Seleziona un monitor';
+  // placeholderOption.disabled = true; // Rende l'opzione non selezionabile
+  // placeholderOption.selected = true; // Imposta come opzione predefinita
+  // selectMonitor.appendChild(placeholderOption);
+
+  // for (let i = 0; i < schermi.length; i++) {
+  //   const option = document.createElement('option');
+  //   option.value = `${i}`;
+  //   option.textContent = `Monitor ${i + 1}: ${schermi[i].label}`;
+  //   selectMonitor.appendChild(option);
+  // }
+}
+
+function calcoloMonitorOccupati() {
+  if (monitors.length < 2) {
+    return 'Rilevato un solo monitor';
+  }
+  let testoCalcolo = '';
+  let monitorOccupati = 0;
+  const idMonitorOccupati = [];
+
+  for (const monitor of monitors) {
+    // Controlla se la finestra interseca l'area del monitor
+    const windowRight = configAttuale.left + configAttuale.width;
+    const windowBottom = configAttuale.top + configAttuale.height;
+
+    const monitorRight = monitor.bounds.left + monitor.bounds.width;
+    const monitorBottom = monitor.bounds.top + monitor.bounds.height;
+
+    const isOverlapping =
+      configAttuale.left < monitorRight &&
+      windowRight > monitor.bounds.left &&
+      configAttuale.top < monitorBottom &&
+      windowBottom > monitor.bounds.top;
+
+    if (isOverlapping) {
+      monitorOccupati++;
+      idMonitorOccupati.push(monitor.id);
+    }
+  }
+  if (monitorOccupati === 1) {
+    testoCalcolo = `La finestra viene visualizzata automaticamente nel monitor ${idMonitorOccupati[0]}`;
+  } else if (monitorOccupati > 1) {
+    testoCalcolo = `La finestra viene visualizzata su ${monitorOccupati} monitor e viene estesa automaticamente dal monitor ${idMonitorOccupati[0]} al monitor ${idMonitorOccupati[idMonitorOccupati.length - 1]}`;
+  }
+  return testoCalcolo;
+}
+
+async function spostaVisualizzatoreSuMonitor(monitorInfo) {
+  console.log(monitorInfo);
+  window.moveTo(monitorInfo.availLeft, monitorInfo.availTop);
+  setTimeout(async () => {
+    window.resizeTo(monitorInfo.availWidth, monitorInfo.avaiHeight);
+  }, 100);
+
+  setTimeout(async () => {
+    await window.checkMonitor();
+  }, 100);
+
+  // const nuovaFinestra = window.open(
+  //   window.location.href, // URL della finestra
+  //   '_blank', // Target: nuova finestra (_blank)
+  //   `toolbar=no,scrollbars=no,resizable=no,status=no,menubar=no,width=${monitorInfo.width + 100},height=${monitorInfo.height + 100},top=${monitorInfo.top},left=${monitorInfo.left}` // Parametri della finestra
+  // );
+  // // Chiudi la finestra corrente
+  // if (nuovaFinestra) {
+  //   // reindirizzo a una pagina vuota
+  //   // window.location.href = 'about:blank';
+  //   //La finestra si chiuderà solo se aperta a sua volta con window.open o comunque con _blank (se aperta dal pacs avrà effetto)
+  //   window.close();
+  // }
+}
+
+function leggiConfigurazioneAttuale() {
+  if (!localStorage.getItem('configurazioneMonitor')) {
+    return;
+  }
+  let configAttuale = localStorage.getItem('configurazioneMonitor');
+  configAttuale = JSON.parse(configAttuale);
+  const { label } = configAttuale;
+
+  const { colorDepth } = configAttuale;
+  const { devicePixelRatio } = configAttuale;
+  const { height } = configAttuale;
+  const { left } = configAttuale;
+  const { numeroMonitor } = configAttuale;
+  const { top } = configAttuale;
+  const { width } = configAttuale;
+
+  document.querySelector('.nessuna-configurazione-salvata').innerHTML = `
+  <p>Apertura automatica sul monitor #${numeroMonitor}</p>
+  <p>${label}</p>
+  <p>${width}x${height} - ${left},${top} </p>
+  <p>Color depth: ${colorDepth}</p>
+  <p>Device Pixel Ratio: ${devicePixelRatio}</p>
+  `;
+  document.querySelector('.nessuna-configurazione-salvata').className = 'warning';
+}
+
+// window.salvaConfigMonitor = () => {
+//   const opzioneSelezionata = document.getElementById('select-monitor').value;
+//   const monitorSelezionato = schermi[opzioneSelezionata];
+//   const objMonitorSelezionato = {
+//     label: monitorSelezionato.label,
+//     numeroMonitor: Number(opzioneSelezionata) + 1,
+//     width: monitorSelezionato.width,
+//     height: monitorSelezionato.height,
+//     left: monitorSelezionato.left,
+//     top: monitorSelezionato.top,
+//     colorDepth: monitorSelezionato.colorDepth,
+//     devicePixelRatio: monitorSelezionato.devicePixelRatio,
+//   };
+
+//   const strMonitorSelezionato = JSON.stringify(objMonitorSelezionato);
+//   localStorage.setItem('configurazioneMonitor', strMonitorSelezionato);
+//   document.getElementById('configurazione-salvata').style.display = 'block';
+// };
+
+window.salvaConfigMonitor = () => {
+  window.postMessage({ type: 'fromPage', data: 'Salva configurazione' }, '*');
+  abilitaPulsanteEliminazione = true;
+};
+
+function aggiungiPulsanteEliminaConfigurazione() {
+  if (!document.getElementById('deleteConfigMonitor') && abilitaPulsanteEliminazione) {
+    document.getElementById('salvaConfigMonitor').insertAdjacentHTML(
+      'beforebegin',
       `
-    <div class="monitor-div ${screenDetails.currentScreen.left === schermi[i].left ? 'monitor-attuale-div' : ''}">
-    <label>Monitor corrente</label>
-    <p style="font-weight: 800;">[${i + 1}] - ${schermi[i].label} ${schermi[i].isPrimary ? '- PRIMARIO' : ''}</p>
-    <p>${screenDetails.currentScreen.left === schermi[i].left ? 'Monitor attuale' : ''}</p>
-      <p>${schermi[i].left},${schermi[i].top}  ${schermi[i].width}x${schermi[i].height}</p>
-      <p>devicePixelRatio: ${schermi[i].devicePixelRatio}, colorDepth: ${schermi[i].colorDepth}</p>
-      <p>isExtended: ${schermi[i].isExtended}</p>
-    </div>
+    <button id="deleteConfigMonitor">Elimina configurazione</button>
     `
     );
+    const deleteConfigBtn = document.getElementById('deleteConfigMonitor');
+    deleteConfigBtn.addEventListener('click', deleteConfigMonitor);
   }
 }
+
+function deleteConfigMonitor() {
+  window.postMessage({ type: 'fromPage', data: 'Elimina configurazione' }, '*');
+  abilitaPulsanteEliminazione = false; //Una volta che la configurazione viene eliminata, non faccio più ricomparire il pulsante elimina alla riapetura della funzione monitor,
+  //tranne nel caso in cui venga salvata nuovamente una configurazione
+}
+
+// Ascolta messaggi dall'estensione
+window.addEventListener('message', event => {
+  if (event.source !== window) {
+    return;
+  } // Ignora messaggi non dall'estensione
+  if (event.data.type === 'fromExtension' && event.data.data) {
+    const messaggio = event.data.data;
+    if (messaggio.versione) {
+      console.log('Versione estensione: ', messaggio.versione);
+      versioneEstensioneInstallata = messaggio.versione;
+      //Al caricamento iniziale o ad ogni cambio di winsow.layout eseguo le correzioni
+      // e avvio funzione di trasformazione per riadattare eventualmente la griglia al caricamento su più monitor
+
+      let previousLayout = null; // Per memorizzare il precedente stato di window.layout
+      let mprChanged = null;
+
+      function monitorLayoutChanges() {
+        calcolaLarghezzaFinestraSuPiuMonitor();
+        requestAnimationFrame(monitorLayoutChanges);
+      }
+
+      // Effettuo correzioni continue
+      monitorLayoutChanges();
+    }
+    if (messaggio.monitors) {
+      monitors = JSON.parse(messaggio.monitors);
+      console.log('Info monitor: ', monitors);
+    }
+    if (messaggio.configAttuale) {
+      configAttuale = messaggio.configAttuale;
+      console.log('Config attuale: ', configAttuale);
+    }
+    if (
+      messaggio.applicazioneModifiche &&
+      !document.body.classList.contains('storico-injected-iframe')
+    ) {
+      console.log("L'estensione ha spostato la finestra seguendo la configurazione salvata");
+      //Se l'estensione ha applicato le modifiche ovvero ha spostato e/o ridimensionato la finestra significa che al caricamento non aveva le caratteristiche previste dalla
+      //configurazione salvata. Capita però che se la finestra si trovava in un monitor verticale o comunque con una risoluzione completamente diversa e l'estensione
+      //sposta la finestra su altri monitor, questa non avrà la larghezza corretta, per cui risolvo con un ricaricamento pagina che avverrà sul monitor in questione riportando
+      //la larghezza corretta a quel punto MA SOLO SE NON HO UNO STORICO IFRAME.
+      window.location.reload();
+    }
+
+    if (messaggio.success && messaggio.success === 'Configurazione salvata!') {
+      console.log('Salvataggio riuscito');
+      const salvataggioBtn = document.getElementById('salvaConfigMonitor');
+      salvataggioBtn.textContent = 'Salvataggio riuscito!';
+      salvataggioBtn.style.pointerEvents = 'none';
+      salvataggioBtn.style.background = '#4caf50';
+
+      setTimeout(() => {
+        salvataggioBtn.textContent = 'Salva visualizzazione attuale';
+        salvataggioBtn.style.pointerEvents = 'all';
+        salvataggioBtn.style.background = '#607d8b';
+        //A questo punto se non era presente, aggiungo il pulsante per eliminare la configurazione appena salvata
+        abilitaPulsanteEliminazione = true;
+        aggiungiPulsanteEliminaConfigurazione();
+      }, 3000);
+    }
+    if (messaggio.success && messaggio.success === 'Configurazione eliminata!') {
+      console.log('Configurazione eliminata');
+      const deleteBtn = document.getElementById('deleteConfigMonitor');
+      deleteBtn.textContent = 'Configurazione eliminata';
+      deleteBtn.style.pointerEvents = 'none';
+
+      setTimeout(() => {
+        deleteBtn.remove();
+      }, 3000);
+    }
+
+    console.log("Messaggio ricevuto dall'estensione:", event.data);
+  }
+});
 
 function showWarning(text) {
   //Se ho un qualsiasi errore nascondo a prescindere i pulsanti in basso rileva monitor e salva configurazione
@@ -210,5 +530,51 @@ function showWarning(text) {
     avvisiGestioneMonitor.textContent = text;
   } else {
     avvisiGestioneMonitor.style.display = 'none';
+  }
+}
+
+///////////////////////////////
+
+function calcolaLarghezzaFinestraSuPiuMonitor() {
+  if (versioneEstensioneInstallata === '') {
+    return;
+  }
+
+  let fromLeftToRight = true;
+
+  // Coordinate e dimensioni della finestra
+  const finestraLeft = window.screenX;
+  const finestraWidth = window.innerWidth;
+
+  // Dimensioni e coordinate del monitor attuale
+  const monitorLeft = screen.availLeft;
+  const monitorWidth = screen.width;
+
+  // Calcola la larghezza sovrapposta al monitor attuale
+  const sovrapposizioneLarghezza = Math.max(
+    0,
+    Math.min(finestraLeft + finestraWidth, monitorLeft + monitorWidth) -
+    Math.max(finestraLeft, monitorLeft)
+  );
+
+  // Calcola la larghezza fuori dal monitor attuale (eccedenza a destra o sinistra)
+  let larghezzaFuoriMonitor = 0;
+  if (finestraLeft < monitorLeft) {
+    fromLeftToRight = false;
+    // Eccedenza a sinistra del monitor attuale
+    larghezzaFuoriMonitor = Math.abs(finestraLeft - monitorLeft);
+  } else if (finestraLeft + finestraWidth > monitorLeft + monitorWidth) {
+    fromLeftToRight = true;
+    // Eccedenza a destra del monitor attuale
+    larghezzaFuoriMonitor = finestraLeft + finestraWidth - (monitorLeft + monitorWidth);
+  }
+
+  console.log(`Larghezza sovrapposta al monitor attuale: ${sovrapposizioneLarghezza}px`);
+  console.log(`Larghezza fuori dal monitor attuale: ${larghezzaFuoriMonitor}px`);
+
+  if (larghezzaFuoriMonitor > 8) {
+    riadattaFinestraSuPiuMonitor(sovrapposizioneLarghezza, larghezzaFuoriMonitor, fromLeftToRight);
+  } else {
+    ripristinoVisualizzazioneSuUnMonitor();
   }
 }
