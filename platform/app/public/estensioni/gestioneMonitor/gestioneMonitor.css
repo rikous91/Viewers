@@ -39,7 +39,8 @@
 }
 
 #monitor-tools #checkMonitorButton,
-#monitor-tools #salvaConfigMonitor {
+#monitor-tools #salvaConfigMonitor,
+#monitor-tools #deleteConfigMonitor {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -51,19 +52,87 @@
 
 #monitor-tools #checkMonitorButton {
   bottom: 40px;
+  display: none;
 }
 
 #monitor-tools #salvaConfigMonitor {
   bottom: 10px;
 }
 
-#avvisi-gestione-monitor {
+#monitor-tools #deleteConfigMonitor {
+  bottom: 40px;
+  background: #f44336;
+}
+
+#monitor-tools #configurazione-div,
+#monitor-tools #imposta-configurazione-div {
+  margin-top: 30px;
+}
+
+#monitor-tools #configurazione-div label,
+#monitor-tools #imposta-configurazione-div label {
+  display: block;
+}
+
+#monitor-tools #imposta-configurazione-div select {
+  color: #333;
+}
+
+.sposta-su-monitor-btn {
+  background: #dbdbdb;
+  color: #000000;
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 4px;
+}
+
+#avvisi-gestione-monitor,
+.nessuna-configurazione-salvata {
   padding: 5px;
   color: #721c24;
   background-color: #f8d7da;
   border-color: #f5c6cb;
   border: 1px solid transparent;
   border-radius: 0.25rem;
+  display: none;
+}
+
+#info-versione-estensione {
+  padding: 5px;
+  color: #1c726f;
+  background-color: #d7f8e7;
+  border-color: #c8f5c6;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  margin-bottom: 10px;
+}
+
+.nessuna-configurazione-salvata {
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 3px;
+}
+
+.warning {
+  padding: 5px;
+  color: #726f1c;
+  background-color: #f8ecd7;
+  border-color: #f5c6cb;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+
+#configurazione-salvata {
+  padding: 0 16px;
+  color: #1c725f;
+  background-color: #d7f8da;
+  border-color: #f5c6cb;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  bottom: 50px;
+  position: absolute;
+  width: 95%;
+  text-align: center;
   display: none;
 }
 
@@ -82,6 +151,12 @@
   text-align: center;
   color: #000;
   font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.monitor-div:hover {
+  background-color: #e0f7fa;
+  box-shadow: 0 0 6px 0px #ffffff;
 }
 
 .monitor-div label {

@@ -70,33 +70,6 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
   );
   return (
     <div>
-      {renderRowTitle(t('Important links'))}
-      <div className="mb-8 flex">
-        <Link
-          href="https://community.ohif.org/"
-          showIcon={true}
-        >
-          {t('Visit the forum')}
-        </Link>
-        <span className="ml-4">
-          <Link
-            href="https://github.com/OHIF/Viewers/issues/new/choose"
-            showIcon={true}
-          >
-            {t('Report an issue')}
-          </Link>
-        </span>
-        <span className="ml-4">
-          <Link
-            href="https://ohif.org/"
-            showIcon={true}
-          >
-            {t('More details')}
-          </Link>
-        </span>
-      </div>
-
-      {renderRowTitle(t('Version information'))}
       <div className="flex flex-col">
         <img
           style={{ width: '130px', marginBottom: '20px' }}

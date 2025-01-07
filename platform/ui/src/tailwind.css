@@ -122,6 +122,10 @@
   filter: invert(1);
 }
 
+[data-cy='hideInfoDicom'] img {
+  filter: invert(1);
+}
+
 .hide-info-dicom {
   .overlay-info-dicom {
     display: none;
@@ -879,7 +883,7 @@ input[type='range']::-webkit-slider-thumb {
 /* Divido la toolbar in due o più righe */
 @media only screen and (max-width: 1300px) {
   .toolbar-child-flex {
-    flex-wrap: wrap;
+    flex-wrap: wrap !important;
   }
   .logo {
     max-width: 18vw;
@@ -891,10 +895,10 @@ input[type='range']::-webkit-slider-thumb {
     height: calc(-137px + 100vh);
   }
   .nolex-bar {
-    height: 136px;
+    height: 136px !important;
   }
   .toolbar-child-flex {
-    top: 45px;
+    top: 45px !important;
   }
 }
 @media only screen and (min-width: 916px) and (max-width: 1300px) {
@@ -903,12 +907,12 @@ input[type='range']::-webkit-slider-thumb {
   }
 
   .toolbar-child-flex {
-    flex-wrap: wrap;
-    top: 23px;
+    flex-wrap: wrap !important;
+    top: 23px !important;
     padding: 20px;
   }
   .nolex-bar {
-    height: 90px;
+    height: 90px !important;
   }
 }
 

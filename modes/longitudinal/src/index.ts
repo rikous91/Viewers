@@ -126,7 +126,6 @@ function modeFactory({ modeConfiguration }) {
           'Capture',
           'hideInfoDicom',
           'ReferenceLines',
-          'Reset3DRotate',
           'MoreTools',
           // 'setCamera',
           // 'storeState',

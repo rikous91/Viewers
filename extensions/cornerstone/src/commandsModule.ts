@@ -673,7 +673,7 @@ function commandsModule({
           //   }
           // });
           restoreState();
-          // window.mprIsActive = false;
+          window.mprIsActive = false;
 
           //Se sono nell'iframe dello storico mando un messaggio al genitore dicendo che l'mpr è stato appena disabilitato
           if (window.location.href.includes('storico=same-tab')) {
