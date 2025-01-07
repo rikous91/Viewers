@@ -47,6 +47,7 @@ if (modality && modality === 'MG') {
 }
 
 window.config = {
+  name: 'config/default.js',
   //routerBasename: '/viewer',
   routerBasename: `${window.portableVersion ? '/' : '/nolexviewer'}`,
   // whiteLabeling: {},
