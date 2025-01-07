@@ -15,6 +15,7 @@ import {
 } from '@cornerstonejs/tools';
 import { useToggleOneUpViewportGridStore } from '@ohif/extension-default';
 import { Types as OhifTypes } from '@ohif/core';
+import i18n from '@ohif/i18n';
 import {
   callLabelAutocompleteDialog,
   showLabelAnnotationPopup,
@@ -1284,7 +1285,7 @@ function commandsModule({
           segments: options.createInitialSegment
             ? {
               1: {
-                label: 'Segment 1',
+                label: `${i18n.t('Segment')} 1`,
                 active: true,
               },
             }
