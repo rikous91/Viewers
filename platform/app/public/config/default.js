@@ -4,6 +4,7 @@
 let prefetch = new URLSearchParams(new URL(window.location.href).search).get('prefetch');
 let dicomLoad = new URLSearchParams(new URL(window.location.href).search).get('dicomload');
 let hdnDicomLoad = new URLSearchParams(new URL(window.location.href).search).get('fZG');
+let useCPURendering = new URLSearchParams(new URL(window.location.href).search).get('usecpu');
 const modality = new URLSearchParams(new URL(window.location.href).search).get('Modality');
 window.nolexStudyInstanceUIDs = new URLSearchParams(new URL(window.location.href).search).get(
   'StudyInstanceUIDs'
@@ -48,7 +49,8 @@ if (modality && modality === 'MG') {
 
 window.config = {
   name: 'config/default.js',
-  routerBasename: '/viewer',
+  routerBasename: '/',
+  // routerBasename: '/viewer',
   // routerBasename: `${window.portableVersion ? '/' : '/nolexviewer'}`,
   // whiteLabeling: {},
   extensions: [],
@@ -66,6 +68,7 @@ window.config = {
   useSharedArrayBuffer: `${origin.includes('https') ? 'TRUE' : 'FALSE'}`,
   groupEnabledModesFirst: true,
   useExperimentalUI: true,
+  useCPURendering: useCPURendering ? true : false,
   maxNumRequests: {
     interaction: 100,
     thumbnail: 75,
