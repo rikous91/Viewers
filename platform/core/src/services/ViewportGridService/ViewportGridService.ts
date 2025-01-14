@@ -236,6 +236,8 @@ class ViewportGridService extends PubSubService {
     const prevState = this.getState();
     const prevViewportIds = new Set(prevState.viewports.keys());
 
+    window.layout = `${numCols}x${numRows}`;
+
     await this.serviceImplementation._setLayout({
       numCols,
       numRows,

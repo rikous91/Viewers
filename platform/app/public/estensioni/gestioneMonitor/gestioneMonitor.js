@@ -510,6 +510,7 @@ window.addEventListener('message', event => {
   }
 });
 
+
 function showWarning(text) {
   //Se ho un qualsiasi errore nascondo a prescindere i pulsanti in basso rileva monitor e salva configurazione
   if (text && text.trim() !== '' && document.querySelectorAll('#main-area-monitor button')) {
@@ -569,8 +570,8 @@ function calcolaLarghezzaFinestraSuPiuMonitor() {
     larghezzaFuoriMonitor = finestraLeft + finestraWidth - (monitorLeft + monitorWidth);
   }
 
-  console.log(`Larghezza sovrapposta al monitor attuale: ${sovrapposizioneLarghezza}px`);
-  console.log(`Larghezza fuori dal monitor attuale: ${larghezzaFuoriMonitor}px`);
+  // console.log(`Larghezza sovrapposta al monitor attuale: ${sovrapposizioneLarghezza}px`);
+  // console.log(`Larghezza fuori dal monitor attuale: ${larghezzaFuoriMonitor}px`);
 
   if (larghezzaFuoriMonitor > 8) {
     riadattaFinestraSuPiuMonitor(sovrapposizioneLarghezza, larghezzaFuoriMonitor, fromLeftToRight);
