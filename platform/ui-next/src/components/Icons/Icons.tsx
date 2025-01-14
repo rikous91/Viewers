@@ -184,6 +184,7 @@ import LoadingOHIFMark from './Sources/LoadingOHIFMark';
 import ArrowLeftBold from './Sources/ArrowLeftBold';
 import Pencil from './Sources/Pencil';
 //
+//
 /** Nolex **/
 import notificationWarning from '../../../assets/icons/warning.png';
 import mprDirect from '../../../assets/icons/mpr.png';
@@ -196,6 +197,7 @@ import preferiti from '../../../assets/icons/preferiti.png';
 import preferitiActive from '../../../assets/icons/preferiti-active.png';
 import logoNolex from '../../../assets/icons/logo_nolex.png';
 import hpIcon from '../../../assets/icons/hp.png';
+//
 //
 type IconProps = React.HTMLAttributes<SVGElement>;
 type ImageIconProps = React.ImgHTMLAttributes<HTMLImageElement>;
@@ -729,6 +731,7 @@ export const Icons = {
   'status-alert': (props: IconProps) => Alert(props),
   info: (props: IconProps) => Info(props),
   'notifications-info': (props: IconProps) => NotificationInfo(props),
+  'notificationwarning-diamond': (props: IconProps) => NotificationWarning(props),
   'content-prev': (props: IconProps) => ContentPrev(props),
   'content-next': (props: IconProps) => ContentNext(props),
   'icon-settings': (props: IconProps) => Settings(props),
