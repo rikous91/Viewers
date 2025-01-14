@@ -6,7 +6,7 @@ import { DicomMetadataStore, MODULE_TYPES } from '@ohif/core';
 import Dropzone from 'react-dropzone';
 import filesToStudies from './filesToStudies';
 
-import { extensionManager } from '../../App.tsx';
+import { extensionManager } from '../../App';
 
 import { Button, Icon, LoadingIndicatorProgress, LoadingIndicatorTotalPercent } from '@ohif/ui';
 import { Icons } from '@ohif/ui-next';

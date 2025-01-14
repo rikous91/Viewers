@@ -3,9 +3,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Enums, ExtensionManager, MODULE_TYPES, log } from '@ohif/core';
 //
-import { extensionManager } from '../App.tsx';
-import { useParams, useLocation, useNavigate } from 'react-router';
-import useSearchParams from '../hooks/useSearchParams.ts';
+import { extensionManager } from '../App';
+import { useParams, useLocation } from 'react-router';
+import { useNavigate } from 'react-router-dom';
+import useSearchParams from '../hooks/useSearchParams';
 
 /**
  * Determines if two React Router location objects are the same.
