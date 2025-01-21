@@ -47,6 +47,13 @@ if (modality && modality === 'MG') {
   prefetch = 1;
 }
 
+const isMobile = () => {
+
+  if (window.matchMedia("(max-width: 768px)").matches) {
+    return true
+  } else return
+};
+
 window.config = {
   name: 'config/default.js',
   routerBasename: '/',
@@ -363,7 +370,7 @@ window.config = {
     createLogoComponentFn: function (React) {
       return React.createElement('img', {
         // src: '../assets/logo_nolex.png',
-        src: './assets/logo_nolex.png', //Produzione - build
+        src: `${isMobile() ? './assets/logo_nolex_mobile.png' : './assets/logo_nolex.png'}`, //Produzione - build
         className: 'logo',
       });
     },

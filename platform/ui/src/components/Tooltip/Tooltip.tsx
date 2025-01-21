@@ -137,7 +137,7 @@ const Tooltip = ({
 
   const tooltipContent = (
     <div
-      className={classnames(`tooltip tooltip-${position} block`, 'z-50')}
+      className={classnames(`${isOpen && 'visible'} tooltip tooltip-${position} block`, 'z-50')}
       style={{
         position: 'fixed',
         top: coords.y,

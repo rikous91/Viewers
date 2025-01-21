@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { useDrop } from 'react-dnd';
-import { utilities as csUtils } from '@cornerstonejs/core';
 
 // NOTE: If we found a way to make `useDrop` conditional,
 // Or we provided a HOC of this component, we could provide
@@ -43,51 +42,9 @@ function ViewportPane({
     }
   };
 
-  const isPreferitoOnView = () => {
-    const iconaStella = document.querySelector('.nolex-selected .preferiti-btn img');
-    if (!iconaStella || !window.preferiti || window.preferiti.length === 0) {
-      return;
-    }
-
-    iconaStella.src = '/nolexviewer/assets/images/preferiti.png';
-    const { viewportGridService } = window.servicesManager.services;
-    const { cornerstoneViewportService } = window.servicesManager.services;
-    const { displaySetService } = window.servicesManager.services;
-    const { activeViewportId } = viewportGridService.getState();
-    const viewportId = activeViewportId;
-    const viewportInfo = cornerstoneViewportService.getViewportInfo(viewportId);
-    // const { element } = viewportInfo; //La viewport in questione nel dom
-    const { viewportData } = viewportInfo;
-    const displaySetInstanceUID = viewportData.data[0].displaySetInstanceUID;
-    const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
-    const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
-    let { currentImageIdIndex } = viewport;
-    if (!currentImageIdIndex) {
-      currentImageIdIndex = 0;
-    }
-    const SOPInstanceUID =
-      displaySet.instances.length > 1
-        ? displaySet.instances[currentImageIdIndex]['SOPInstanceUID']
-        : displaySet.instances[0]['SOPInstanceUID'];
-    //Controllo se allo scroll, l'istanza è attiva è tra i preferiti. Se lo è metto preferiti-active all'icona
-    window.preferiti.forEach(preferito => {
-      if (
-        preferito.SOPInstanceUID === SOPInstanceUID &&
-        preferito.NumeroIstanza === currentImageIdIndex + 1
-      ) {
-        console.log('è tra i preferiti');
-        //Cambio la classe alla stellina
-        iconaStella.src = '/nolexviewer/assets/images/preferiti-active.png';
-      }
-    });
-  };
-
   const onInteractionHandler = event => {
     focus();
     onInteraction(event);
-    setTimeout(() => {
-      isPreferitoOnView();
-    }, 0);
   };
 
   const refHandler = element => {
@@ -109,9 +66,9 @@ function ViewportPane({
       onScroll={onInteractionHandler}
       onWheel={onInteractionHandler}
       className={classnames(
-        'group/pane viewport-parent-div h-full w-full overflow-hidden rounded-md transition duration-300',
+        'group/pane h-full w-full overflow-hidden rounded-md transition duration-300',
         {
-          'border-primary-light nolex-selected border-2': isActive,
+          'border-primary-light border-2': isActive,
           'border-2 border-transparent': !isActive,
         },
         className
@@ -152,11 +109,5 @@ ViewportPane.propTypes = {
   /** Executed when the pane is double clicked */
   onDoubleClick: PropTypes.func,
 };
-
-const noop = () => { };
-
-// ViewportPane.defaultProps = {
-//   onInteraction: noop,
-// };
 
 export default ViewportPane;
