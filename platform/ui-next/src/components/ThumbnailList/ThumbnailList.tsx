@@ -37,6 +37,19 @@ const ThumbnailList = ({
             imageAltText,
             isHydratedForDerivedDisplaySet,
           }) => {
+
+            const onClickNolex = (displaySetInstanceUID) => {
+              onThumbnailClick(displaySetInstanceUID)
+              //Se sono su mobile chiudo in automatico il pannello di selezione serie
+              if (window.matchMedia("(max-width: 768px)").matches) {
+                try {
+                  // document.querySelector('[data-cy="side-panel-header-left"]').click()
+                } catch (err) {
+                  console.error('Impossibile chiudere in aumatico il pannello di selezione serie', err)
+                }
+              }
+            }
+
             const isActive = activeDisplaySetInstanceUIDs.includes(displaySetInstanceUID);
             return (
               <Thumbnail
@@ -56,7 +69,7 @@ const ThumbnailList = ({
                 modality={modality}
                 viewPreset={componentType === 'thumbnailNoImage' ? 'list' : viewPreset}
                 thumbnailType={componentType}
-                onClick={() => onThumbnailClick(displaySetInstanceUID)}
+                onClick={() => onClickNolex(displaySetInstanceUID)}
                 onDoubleClick={() => onThumbnailDoubleClick(displaySetInstanceUID)}
                 isTracked={isTracked}
                 loadingProgress={loadingProgress}

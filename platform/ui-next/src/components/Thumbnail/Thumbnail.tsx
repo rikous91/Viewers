@@ -168,12 +168,12 @@ const Thumbnail = ({
           ></div>
           <div className="flex h-full flex-col">
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px]">
+              <div className="text-muted-foreground text-[12px] series-foreground-text">
                 {' '}
                 <span>S:</span>
                 {seriesNumber}
               </div>
-              <div className="text-muted-foreground text-[12px]">
+              <div className="text-muted-foreground text-[12px]  instances-foreground-text">
                 <div className="flex items-center gap-[4px]">
                   {' '}
                   {countIcon ? (

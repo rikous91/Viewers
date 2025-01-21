@@ -90,7 +90,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
       children: false,
       warnings: true,
     },
-    cache: false,
+    cache: true,
     cache: {
       type: 'filesystem',
     },

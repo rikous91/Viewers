@@ -21,18 +21,19 @@ const collapsedWidth = 25;
 const closeIconWidth = 30;
 const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
+let primoAvvio = true
 
 const baseClasses =
   'nolex-new-panel transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col';
 
 const classesMap = {
   open: {
-    left: `mr-1`,
-    right: `ml-1`,
+    left: `mr-1 open`,
+    right: `ml-1 open`,
   },
   closed: {
-    left: `mr-2 items-end`,
-    right: `ml-2 items-start`,
+    left: `mr-2 items-end closed`,
+    right: `ml-2 items-start `,
   },
 };
 
@@ -375,9 +376,25 @@ const SidePanel = ({
     );
   };
 
+  const handleOnMobile = () => {
+
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      setPanelOpen(false); // Chiude il pannello
+    }
+    primoAvvio = false; // Imposta `primoAvvio` a false per evitare chiamate successive
+  };
+
+  //Al primo avvio verifico se sono su mobile, se lo fossi al primo avvio chiudo di default il pannello
+  useEffect(() => {
+    if (primoAvvio) {
+      handleOnMobile(); // Verifica se chiudere il pannello
+    }
+  }, []);
+
+
   return (
     <div
-      className={classnames(className, baseClasses, classesMap[openStatus][side])}
+      className={classnames(className, side, baseClasses, classesMap[openStatus][side])}
       style={style}
     >
       {panelOpen ? (
@@ -395,6 +412,7 @@ const SidePanel = ({
       )}
     </div>
   );
+
 };
 
 SidePanel.propTypes = {

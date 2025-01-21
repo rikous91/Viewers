@@ -13,6 +13,8 @@ import { PanelStudyBrowserHeader, MoreDropdownMenu } from '@ohif/extension-defau
 import { defaultActionIcons, defaultViewPresets } from './constants';
 import axios from 'axios';
 
+let primoAvvio = true
+
 const { formatDate, createStudyBrowserTabs } = utils;
 const thumbnailNoImageModalities = [
   'SR',
@@ -99,6 +101,27 @@ export default function PanelStudyBrowserTracking({
     });
     setViewPresets(newViewPresets);
   };
+
+
+  const handleOnMobile = () => {
+
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      updateViewPresetValue({
+        id: "list",
+        iconName: "ListView",
+        selected: false,
+      })
+    }
+    primoAvvio = false; // Imposta `primoAvvio` a false per evitare chiamate successive
+  };
+
+  //Al primo avvio verifico se sono su mobile, se lo sono al primo avvio setto la modalità visualizzazione serie in lista
+  useEffect(() => {
+    if (primoAvvio) {
+      handleOnMobile(); // Verifica se chiudere il pannello
+    }
+  }, []);
+
 
   const onDoubleClickThumbnailHandler = displaySetInstanceUID => {
     let updatedViewports = [];

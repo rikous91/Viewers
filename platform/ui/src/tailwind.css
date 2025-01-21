@@ -920,3 +920,155 @@ input[type='range']::-webkit-slider-thumb {
 #print-btn {
   display: none !important;
 }
+
+/* MOBILE */
+
+@media only screen and (max-width: 767px) {
+  .logo {
+    max-width: 10vw !important;
+    left: 75px;
+    position: relative;
+  }
+  .tab-studio-nolex {
+    display: none !important;
+  }
+  #seriesList-btn {
+    display: none !important;
+  }
+
+  .nolex-new-panel {
+    height: 100vh !important;
+    .ohif-scrollbar {
+      top: -45px;
+      position: relative;
+      overflow-x: hidden;
+      [data-cy='study-browser-thumbnail']:nth-of-type(1) {
+        margin-top: 42px;
+      }
+    }
+  }
+
+  .nolex-new-panel.open {
+    max-width: 140px !important;
+    [data-cy='side-panel-header-left'] {
+      height: 48px;
+      padding-right: 4px;
+      bottom: 0;
+      position: fixed;
+      left: 0;
+      z-index: 999;
+      width: max-content !important;
+      svg {
+        display: none;
+      }
+    }
+    [data-cy='side-panel-header-left']::after {
+      content: '← Nascondi Serie';
+      padding: 10px;
+      color: #fff;
+      left: 0px;
+      background: #111111;
+      position: relative;
+    }
+  }
+  .nolex-new-panel.closed {
+    margin-right: 0;
+    top: unset !important;
+    bottom: 0;
+    z-index: 99;
+    height: 0 !important;
+    position: absolute !important;
+    [data-cy='side-panel-header-left'] {
+      height: auto;
+      padding-right: 4px;
+      bottom: 0;
+      position: fixed;
+      border-bottom: 4px solid #494949;
+      svg {
+        display: none;
+      }
+    }
+    [data-cy='side-panel-header-left']::after {
+      content: 'Serie →';
+      padding: 10px;
+      color: #fff;
+      left: 50px;
+      background: #0a0a0a;
+      position: relative;
+    }
+  }
+
+  .nolex-new-panel .grid-cols-1 .flex.h-full.w-full .overflow-hidden.overflow-ellipsis {
+    position: relative;
+    right: 0;
+    padding-left: 0px;
+  }
+
+  .instances-foreground-text {
+    position: absolute;
+    left: 35px;
+  }
+
+  #ohif-thumbnail-list {
+    .flex.h-full.w-full {
+      width: 210px;
+      padding-left: 64px;
+    }
+    .flex.overflow-hidden {
+      display: contents;
+    }
+    button {
+      display: none;
+    }
+  }
+
+  .div-icone-right-viewport {
+    display: none;
+  }
+
+  .nolex-panel-header {
+    display: none;
+  }
+
+  .nolex-bar {
+    height: auto !important;
+    bottom: 0;
+    position: fixed;
+    width: 100%;
+    overflow-x: scroll;
+  }
+  .preferiti-btn {
+    display: none;
+  }
+
+  .toolbar-child-flex {
+    top: 0 !important;
+    flex-wrap: nowrap !important;
+    left: 244px;
+  }
+  .div-info-paziente {
+    display: none;
+  }
+  .right.nolex-new-panel {
+    display: none !important;
+  }
+  .parent-LayoutMPR,
+  .parent-gestioneHP,
+  .parent-Capture,
+  .parent-Probe {
+    visibility: hidden;
+    margin-right: -60px;
+  }
+  .visible.tooltip.tooltip-bottom {
+    left: 0px !important;
+    top: unset !important;
+    bottom: 48px;
+    transform: none !important;
+    .tooltip-box {
+      width: 100vw;
+    }
+    .text-primary-dark.stroke-secondary-light.absolute {
+      display: none !important;
+    }
+  }
+}
