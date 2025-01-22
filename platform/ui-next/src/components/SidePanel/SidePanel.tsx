@@ -380,11 +380,18 @@ const SidePanel = ({
 
     if (window.matchMedia("(max-width: 768px)").matches) {
       setPanelOpen(false); // Chiude il pannello
+      const mainArea = document.querySelector('.nolex-main-area')
+      const barraHeaderInBasso = document.querySelector('.nolex-bar')
+      const posizioneYBarraHeaderInBasso = barraHeaderInBasso.getBoundingClientRect().y
+      mainArea.style.height = posizioneYBarraHeaderInBasso - 2 + 'px'
+      mainArea.style.top = '2px'
+
     }
     primoAvvio = false; // Imposta `primoAvvio` a false per evitare chiamate successive
   };
 
-  //Al primo avvio verifico se sono su mobile, se lo fossi al primo avvio chiudo di default il pannello
+  //Al primo avvio verifico se sono su mobile, se lo fossi al primo avvio chiudo di default il pannello e adatto l'altezza dell'intera area
+  //sopra la barra header in basso
   useEffect(() => {
     if (primoAvvio) {
       handleOnMobile(); // Verifica se chiudere il pannello

@@ -102,37 +102,58 @@ function modeFactory({ modeConfiguration }) {
       initToolGroups(extensionManager, toolGroupService, commandsManager, this.labelConfig);
 
       toolbarService.addButtons([...toolbarButtons, ...moreTools]);
-      //Versione normale
+      //Versione normale o mobile
       if (!window.portableVersion) {
-        toolbarService.createButtonSection('primary', [
-          'WindowLevel',
-          'Pan',
-          'ZoomTools',
-          'TransformTools',
-          'Magnify',
-          'MeasurementTools',
-          'StackScroll',
-          // 'Zoom',
-          'Layout',
-          'LayoutMPR',
-          'LayoutMPRStorico',
-          'Crosshairs',
-          'TrackballRotate',
-          'gestioneHP',
-          'invert',
-          'polygon',
-          'Probe',
-          'Cine',
-          'Capture',
-          'hideInfoDicom',
-          'ReferenceLines',
-          'MoreTools',
-          // 'setCamera',
-          // 'storeState',
-          // 'restoreState',
-          // 'jumpIndex',
-          // 'setHPPreferiti',
-        ]);
+        //Mobile
+        if (window.matchMedia("(max-width: 768px)").matches) {
+          toolbarService.createButtonSection('primary', [
+            'Layout',
+            'Pan',
+            'WindowLevel',
+            'Magnify',
+            // 'Zoom',
+            'TransformTools',
+            'MeasurementTools',
+            'StackScroll',
+            'invert',
+            'polygon',
+            'Probe',
+            'hideInfoDicom',
+            'ReferenceLines',
+            'MoreTools',
+          ]);
+        }
+        else {
+          toolbarService.createButtonSection('primary', [
+            'WindowLevel',
+            'Pan',
+            'ZoomTools',
+            'TransformTools',
+            'Magnify',
+            'MeasurementTools',
+            'StackScroll',
+            // 'Zoom',
+            'Layout',
+            'LayoutMPR',
+            'LayoutMPRStorico',
+            'Crosshairs',
+            'TrackballRotate',
+            'gestioneHP',
+            'invert',
+            'polygon',
+            'Probe',
+            'Cine',
+            'Capture',
+            'hideInfoDicom',
+            'ReferenceLines',
+            'MoreTools',
+            // 'setCamera',
+            // 'storeState',
+            // 'restoreState',
+            // 'jumpIndex',
+            // 'setHPPreferiti',
+          ]);
+        }
       } else {
         //Versione portable
         toolbarService.createButtonSection('primary', [

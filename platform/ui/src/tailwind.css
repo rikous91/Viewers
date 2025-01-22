@@ -924,6 +924,11 @@ input[type='range']::-webkit-slider-thumb {
 /* MOBILE */
 
 @media only screen and (max-width: 767px) {
+  /* .nolex-main-area {
+    height: calc(-105px + 100vh) !important;
+    top: 1px;
+  } */
+
   .logo {
     max-width: 10vw !important;
     left: 75px;
@@ -957,6 +962,7 @@ input[type='range']::-webkit-slider-thumb {
       position: fixed;
       left: 0;
       z-index: 999;
+      background-color: #0a0a0a;
       width: max-content !important;
       svg {
         display: none;
@@ -967,7 +973,7 @@ input[type='range']::-webkit-slider-thumb {
       padding: 10px;
       color: #fff;
       left: 0px;
-      background: #111111;
+      background: #0a0a0a;
       position: relative;
     }
   }
@@ -1006,7 +1012,7 @@ input[type='range']::-webkit-slider-thumb {
 
   .instances-foreground-text {
     position: absolute;
-    left: 35px;
+    right: 2px;
   }
 
   #ohif-thumbnail-list {
@@ -1030,6 +1036,16 @@ input[type='range']::-webkit-slider-thumb {
     display: none;
   }
 
+  .viewport-loading::before {
+    left: 44%;
+    width: 30px;
+    height: 30px;
+  }
+
+  .viewport-overlay {
+    font-size: 0.5rem;
+  }
+
   .nolex-bar {
     height: auto !important;
     bottom: 0;
@@ -1044,7 +1060,7 @@ input[type='range']::-webkit-slider-thumb {
   .toolbar-child-flex {
     top: 0 !important;
     flex-wrap: nowrap !important;
-    left: 244px;
+    left: 43%;
   }
   .div-info-paziente {
     display: none;
@@ -1055,10 +1071,33 @@ input[type='range']::-webkit-slider-thumb {
   .parent-LayoutMPR,
   .parent-gestioneHP,
   .parent-Capture,
+  .parent-Cine,
   .parent-Probe {
     visibility: hidden;
     margin-right: -60px;
   }
+  [data-cy='TransformTools-split-button-secondary'],
+  [data-cy='ZoomTools-split-button-secondary'],
+  [data-cy='MeasurementTools-split-button-secondary'],
+  [data-cy='MoreTools-split-button-secondary'] {
+    display: none !important;
+  }
+
+  .standard-layout .cursor-pointer:nth-child(4) {
+    visibility: hidden;
+  }
+
+  [data-cy='Layout-2-0'],
+  [data-cy='Layout-3-0'],
+  [data-cy='Layout-2-1'],
+  [data-cy='Layout-3-1'],
+  [data-cy='Layout-3-1'],
+  [data-cy='Layout-3-1'],
+  [data-cy='Layout-2-2'],
+  [data-cy='Layout-3-2'] {
+    visibility: hidden !important;
+  }
+
   .visible.tooltip.tooltip-bottom {
     left: 0px !important;
     top: unset !important;
