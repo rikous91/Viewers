@@ -14,6 +14,8 @@ import { defaultActionIcons, defaultViewPresets } from './constants';
 import axios from 'axios';
 
 let primoAvvio = true
+let storicoRemotoControllato = false
+const cacheThumbnails = {}
 
 const { formatDate, createStudyBrowserTabs } = utils;
 const thumbnailNoImageModalities = [
@@ -153,6 +155,7 @@ export default function PanelStudyBrowserTracking({
 
   const storicoRemoto = async qidoStudiesForPatient => {
     try {
+      storicoRemotoControllato = true
       const qidoUrl = window.qidoUrlDefinitivo.replace('/qido/', '/qido-remoto/');
       const apiResponse = await axios.get(qidoUrl, {
         // Non è necessario impostare il method a 'GET', perché è il default di axios.get
@@ -259,7 +262,9 @@ export default function PanelStudyBrowserTracking({
         }
         return ret;
       });
-      await storicoRemoto(qidoStudiesForPatient);
+      if (!storicoRemotoControllato) {
+        await storicoRemoto(qidoStudiesForPatient);
+      }
     }
 
     StudyInstanceUIDs.forEach(sid => fetchStudiesForPatient(sid));
@@ -279,6 +284,7 @@ export default function PanelStudyBrowserTracking({
 
       return;
     }
+
 
     let currentDisplaySets = displaySetService.activeDisplaySets;
     // filter non based on the list of modalities that are supported by cornerstone
@@ -301,14 +307,29 @@ export default function PanelStudyBrowserTracking({
       if (!imageId || displaySet?.unsupported) {
         return;
       }
+
       // When the image arrives, render it and store the result in the thumbnailImgSrcMap
-      newImageSrcEntry[dSet.displaySetInstanceUID] = await getImageSrc(imageId);
+
+      //Se ho già salvato l'anteprima thumbnail in cache allora newImageSrcEntry prenderà il valore dalla cache anziché chiederlo sempre
+      //al metodo getImageSrc che rallenta tantissimo con gli studi con tante serie
+      if (cacheThumbnails[dSet.displaySetInstanceUID]) {
+        newImageSrcEntry[dSet.displaySetInstanceUID] = JSON.parse(JSON.stringify(cacheThumbnails[dSet.displaySetInstanceUID]))
+      }
+      //Se non ho ancora nulla in cache newImageSrcEntry chiederà il valore al metodo getImageSrc e subito dopo copierò questo valore
+      //ottenuto in cache
+      else {
+        newImageSrcEntry[dSet.displaySetInstanceUID] = await getImageSrc(imageId);
+        cacheThumbnails[dSet.displaySetInstanceUID] = JSON.parse(JSON.stringify(newImageSrcEntry[dSet.displaySetInstanceUID]))
+      }
 
       setThumbnailImageSrcMap(prevState => {
         return { ...prevState, ...newImageSrcEntry };
       });
     });
+
+
   }, [displaySetService, dataSource, getImageSrc, activeViewportId, hasLoadedViewports]);
+
 
   // ~~ displaySets
   useEffect(() => {

@@ -38,12 +38,12 @@ interface ErrorBoundaryProps {
 const DefaultFallback = ({
   error,
   context,
-  resetErrorBoundary = () => {},
+  resetErrorBoundary = () => { },
 }: DefaultFallbackProps) => {
   const { t } = useTranslation('ErrorBoundary');
   const [showDetails, setShowDetails] = useState(false);
-  const title = `${t('Something went wrong')}${!isProduction && ` ${t('in')} ${context}`}.`;
-  const subtitle = t('Sorry, something went wrong there. Try again.');
+  const title = `${t('Qualcosa è andato storto')}${!isProduction && ` ${t('in')} ${context}`}.`;
+  const subtitle = t('Qualcosa è andato storto. Riprova.');
 
   const copyErrorDetails = () => {
     const errorDetails = `
@@ -59,7 +59,7 @@ Stack: ${error.stack}
     toast.error(title, {
       description: subtitle,
       action: {
-        label: t('Show Details'),
+        label: t('Mostra dettagli'),
         onClick: () => setShowDetails(true),
       },
       duration: 0,
@@ -118,8 +118,8 @@ Stack: ${error.stack}
 
 const ErrorBoundary = ({
   context = 'OHIF',
-  onReset = () => {},
-  onError = () => {},
+  onReset = () => { },
+  onError = () => { },
   fallbackComponent: FallbackComponent = DefaultFallback,
   children,
   fallbackRoute = null,

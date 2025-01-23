@@ -9,11 +9,11 @@ import IconButton from '../IconButton';
 import { Icons } from '@ohif/ui-next';
 const isProduction = process.env.NODE_ENV === 'production';
 
-const DefaultFallback = ({ error, context, resetErrorBoundary = () => {}, fallbackRoute }) => {
+const DefaultFallback = ({ error, context, resetErrorBoundary = () => { }, fallbackRoute }) => {
   const { t } = useTranslation('ErrorBoundary');
   const [showDetails, setShowDetails] = useState(false);
-  const title = `${t('Something went wrong')}${!isProduction && ` ${t('in')} ${context}`}.`;
-  const subtitle = t('Sorry, something went wrong there. Try again.');
+  const title = `${t('Qualcosa è andato storto')}${!isProduction && ` ${t('in')} ${context}`}.`;
+  const subtitle = t('Qualcosa è andato storto. Riprova.');
   return (
     <div
       className="ErrorFallback bg-primary-dark h-full w-full"
@@ -60,8 +60,8 @@ DefaultFallback.propTypes = {
 
 const ErrorBoundary = ({
   context = 'OHIF',
-  onReset = () => {},
-  onError = () => {},
+  onReset = () => { },
+  onError = () => { },
   fallbackComponent: FallbackComponent = DefaultFallback,
   children,
   fallbackRoute = null,
@@ -81,7 +81,7 @@ const ErrorBoundary = ({
       closeButton
       shouldCloseOnEsc
       isOpen={isOpen}
-      title={i18n.t('ErrorBoundary:Something went wrong')}
+      title={i18n.t('ErrorBoundary:Qualcosa è andato storto')}
       onClose={() => {
         setIsOpen(false);
         if (fallbackRoute && typeof window !== 'undefined') {

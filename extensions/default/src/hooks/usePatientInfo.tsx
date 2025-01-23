@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { utils } from '@ohif/core';
 
 const { formatPN, formatDate } = utils;
+let primoAvvio = true
 
 function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
   const { displaySetService } = servicesManager.services;
@@ -15,7 +16,13 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
   const [isMixedPatients, setIsMixedPatients] = useState(false);
   const displaySets = displaySetService.getActiveDisplaySets();
 
-  const checkMixedPatients = PatientID => {
+  //Forzo l'aggiornamento delle info paziente non appena displaySets è popolato
+  if (primoAvvio && displaySets[0]?.instances?.[0]) {
+    updatePatientInfo()
+    primoAvvio = false
+  }
+
+  function checkMixedPatients(PatientID) {
     const displaySets = displaySetService.getActiveDisplaySets();
     let isMixedPatients = false;
     displaySets.forEach(displaySet => {
@@ -30,15 +37,16 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
     setIsMixedPatients(isMixedPatients);
   };
 
-  const updatePatientInfo = () => {
+  function updatePatientInfo() {
     const displaySet = displaySets[0];
     const instance = displaySet?.instances?.[0] || displaySet?.instance;
     if (!instance) {
       return;
     }
+
     setPatientInfo({
       PatientID: instance.PatientID || null,
-      PatientName: instance.PatientName ? formatPN(instance.PatientName.Alphabetic) : null,
+      PatientName: instance.PatientName ? formatPN(instance.PatientName) : null,
       PatientSex: instance.PatientSex || null,
       PatientDOB: formatDate(instance.PatientBirthDate) || null,
     });

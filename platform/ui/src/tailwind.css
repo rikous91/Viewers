@@ -841,7 +841,15 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
-.tab-studio-nolex {
+[data-cy='study-browser-thumbnail-no-image'] {
+  max-width: 100%;
+  padding: 6px;
+  .items-center {
+    display: contents;
+  }
+  .bg-background {
+    visibility: hidden;
+  }
 }
 
 .qualestudio-btn {
@@ -939,6 +947,12 @@ input[type='range']::-webkit-slider-thumb {
   }
   #seriesList-btn {
     display: none !important;
+  }
+
+  #viewerLayoutResizableLeftPanel,
+  #viewerLayoutResizableRightPanel {
+    flex: 0 !important;
+    min-width: fit-content !important;
   }
 
   .nolex-new-panel {
@@ -1060,7 +1074,7 @@ input[type='range']::-webkit-slider-thumb {
   .toolbar-child-flex {
     top: 0 !important;
     flex-wrap: nowrap !important;
-    left: 43%;
+    left: 43% !important;
   }
   .div-info-paziente {
     display: none;
