@@ -1,23 +1,59 @@
 import classnames from 'classnames';
-import PropTypes from 'prop-types';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Icons } from '../Icons';
-import { TooltipTrigger, TooltipContent, TooltipProvider, Tooltip } from '../Tooltip';
+import { TooltipTrigger, TooltipContent, Tooltip } from '../Tooltip';
 import { Separator } from '../Separator';
-import { PanelStudyBrowserHeader } from './PanelStudyBrowserHeader';
+
+/**
+ * SidePanel component properties.
+ * Note that the component monitors changes to the various widths and border sizes and will resize dynamically
+ * @property {boolean} isExpanded - boolean indicating if the side panel is expanded/open or collapsed
+ * @property {number} expandedWidth - the width of this side panel when expanded not including any borders or margins
+ * @property {number} collapsedWidth - the width of this side panel when collapsed not including any borders or margins
+ * @property {number} expandedInsideBorderSize - the width of the space between the expanded side panel content and viewport grid
+ * @property {number} collapsedInsideBorderSize - the width of the space between the collapsed side panel content and the viewport grid
+ * @property {number} collapsedOutsideBorderSize - the width of the space between the collapsed side panel content and the edge of the browser window
+ */
+type SidePanelProps = {
+  side: 'left' | 'right';
+  className: string;
+  activeTabIndex: number;
+  onOpen: () => void;
+  onClose: () => void;
+  onActiveTabIndexChange: () => void;
+  isExpanded: boolean;
+  expandedWidth: number;
+  collapsedWidth: number;
+  expandedInsideBorderSize: number;
+  collapsedInsideBorderSize: number;
+  collapsedOutsideBorderSize: number;
+  tabs: any;
+};
 
 type StyleMap = {
   open: {
-    left: { marginLeft: string };
-    right: { marginRight: string };
+    left: {
+      marginLeft: string; // the space between the expanded/open left side panel and the browser window left edge
+      marginRight: string; // the space between the expanded/open left side panel and the viewport grid
+    };
+    right: {
+      marginLeft: string; // the space between the expanded/open right side panel and the viewport grid
+      marginRight: string; // the space between the expanded/open right side panel and the browser window right edge
+    };
   };
   closed: {
-    left: { marginLeft: string };
-    right: { marginRight: string };
+    left: {
+      marginLeft: string; // the space between the collapsed/closed left panel and the browser window left edge
+      marginRight: string; // the space between the collapsed/closed left panel and the viewport grid
+      alignItems: 'flex-end'; // the flexbox layout align-items property
+    };
+    right: {
+      marginLeft: string; // the space between the collapsed/closed right panel and the viewport grid
+      marginRight: string; // the space between the collapsed/closed right panel and the browser window right edge
+      alignItems: 'flex-start'; // the flexbox layout align-items property
+    };
   };
 };
-const borderSize = 4;
-const collapsedWidth = 25;
 const closeIconWidth = 30;
 const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
@@ -108,19 +144,29 @@ const getTabIconClassNames = (numTabs: number, isActiveTab: boolean) => {
 };
 const createStyleMap = (
   expandedWidth: number,
-  borderSize: number,
-  collapsedWidth: number
+  expandedInsideBorderSize: number,
+  collapsedWidth: number,
+  collapsedInsideBorderSize: number,
+  collapsedOutsideBorderSize: number
 ): StyleMap => {
-  const collapsedHideWidth = expandedWidth - collapsedWidth - borderSize;
+  const collapsedHideWidth = expandedWidth - collapsedWidth - collapsedInsideBorderSize;
 
   return {
     open: {
-      left: { marginLeft: '0px' },
-      right: { marginRight: '0px' },
+      left: { marginLeft: '0px', marginRight: `${expandedInsideBorderSize}px` },
+      right: { marginLeft: `${expandedInsideBorderSize}px`, marginRight: '0px' },
     },
     closed: {
-      left: { marginLeft: `-${collapsedHideWidth}px` },
-      right: { marginRight: `-${collapsedHideWidth}px` },
+      left: {
+        marginLeft: `-${collapsedHideWidth}px`,
+        marginRight: `${collapsedOutsideBorderSize}px`,
+        alignItems: `flex-end`,
+      },
+      right: {
+        marginLeft: `${collapsedOutsideBorderSize}px`,
+        marginRight: `-${collapsedHideWidth}px`,
+        alignItems: `flex-start`,
+      },
     },
   };
 };
@@ -145,49 +191,69 @@ const createBaseStyle = (expandedWidth: number) => {
     height: '99.8%',
   };
 };
+
 const SidePanel = ({
   side,
   className,
-  activeTabIndex: activeTabIndexProp = null,
+  activeTabIndex: activeTabIndexProp,
+  isExpanded,
   tabs,
   onOpen,
   onClose,
-  expandedWidth = 280,
   onActiveTabIndexChange,
-}) => {
-  const [panelOpen, setPanelOpen] = useState(activeTabIndexProp !== null);
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  expandedWidth = 280,
+  collapsedWidth = 25,
+  expandedInsideBorderSize = 4,
+  collapsedInsideBorderSize = 8,
+  collapsedOutsideBorderSize = 4,
+}: SidePanelProps) => {
+  const [panelOpen, setPanelOpen] = useState(isExpanded);
+  const [activeTabIndex, setActiveTabIndex] = useState(activeTabIndexProp ?? 0);
 
-  const styleMap = createStyleMap(expandedWidth, borderSize, collapsedWidth);
-  const baseStyle = createBaseStyle(expandedWidth);
-  const gridAvailableWidth = expandedWidth - closeIconWidth - gridHorizontalPadding;
-  const gridWidth = getGridWidth(tabs.length, gridAvailableWidth);
+  const [styleMap, setStyleMap] = useState(
+    createStyleMap(
+      expandedWidth,
+      expandedInsideBorderSize,
+      collapsedWidth,
+      collapsedInsideBorderSize,
+      collapsedOutsideBorderSize
+    )
+  );
+
+  const [baseStyle, setBaseStyle] = useState(createBaseStyle(expandedWidth));
+
+  const [gridAvailableWidth, setGridAvailableWidth] = useState(
+    expandedWidth - closeIconWidth - gridHorizontalPadding
+  );
+
+  const [gridWidth, setGridWidth] = useState(getGridWidth(tabs.length, gridAvailableWidth));
   const openStatus = panelOpen ? 'open' : 'closed';
   const style = Object.assign({}, styleMap[openStatus][side], baseStyle);
 
   const updatePanelOpen = useCallback(
-    (panelOpen: boolean) => {
-      setPanelOpen(panelOpen);
+    (isOpen: boolean) => {
+      setPanelOpen(isOpen);
       const event = new CustomEvent('panelOpen', { detail: { isOpen: panelOpen, side: side } });
       window.dispatchEvent(event);
-      if (panelOpen && onOpen) {
-        onOpen();
-      } else if (onClose && !panelOpen) {
-        onClose();
+      if (isOpen !== panelOpen) {
+        // only fire events for changes
+        if (isOpen && onOpen) {
+          onOpen();
+        } else if (onClose && !isOpen) {
+          onClose();
+        }
       }
     },
-    [onOpen, onClose]
+    [panelOpen, onOpen, onClose]
   );
 
   const updateActiveTabIndex = useCallback(
-    (activeTabIndex: number) => {
-      if (activeTabIndex === null) {
-        updatePanelOpen(false);
-        return;
+    (activeTabIndex: number, forceOpen: boolean = false) => {
+      if (forceOpen) {
+        updatePanelOpen(true);
       }
 
       setActiveTabIndex(activeTabIndex);
-      updatePanelOpen(true);
 
       if (onActiveTabIndexChange) {
         onActiveTabIndexChange({ activeTabIndex });
@@ -197,7 +263,35 @@ const SidePanel = ({
   );
 
   useEffect(() => {
-    updateActiveTabIndex(activeTabIndexProp);
+    updatePanelOpen(isExpanded);
+  }, [isExpanded, updatePanelOpen]);
+
+  useEffect(() => {
+    setStyleMap(
+      createStyleMap(
+        expandedWidth,
+        expandedInsideBorderSize,
+        collapsedWidth,
+        collapsedInsideBorderSize,
+        collapsedOutsideBorderSize
+      )
+    );
+    setBaseStyle(createBaseStyle(expandedWidth));
+
+    const gridAvailableWidth = expandedWidth - closeIconWidth - gridHorizontalPadding;
+    setGridAvailableWidth(gridAvailableWidth);
+    setGridWidth(getGridWidth(tabs.length, gridAvailableWidth));
+  }, [
+    collapsedInsideBorderSize,
+    collapsedWidth,
+    expandedWidth,
+    expandedInsideBorderSize,
+    tabs.length,
+    collapsedOutsideBorderSize,
+  ]);
+
+  useEffect(() => {
+    updateActiveTabIndex(activeTabIndexProp ?? 0);
   }, [activeTabIndexProp, updateActiveTabIndex]);
 
   const getCloseStateComponent = () => {
@@ -227,7 +321,7 @@ const SidePanel = ({
                   data-cy={`${childComponent.name}-btn`}
                   className="text-primary-active hover:cursor-pointer"
                   onClick={() => {
-                    return childComponent.disabled ? null : updateActiveTabIndex(index);
+                    return childComponent.disabled ? null : updateActiveTabIndex(index, true);
                   }}
                 >
                   {React.createElement(Icons[childComponent.iconName] || Icons.MissingIcon, {
@@ -379,7 +473,8 @@ const SidePanel = ({
   const handleOnMobile = () => {
 
     if (window.matchMedia("(max-width: 768px)").matches) {
-      setPanelOpen(false); // Chiude il pannello
+      updatePanelOpen(false); // Chiude il pannello
+
       const mainArea = document.querySelector('.nolex-main-area')
       const barraHeaderInBasso = document.querySelector('.nolex-bar')
       const posizioneYBarraHeaderInBasso = barraHeaderInBasso.getBoundingClientRect().y
@@ -419,17 +514,6 @@ const SidePanel = ({
       )}
     </div>
   );
-
-};
-
-SidePanel.propTypes = {
-  side: PropTypes.oneOf(['left', 'right']).isRequired,
-  className: PropTypes.string,
-  activeTabIndex: PropTypes.number,
-  onOpen: PropTypes.func,
-  onClose: PropTypes.func,
-  onActiveTabIndexChange: PropTypes.func,
-  expandedWidth: PropTypes.number,
 };
 
 export { SidePanel };

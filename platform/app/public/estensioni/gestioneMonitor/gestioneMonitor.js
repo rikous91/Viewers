@@ -76,8 +76,11 @@ async function monitorMainFunc() {
   document.body.insertAdjacentHTML('beforeend', monitorToolsHtml);
   if (versioneEstensioneInstallata === '') {
     showWarning(
-      "La gestione della visualizzazione su più schermi è una funzionalità avanzata che richiede l'installazione della nostra estensione Chrome. Installala da qui e ricarica la pagina"
+      "Est. da installare"
     );
+    // showWarning(
+    //   "La gestione della visualizzazione su più schermi è una funzionalità avanzata che richiede l'installazione della nostra estensione Chrome. Installala da qui e ricarica la pagina"
+    // );
   }
 
   if (monitors.length > 1) {

@@ -186,6 +186,8 @@ import Pencil from './Sources/Pencil';
 //
 //
 /** Nolex **/
+import ArrowRight from './Sources/ArrowRight';
+import ChevronLeft from './Sources/ChevronLeft';
 import notificationWarning from '../../../assets/icons/warning.png';
 import mprDirect from '../../../assets/icons/mpr.png';
 import toolStackScroll from '../../../assets/icons/tool-stack-scroll.svg';
@@ -560,6 +562,23 @@ export const Icons = {
   ViewportViews,
   ChevronClosed,
   ChevronOpen,
+  ChevronRight: (props: IconProps) => {
+    return (
+      <ChevronLeft
+        {...props}
+        className={`${props.className || ''} rotate-180`.trim()}
+      />
+    );
+  },
+  ChevronLeft,
+  ChevronDown: (props: IconProps) => {
+    return (
+      <ChevronLeft
+        {...props}
+        className={`${props.className || ''} -rotate-90`.trim()}
+      />
+    );
+  },
   Alert,
   AlertOutline,
   NotificationInfo,
@@ -574,20 +593,13 @@ export const Icons = {
   Link,
   LoadingOHIFMark,
   ArrowLeft: ChevronClosed,
-  ArrowRight: (props: IconProps) => {
-    return (
-      <ChevronClosed
-        {...props}
-        className="rotate-180"
-      />
-    );
-  },
+  ArrowRight,
   ArrowLeftBold,
   ArrowRightBold: (props: IconProps) => {
     return (
       <ArrowLeftBold
         {...props}
-        className="rotate-180"
+        className={`${props.className || ''} rotate-180`.trim()}
       />
     );
   },
@@ -595,7 +607,7 @@ export const Icons = {
     return (
       <ChevronOpen
         {...props}
-        className="rotate-180"
+        className={`${props.className || ''} -rotate-90`.trim()}
       />
     );
   },
@@ -754,6 +766,9 @@ export const Icons = {
   pencil: (props: IconProps) => Pencil(props),
   'icon-list-view': (props: IconProps) => ListView(props),
   'chevron-menu': 'chevron-down',
+  'icon-status-alert': (props: IconProps) => Alert(props),
+  'info-link': (props: IconProps) => InfoLink(props),
+  'launch-info': (props: IconProps) => LaunchInfo(props),
   clipboard: (props: IconProps) => Clipboard(props),
 
   /** Adds an icon to the set of icons */
