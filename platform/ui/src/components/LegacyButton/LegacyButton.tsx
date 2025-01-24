@@ -151,7 +151,7 @@ const LegacyButton = ({
   endIcon: endIconProp,
   name,
   className,
-  onClick = () => {},
+  onClick = () => { },
   /** TODO: All possible props should be explicitly defined -- avoid spreading props  */
   ...rest
 }) => {

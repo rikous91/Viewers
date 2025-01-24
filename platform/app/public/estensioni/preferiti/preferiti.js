@@ -16,6 +16,9 @@ const preferitiInitInterval = () => {
 };
 
 const injectPreferitiBtn = () => {
+  if (document.getElementById('preferiti-btn')) {
+    return
+  }
   //Attacco pulsante sotto quello delle misurazioni nel pannello a dx
   document.getElementById('trackedMeasurements-btn').parentElement.insertAdjacentHTML(
     'afterend',

@@ -135,6 +135,15 @@
   }
 }
 
+.bg-primary-light[data-cy='StackScroll'] img {
+  filter: invert(1);
+}
+
+[data-cy='panelSegmentation-btn'] .bg-customblue-40,
+[data-cy='trackedMeasurements-btn'] .bg-customblue-40 {
+  background-color: #8a1818 !important;
+}
+
 #SplitButton {
   button {
     padding-right: 0 !important;
@@ -852,6 +861,25 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
+.storico-same-tab {
+  .right.nolex-new-panel {
+    display: block !important;
+  }
+  #viewerLayoutResizableLeftPanel,
+  #viewerLayoutResizableRightPanel {
+    -webkit-box-flex: 0 !important;
+    -ms-flex: 0 !important;
+    flex: 0 !important;
+    min-width: -webkit-fit-content !important;
+    min-width: -moz-fit-content !important;
+    min-width: fit-content !important;
+  }
+  #monitor-btn,
+  #print-btn {
+    display: none;
+  }
+}
+
 .qualestudio-btn {
   padding: 10px !important;
 }
@@ -1079,9 +1107,11 @@ input[type='range']::-webkit-slider-thumb {
   .div-info-paziente {
     display: none;
   }
+  /*Nascondo il pannello dx ma solo se non è lo storico splittato*/
   .right.nolex-new-panel {
     display: none !important;
   }
+
   .parent-LayoutMPR,
   .parent-gestioneHP,
   .parent-Capture,
