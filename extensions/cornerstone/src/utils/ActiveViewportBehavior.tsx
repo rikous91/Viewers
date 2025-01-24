@@ -1,8 +1,5 @@
 import { useEffect, useState, memo } from 'react';
 
-// const MODALITIES_REQUIRING_CINE_AUTO_MOUNT = ['OT', 'US'];
-const MODALITIES_REQUIRING_CINE_AUTO_MOUNT = ['ggdff'];
-
 const ActiveViewportBehavior = memo(
   ({ servicesManager, viewportId }: withAppTypes<{ viewportId: string }>) => {
     const { displaySetService, cineService, viewportGridService, customizationService } =
@@ -42,13 +39,7 @@ const ActiveViewportBehavior = memo(
       const modalities = displaySets.map(displaySet => displaySet?.Modality);
       const isDynamicVolume = displaySets.some(displaySet => displaySet?.isDynamicVolume);
 
-      const { modalities: sourceModalities } = customizationService.getModeCustomization(
-        'autoCineModalities',
-        {
-          id: 'autoCineModalities',
-          modalities: MODALITIES_REQUIRING_CINE_AUTO_MOUNT,
-        }
-      );
+      const sourceModalities = customizationService.getCustomization('autoCineModalities');
 
       const requiresCine = modalities.some(modality => sourceModalities.includes(modality));
 

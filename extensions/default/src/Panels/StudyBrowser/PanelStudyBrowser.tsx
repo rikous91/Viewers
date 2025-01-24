@@ -6,7 +6,7 @@ import { utils } from '@ohif/core';
 import { useNavigate } from 'react-router-dom';
 import { Separator } from '@ohif/ui-next';
 import { PanelStudyBrowserHeader } from './PanelStudyBrowserHeader';
-import { defaultActionIcons, defaultViewPresets } from './constants';
+import { defaultActionIcons } from './constants';
 import MoreDropdownMenu from '../../Components/MoreDropdownMenu';
 
 const { sortStudyInstances, formatDate, createStudyBrowserTabs } = utils;
@@ -33,7 +33,7 @@ function PanelStudyBrowser({
   const { StudyInstanceUIDs } = useImageViewer();
   const [{ activeViewportId, viewports, isHangingProtocolLayout }, viewportGridService] =
     useViewportGrid();
-  const [activeTabName, setActiveTabName] = useState('all');
+  const [activeTabName, setActiveTabName] = useState('primary');
   const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState([
     ...StudyInstanceUIDs,
   ]);
@@ -43,7 +43,7 @@ function PanelStudyBrowser({
   const [thumbnailImageSrcMap, setThumbnailImageSrcMap] = useState({});
 
   const [viewPresets, setViewPresets] = useState(
-    customizationService.getCustomization('studyBrowser.viewPresets')?.value || defaultViewPresets
+    customizationService.getCustomization('studyBrowser.viewPresets')
   );
 
   const [actionIcons, setActionIcons] = useState(defaultActionIcons);
@@ -306,7 +306,7 @@ function PanelStudyBrowser({
         onClickTab={clickedTabName => {
           setActiveTabName(clickedTabName);
         }}
-        onClickThumbnail={() => {}}
+        onClickThumbnail={() => { }}
         onDoubleClickThumbnail={onDoubleClickThumbnailHandler}
         activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
         showSettings={actionIcons.find(icon => icon.id === 'settings').value}

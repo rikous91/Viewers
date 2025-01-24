@@ -20,15 +20,15 @@ const Thumbnail = ({
   loadingProgress,
   countIcon,
   messages,
-  dragData = {},
   isActive,
   onClick,
   onDoubleClick,
-  viewPreset = 'thumbnails',
   modality,
+  viewPreset = 'thumbnails',
   isHydratedForDerivedDisplaySet = false,
   isTracked = false,
   canReject = false,
+  dragData = {},
   onReject = () => { },
   thumbnailType = 'thumbnail',
   onClickUntrack = () => { },
@@ -224,33 +224,31 @@ const Thumbnail = ({
             />
           )}
           {isTracked && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger>
-                  <div className="group">
-                    <Icons.StatusTracking className="text-primary-light h-[20px] w-[20px] group-hover:hidden" />
-                    <Icons.Cancel
-                      className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
-                      onClick={onClickUntrack}
-                    />
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="group">
+                  <Icons.StatusTracking className="text-primary-light h-[20px] w-[20px] group-hover:hidden" />
+                  <Icons.Cancel
+                    className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
+                    onClick={onClickUntrack}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="flex flex-1 flex-row">
+                  <div className="flex-2 flex items-center justify-center pr-4">
+                    <Icons.InfoLink className="text-primary-active" />
                   </div>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  <div className="flex flex-1 flex-row">
-                    <div className="flex-2 flex items-center justify-center pr-4">
-                      <Icons.InfoLink className="text-primary-active" />
-                    </div>
-                    <div className="flex flex-1 flex-col">
-                      <span>
-                        <span className="text-white">
-                          {isTracked ? 'Series is tracked' : 'Series is untracked'}
-                        </span>
+                  <div className="flex flex-1 flex-col">
+                    <span>
+                      <span className="text-white">
+                        {isTracked ? 'Series is tracked' : 'Series is untracked'}
                       </span>
-                    </div>
+                    </span>
                   </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                </div>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
@@ -265,21 +263,25 @@ const Thumbnail = ({
           isActive && 'bg-popover'
         )}
       >
-        <div className="relative flex h-[32px] items-center gap-[8px]">
+        <div className="relative flex h-[32px] w-full items-center gap-[8px] overflow-hidden">
           <div
             className={classnames(
-              'h-[32px] w-[4px] rounded-[2px]',
+              'h-[32px] w-[4px] min-w-[4px] rounded-[2px]',
               isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
               loadingProgress && loadingProgress < 1 && 'bg-primary/25'
             )}
           ></div>
-          <div className="flex h-full flex-col">
+          <div className="flex h-full w-[calc(100%-12px)] flex-col">
             <div className="flex items-center gap-[7px]">
               <div className="text-[13px] font-semibold text-white">{modality}</div>
-
-              <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] font-normal text-white">
-                {description}
-              </div>
+              <Tooltip>
+                <TooltipContent>{description}</TooltipContent>
+                <TooltipTrigger className="w-full overflow-hidden">
+                  <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white">
+                    {description}
+                  </div>
+                </TooltipTrigger>
+              </Tooltip>
             </div>
 
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">

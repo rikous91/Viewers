@@ -231,9 +231,13 @@ function LayoutSelector({
   showLayoutPresetsForStorico = document.getElementById('iframe-storico') ? true : false;
 
   const { customizationService } = servicesManager.services;
-  const commonPresets = customizationService.get('commonPresets') || defaultCommonPresets;
-  const advancedPresets =
-    customizationService.get('advancedPresets') || generateAdvancedPresets({ servicesManager });
+
+  const commonPresets = customizationService.getCustomization('layoutSelector.commonPresets');
+  const advancedPresetsGenerator = customizationService.getCustomization(
+    'layoutSelector.advancedPresetGenerator'
+  );
+
+  const advancedPresets = advancedPresetsGenerator({ servicesManager });
   const advancedPresetsStorico = generateAdvancedPresetsStorico({ servicesManager });
 
   const closeOnOutsideClick = event => {

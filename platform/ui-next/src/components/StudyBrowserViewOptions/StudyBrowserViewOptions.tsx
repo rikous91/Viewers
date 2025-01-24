@@ -5,6 +5,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '../DropdownMenu/DropdownMenu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
 
 export function StudyBrowserViewOptions({ tabs, onSelectTab, activeTabName }: withAppTypes) {
   const handleTabChange = (tabName: string) => {

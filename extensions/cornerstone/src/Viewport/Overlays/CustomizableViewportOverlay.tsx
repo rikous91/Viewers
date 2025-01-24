@@ -213,26 +213,18 @@ function CustomizableViewportOverlay({
   const [scale, setScale] = useState(1);
   const { imageIndex } = imageSliceData;
 
-  // The new customization is 'cornerstoneOverlay', with an append or replace
-  // on the individual items rather than defining individual items.
-  const cornerstoneOverlay = customizationService.getCustomization('@ohif/cornerstoneOverlay');
-
   // Historical usage defined the overlays as separate items due to lack of
   // append functionality.  This code enables the historical usage, but
   // the recommended functionality is to append to the default values in
   // cornerstoneOverlay rather than defining individual items.
-  const topLeftCustomization =
-    customizationService.getCustomization('cornerstoneOverlayTopLeft') ||
-    cornerstoneOverlay?.topLeftItems;
-  const topRightCustomization =
-    customizationService.getCustomization('cornerstoneOverlayTopRight') ||
-    cornerstoneOverlay?.topRightItems;
-  const bottomLeftCustomization =
-    customizationService.getCustomization('cornerstoneOverlayBottomLeft') ||
-    cornerstoneOverlay?.bottomLeftItems;
-  const bottomRightCustomization =
-    customizationService.getCustomization('cornerstoneOverlayBottomRight') ||
-    cornerstoneOverlay?.bottomRightItems;
+  const topLeftCustomization = customizationService.getCustomization('viewportOverlay.topLeft');
+  const topRightCustomization = customizationService.getCustomization('viewportOverlay.topRight');
+  const bottomLeftCustomization = customizationService.getCustomization(
+    'viewportOverlay.bottomLeft'
+  );
+  const bottomRightCustomization = customizationService.getCustomization(
+    'viewportOverlay.bottomRight'
+  );
 
   const instanceNumber = useMemo(
     () =>
@@ -334,8 +326,8 @@ function CustomizableViewportOverlay({
         return null;
       }
 
-      const { customizationType } = item;
-      const OverlayItemComponent = OverlayItemComponents[customizationType];
+      const { inheritsFrom } = item;
+      const OverlayItemComponent = OverlayItemComponents[inheritsFrom];
 
       if (OverlayItemComponent) {
         return <OverlayItemComponent {...overlayItemProps} />;
@@ -363,10 +355,6 @@ function CustomizableViewportOverlay({
 
   const getContent = useCallback(
     (customization, keyPrefix) => {
-      if (!customization?.items) {
-        return null;
-      }
-      const { items } = customization;
       const props = {
         ...displaySetProps,
         formatters: { formatDate: formatDICOMDate },
@@ -379,7 +367,7 @@ function CustomizableViewportOverlay({
 
       return (
         <>
-          {items.map((item, index) => (
+          {customization.map((item, index) => (
             <div key={`${keyPrefix}_${index}`}>
               {((!item?.condition || item.condition(props)) && _renderOverlayItem(item, props)) ||
                 null}
@@ -541,7 +529,7 @@ function VOIOverlayItem({ voi, customization }: OverlayItemProps) {
 
   return (
     <div
-      className="overlay-item flex flex-row"
+      className="overlay-item overlay-info-dicom flex flex-row"
       style={{ color: customization?.color }}
     >
       <span className="mr-1 shrink-0">W:</span>
@@ -579,7 +567,7 @@ function InstanceNumberOverlayItem({
 
   return (
     <div
-      className="overlay-item flex flex-row"
+      className="overlay-item flex flex-row overlay-info-dicom"
       style={{ color: (customization && customization.color) || undefined }}
     >
       <span>
@@ -604,4 +592,4 @@ CustomizableViewportOverlay.propTypes = {
 
 export default CustomizableViewportOverlay;
 
-export { CustomizableViewportOverlay, CornerstoneOverlay };
+export { CustomizableViewportOverlay };
