@@ -342,7 +342,7 @@ const toolbarButtons: Button[] = [
     uiType: 'ohif.radioGroup',
     props: {
       type: 'tool',
-      icon: 'tool-stack-scroll',
+      icon: 'toolStackScroll',
       label: 'Scorrimento con mouse',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',

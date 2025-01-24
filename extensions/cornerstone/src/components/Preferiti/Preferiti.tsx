@@ -58,7 +58,7 @@ export function Preferiti({
       if (!window.preferiti) {
         window.preferiti = [];
       }
-      if (!checked) {
+      if (!checked && document.getElementById('preferiti-btn')) {
         document.getElementById('preferiti-btn').classList.remove('pulse');
         // Filtra l'array preferiti rimuovendo l'elemento che corrisponde ai criteri
         window.preferiti = window.preferiti.filter(preferito => {
@@ -130,7 +130,7 @@ export function Preferiti({
       // }
 
       //Cattura del canvas senza misurazioni e altro anziché di tutta la div
-      if (!isAlreadyPreferito && checked) {
+      if (!isAlreadyPreferito && checked && document.getElementById('preferiti-btn')) {
         const SOPInstanceUID =
           displaySets[0].instances.length > 1
             ? displaySets[0].instances[activeElementIndex].SOPInstanceUID

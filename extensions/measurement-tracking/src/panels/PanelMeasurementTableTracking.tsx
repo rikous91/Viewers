@@ -60,7 +60,8 @@ function PanelMeasurementTableTracking({
                   <Icons.Download className="h-5 w-5" />
                   <span className="pl-1">CSV</span>
                 </Button>
-                <Button
+
+                {/* <Button
                   size="sm"
                   variant="ghost"
                   className="pl-0.5"
@@ -73,7 +74,8 @@ function PanelMeasurementTableTracking({
                 >
                   <Icons.Add />
                   Create SR
-                </Button>
+                </Button> */}
+
                 <Button
                   size="sm"
                   variant="ghost"
@@ -83,7 +85,7 @@ function PanelMeasurementTableTracking({
                   }}
                 >
                   <Icons.Delete />
-                  Delete All
+                  Cancella tutto
                 </Button>
               </div>
             </div>

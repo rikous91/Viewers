@@ -15,6 +15,9 @@ const editorInitInterval = () => {
 };
 
 const injectEditorBtn = () => {
+  if (document.getElementById('editor-btn')) {
+    return
+  }
   //Attacco pulsante sotto quello delle misurazioni nel pannello a dx
   document.getElementById('trackedMeasurements-btn').parentElement.insertAdjacentHTML(
     'afterend',

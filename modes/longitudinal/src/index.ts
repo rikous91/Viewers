@@ -195,8 +195,8 @@ function modeFactory({ modeConfiguration }) {
             {
               sourcePubSubService: measurementService,
               sourceEvents: [
-                measurementService.EVENTS.MEASUREMENT_ADDED,
-                measurementService.EVENTS.RAW_MEASUREMENT_ADDED,
+                // measurementService.EVENTS.MEASUREMENT_ADDED,
+                // measurementService.EVENTS.RAW_MEASUREMENT_ADDED,
               ],
             },
           ],

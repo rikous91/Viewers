@@ -724,7 +724,6 @@ export const Icons = {
   'tool-seg-threshold': (props: IconProps) => ToolSegThreshold(props),
   'tool-spline-roi': (props: IconProps) => ToolSplineRoi(props),
   'tool-stack-image-sync': (props: IconProps) => ToolStackImageSync(props),
-  'tool-stack-scroll': (props: IconProps) => ToolStackScroll(props),
   'toggle-dicom-overlay': (props: IconProps) => ToolToggleDicomOverlay(props),
   'tool-ultrasound-bidirectional': (props: IconProps) => ToolUltrasoundBidirectional(props),
   'tool-window-level': (props: IconProps) => ToolWindowLevel(props),

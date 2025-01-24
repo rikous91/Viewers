@@ -68,7 +68,7 @@ const Body = () => {
   if (!data || data.length === 0) {
     return (
       <div className="text-primary-light mb-1 flex flex-1 items-center px-2 py-2 text-base">
-        No tracked measurements
+        Nessuna misurazione tracciata
       </div>
     );
   }
@@ -134,7 +134,7 @@ const Row = ({ item, index }: RowProps) => {
       onToggleVisibility={() => onToggleVisibility(item.uid)}
       onToggleLocked={() => onToggleLocked(item.uid)}
       onRename={() => onRename(item.uid)}
-      // onColor={() => onColor(item.uid)}
+    // onColor={() => onColor(item.uid)}
     />
   );
 };

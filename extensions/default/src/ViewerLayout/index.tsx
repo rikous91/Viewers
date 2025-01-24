@@ -157,8 +157,7 @@ function ViewerLayout({
                 </ResizablePanel>
                 <ResizableHandle
                   onDragging={onHandleDragging}
-                  // disabled={!leftPanelResizable}
-                  disabled
+                  disabled={!leftPanelResizable}
                   className="!w-0"
                 />
               </>
@@ -175,12 +174,31 @@ function ViewerLayout({
                 </div>
               </div>
             </ResizablePanel>
+
+            {/* Pannello dx storico */}
+            {hasRightPanels && window.sonoUnoStorico ? (
+              <>
+                <ResizablePanel {...resizableLeftPanelProps}>
+                  <SidePanelWithServices
+                    side="left"
+                    isExpanded={!leftPanelClosedState}
+                    servicesManager={servicesManager}
+                    {...leftPanelProps}
+                  />
+                </ResizablePanel>
+                <ResizableHandle
+                  onDragging={onHandleDragging}
+                  disabled={!leftPanelResizable}
+                  className="!w-0"
+                />
+              </>
+            ) : null}
+
             {hasRightPanels ? (
               <>
                 <ResizableHandle
                   onDragging={onHandleDragging}
-                  // disabled={!rightPanelResizable}
-                  disabled
+                  disabled={!rightPanelResizable}
                   className="!w-0"
                 />
                 <ResizablePanel {...resizableRightPanelProps}>
