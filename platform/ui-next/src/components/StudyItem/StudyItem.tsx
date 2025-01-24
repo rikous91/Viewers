@@ -55,7 +55,7 @@ const StudyItem = ({
                   {description}
                 </div>
               </div>
-              <div className="text-muted-foreground ml-auto flex flex-col items-end text-[12px]">
+              <div className="text-muted-foreground flex flex-col items-end pl-[10px] text-[12px]">
                 <div className="max-w-[150px] overflow-hidden text-ellipsis">{modalities}</div>
                 <div>{numInstances}</div>
               </div>

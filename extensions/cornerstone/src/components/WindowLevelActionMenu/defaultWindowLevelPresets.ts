@@ -2,11 +2,11 @@
 // configured via the customization service.
 const defaultWindowLevelPresets = {
   CT: [
-    { description: 'Soft tissue', window: '400', level: '40' },
-    { description: 'Lung', window: '1500', level: '-600' },
-    { description: 'Liver', window: '150', level: '90' },
-    { description: 'Bone', window: '2500', level: '480' },
-    { description: 'Brain', window: '80', level: '40' },
+    { id: 'ct-soft-tissue', description: 'Soft tissue', window: '400', level: '40' },
+    { id: 'ct-lung', description: 'Lung', window: '1500', level: '-600' },
+    { id: 'ct-liver', description: 'Liver', window: '150', level: '90' },
+    { id: 'ct-bone', description: 'Bone', window: '2500', level: '480' },
+    { id: 'ct-brain', description: 'Brain', window: '80', level: '40' },
   ],
 
   // PT: [

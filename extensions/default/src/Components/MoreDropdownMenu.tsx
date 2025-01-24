@@ -27,9 +27,9 @@ const getMenuItemsDefault = ({ commandsManager, items, servicesManager, ...props
         e.preventDefault();
       }}
     >
-      {items?.map(item =>
-        menuContent.content({
-          key: item.id,
+      {items?.map((item, index) =>
+        React.createElement(menuContent.content, {
+          key: item.id || `menu-item-${index}`,
           item,
           commandsManager,
           servicesManager,
@@ -56,9 +56,9 @@ export default function MoreDropdownMenu(bindProps) {
   } = bindProps;
   const { customizationService } = servicesManager.services;
 
-  const items = customizationService.getCustomization(menuItemsKey)?.value;
+  const items = customizationService.getCustomization(menuItemsKey);
 
-  if (!items) {
+  if (!items?.length) {
     return null;
   }
 

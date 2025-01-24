@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import { utils } from '@ohif/core';
 import { useImageViewer, Dialog, ButtonEnums } from '@ohif/ui';
-import { useViewportGrid, DropdownMenu, DropdownMenuTrigger, Icons, Button } from '@ohif/ui-next';
+import { useViewportGrid } from '@ohif/ui-next';
 import { StudyBrowser } from '@ohif/ui-next';
 
 import { useTrackedMeasurements } from '../../getContextModule';
@@ -18,6 +18,7 @@ let storicoRemotoControllato = false
 const cacheThumbnails = {}
 
 const { formatDate, createStudyBrowserTabs } = utils;
+
 const thumbnailNoImageModalities = [
   'SR',
   'SEG',
@@ -55,11 +56,7 @@ export default function PanelStudyBrowserTracking({
     customizationService,
   } = servicesManager.services;
   const navigate = useNavigate();
-  const { mode: studyMode } = customizationService.getCustomization('PanelStudyBrowser.studyMode', {
-    id: 'default',
-    mode: 'primary',
-  });
-
+  const studyMode = customizationService.getCustomization('studyBrowser.studyMode');
   const { t } = useTranslation('Common');
 
   // Normally you nest the components so the tree isn't so deep, and the data
@@ -82,7 +79,7 @@ export default function PanelStudyBrowserTracking({
   const [jumpToDisplaySet, setJumpToDisplaySet] = useState(null);
 
   const [viewPresets, setViewPresets] = useState(
-    customizationService.getCustomization('studyBrowser.viewPresets')?.value || defaultViewPresets
+    customizationService.getCustomization('studyBrowser.viewPresets')
   );
 
   const [actionIcons, setActionIcons] = useState(defaultActionIcons);
