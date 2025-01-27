@@ -880,6 +880,18 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
+[data-cy='trackedMeasurements-panel'] {
+  .text-primary {
+    color: #ffcfcf;
+  }
+  .bg-highlight {
+    background-color: hsl(0deg 74% 63%);
+  }
+  .text-highlight {
+    color: #fff;
+  }
+}
+
 .qualestudio-btn {
   padding: 10px !important;
 }
