@@ -183,9 +183,8 @@ const DataRow: React.FC<DataRowProps> = ({
   return (
     <div className={`flex flex-col ${isVisible ? '' : 'opacity-60'}`}>
       <div
-        className={`flex items-center ${
-          isSelected ? 'bg-popover' : 'bg-muted'
-        } group relative cursor-pointer`}
+        className={`flex items-center ${isSelected ? 'bg-popover' : 'bg-muted'
+          } group relative cursor-pointer`}
         onClick={onSelect}
         data-cy="data-row"
       >
@@ -194,9 +193,8 @@ const DataRow: React.FC<DataRowProps> = ({
 
         {/* Number Box */}
         <div
-          className={`flex h-7 max-h-7 w-7 flex-shrink-0 items-center justify-center rounded-l border-r border-black text-base ${
-            isSelected ? 'bg-highlight text-black' : 'bg-muted text-muted-foreground'
-          } overflow-hidden`}
+          className={`flex h-7 max-h-7 w-7 flex-shrink-0 items-center justify-center rounded-l border-r border-black text-base ${isSelected ? 'bg-highlight text-black' : 'bg-muted text-muted-foreground'
+            } overflow-hidden`}
         >
           {number}
         </div>
@@ -217,9 +215,8 @@ const DataRow: React.FC<DataRowProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className={`cursor-default text-base ${
-                    isSelected ? 'text-highlight' : 'text-muted-foreground'
-                  } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
+                  className={`cursor-default text-base ${isSelected ? 'text-highlight' : 'text-muted-foreground'
+                    } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
                 >
                   {title}
                 </span>
@@ -233,9 +230,8 @@ const DataRow: React.FC<DataRowProps> = ({
             </Tooltip>
           ) : (
             <span
-              className={`text-base ${
-                isSelected ? 'text-highlight' : 'text-muted-foreground'
-              } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
+              className={`text-base ${isSelected ? 'text-highlight' : 'text-muted-foreground'
+                } [overflow:hidden] [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]`}
             >
               {title}
             </span>
@@ -248,9 +244,8 @@ const DataRow: React.FC<DataRowProps> = ({
           <Button
             size="icon"
             variant="ghost"
-            className={`h-6 w-6 transition-opacity ${
-              isSelected || !isVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-            }`}
+            className={`h-6 w-6 transition-opacity ${isSelected || !isVisible ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
             aria-label={isVisible ? 'Hide' : 'Show'}
             onClick={e => {
               e.stopPropagation();
@@ -271,11 +266,10 @@ const DataRow: React.FC<DataRowProps> = ({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className={`h-6 w-6 transition-opacity ${
-                    isSelected || isDropdownOpen
+                  className={`h-6 w-6 transition-opacity ${isSelected || isDropdownOpen
                       ? 'opacity-100'
                       : 'opacity-0 group-hover:opacity-100'
-                  }`}
+                    }`}
                   aria-label="Actions"
                   onClick={e => e.stopPropagation()} // Prevent row selection on button click
                 >
@@ -286,21 +280,21 @@ const DataRow: React.FC<DataRowProps> = ({
                 <>
                   <DropdownMenuItem onClick={e => handleAction('Rename', e)}>
                     <Icons.Rename className="text-foreground" />
-                    <span className="pl-2">Rename</span>
+                    <span className="pl-2">Rinomina</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={e => handleAction('Delete', e)}>
                     <Icons.Delete className="text-foreground" />
-                    <span className="pl-2">Delete</span>
+                    <span className="pl-2">Elimina</span>
                   </DropdownMenuItem>
                   {onColor && (
                     <DropdownMenuItem onClick={e => handleAction('Color', e)}>
                       <Icons.ColorChange className="text-foreground" />
-                      <span className="pl-2">Change Color</span>
+                      <span className="pl-2">Cambia colore</span>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={e => handleAction('Lock', e)}>
                     <Icons.Lock className="text-foreground" />
-                    <span className="pl-2">{isLocked ? 'Unlock' : 'Lock'}</span>
+                    <span className="pl-2">{isLocked ? 'Sblocca' : 'Blocca'}</span>
                   </DropdownMenuItem>
                 </>
               </DropdownMenuContent>

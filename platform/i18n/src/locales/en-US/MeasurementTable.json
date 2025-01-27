@@ -1,12 +1,12 @@
 {
   "Criteria nonconformities": "Criteria nonconformities",
-  "Delete": "Delete",
-  "Description": "Description",
+  "Delete": "Cancella",
+  "Description": "Descrizione",
   "MAX": "MAX",
-  "Measurements": "Measurements",
-  "No, do not ask again": "No, do not ask again",
+  "Measurements": "Misurazioni",
+  "No, do not ask again": "No, non chiedere nuovamente",
   "NonTargets": "NonTargets",
   "Relabel": "Relabel",
   "Targets": "Targets",
-  "Track measurements for this series?": "Track measurements for this series?"
+  "Track measurements for this series?": "Tracciare le misurazioni per questa serie?"
 }
