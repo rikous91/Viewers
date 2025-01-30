@@ -285,6 +285,14 @@
   background-color: #b71c1c !important;
 }
 
+.hover\:bg-primary\/25:hover {
+  background-color: #fff !important;
+}
+
+.hover\:bg-background:hover {
+  background-color: hsl(0deg 0% 11.17%) !important;
+}
+
 .hover\:bg-secondary-main:hover {
   background-color: #b71c1c !important;
 }
@@ -537,6 +545,7 @@ input[type='range']::-webkit-slider-thumb {
   .hover\:bg-primary\/20:hover {
     background-color: hsl(0deg 73.13% 39.41%);
   }
+
   .data-\[state\=on\]\:bg-primary\/20[data-state='on'] {
     background-color: #adadad33;
   }

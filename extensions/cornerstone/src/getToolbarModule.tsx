@@ -1,14 +1,8 @@
 import { Enums } from '@cornerstonejs/tools';
-
-const getToggledClassName = (isToggled: boolean) => {
-  return isToggled
-    ? '!text-primary-active'
-    : '!text-common-bright hover:!bg-primary-dark hover:text-primary-light';
-};
+import { utils } from '@ohif/ui-next';
 
 const getDisabledState = (disabledText?: string) => ({
   disabled: true,
-  className: '!text-common-bright ohif-disabled',
   disabledText: disabledText ?? 'Not available on the current viewport',
 });
 
@@ -106,9 +100,6 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
 
         return {
           disabled: false,
-          className: isPrimaryActive
-            ? '!text-black bg-primary-light rounded'
-            : '!text-common-bright hover:!bg-primary-dark hover:!text-primary-light rounded',
           // Todo: isActive right now is used for nested buttons where the primary
           // button needs to be fully rounded (vs partial rounded) when active
           // otherwise it does not have any other use
@@ -166,9 +157,9 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
     },
     {
       name: 'evaluate.action',
-      evaluate: ({ viewportId, button }) => {
+      evaluate: () => {
         return {
-          className: '!text-common-bright hover:!bg-primary-dark hover:text-primary-light',
+          disabled: false,
         };
       },
     },
@@ -203,7 +194,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
 
         if (!synchronizers?.length) {
           return {
-            className: getToggledClassName(false),
+            className: utils.getToggledClassName(false),
           };
         }
 
@@ -217,7 +208,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
 
         if (!synchronizers?.length) {
           return {
-            className: getToggledClassName(false),
+            className: utils.getToggledClassName(false),
           };
         }
 
@@ -229,7 +220,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
         const isEnabled = synchronizer?._enabled;
 
         return {
-          className: getToggledClassName(isEnabled),
+          className: utils.getToggledClassName(isEnabled),
         };
       },
     },
@@ -286,14 +277,13 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
         if (!prop) {
           return {
             disabled: false,
-            className: '!text-common-bright hover:!bg-primary-dark hover:text-primary-light',
           };
         }
 
         const isToggled = prop;
 
         return {
-          className: getToggledClassName(isToggled),
+          className: utils.getToggledClassName(isToggled),
         };
       },
     },
@@ -334,7 +324,7 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
 
         return {
           disabled: false,
-          className: getToggledClassName(isMpr),
+          className: utils.getToggledClassName(isMpr),
         };
       },
     },
@@ -367,6 +357,6 @@ function _evaluateToggle({
   const isOff = offModes.includes(toolGroup.getToolOptions(toolName).mode);
 
   return {
-    className: getToggledClassName(!isOff),
+    className: utils.getToggledClassName(!isOff),
   };
 }

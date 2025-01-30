@@ -10,6 +10,8 @@ import { Onboarding, ResizablePanelGroup, ResizablePanel, ResizableHandle } from
 import { ErrorBoundary } from '@ohif/ui-next';
 import useResizablePanels from './ResizablePanelsHook';
 
+const resizableHandleClassName = 'mt-[1px] bg-black';
+
 function ViewerLayout({
   // From Extension Module Params
   extensionManager,
@@ -158,7 +160,7 @@ function ViewerLayout({
                 <ResizableHandle
                   onDragging={onHandleDragging}
                   disabled={!leftPanelResizable}
-                  className="!w-0"
+                  className={resizableHandleClassName}
                 />
               </>
             ) : null}
@@ -199,7 +201,7 @@ function ViewerLayout({
                 <ResizableHandle
                   onDragging={onHandleDragging}
                   disabled={!rightPanelResizable}
-                  className="!w-0"
+                  className={resizableHandleClassName}
                 />
                 <ResizablePanel {...resizableRightPanelProps}>
                   <SidePanelWithServices
