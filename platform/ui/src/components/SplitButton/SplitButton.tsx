@@ -32,8 +32,8 @@ const classes = {
       isActive
         ? isExpanded
           ? 'border-primary-dark !bg-primary-dark hover:border-primary-dark !text-primary-light'
-          : 'border-primary-light bg-primary-light rounded-md'
-        : `focus:!text-black focus:!rounded-md focus:!border-primary-light focus:!bg-primary-light ${isExpanded ? 'border-primary-dark bg-primary-dark !text-primary-light' : 'border-secondary-dark bg-secondary-dark group-hover/button:border-primary-dark group-hover/button:text-primary-light hover:!bg-primary-dark hover:border-primary-dark focus:!text-black'}`
+          : 'border-primary-light bg-primary-light !text-black rounded-md'
+        : `focus:!text-black focus:!rounded-md focus:!border-primary-light focus:!bg-primary-light ${isExpanded ? 'border-primary-dark bg-primary-dark !text-primary-light' : 'border-secondary-dark bg-secondary-dark group-hover/button:border-primary-dark hover:!bg-primary-dark hover:border-primary-dark focus:!text-black'}`
     ),
   Secondary: ({ isExpanded, primary }) =>
     classNames(
@@ -139,7 +139,7 @@ const SplitButton = ({
               />
             </div>
             <div className={classes.Separator({ ...state, primary })}></div>
-            <div
+            <div id="SplitButton"
               className={classes.Secondary({ ...state, primary })}
               onClick={toggleExpanded}
               data-cy={`${groupId}-split-button-secondary`}

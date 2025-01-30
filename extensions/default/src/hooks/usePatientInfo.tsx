@@ -14,13 +14,12 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
     PatientDOB: '',
   });
   const [isMixedPatients, setIsMixedPatients] = useState(false);
-  const displaySets = displaySetService.getActiveDisplaySets();
 
   //Forzo l'aggiornamento delle info paziente non appena displaySets è popolato
-  if (primoAvvio && displaySets[0]?.instances?.[0]) {
-    updatePatientInfo()
-    primoAvvio = false
-  }
+  // if (primoAvvio && displaySets[0]?.instances?.[0]) {
+  //   updatePatientInfo()
+  //   primoAvvio = false
+  // }
 
   function checkMixedPatients(PatientID) {
     const displaySets = displaySetService.getActiveDisplaySets();
@@ -37,8 +36,11 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
     setIsMixedPatients(isMixedPatients);
   };
 
-  function updatePatientInfo() {
-    const displaySet = displaySets[0];
+  function updatePatientInfo({ displaySetsAdded }) {
+    if (!displaySetsAdded.length) {
+      return;
+    }
+    const displaySet = displaySetsAdded[0];
     const instance = displaySet?.instances?.[0] || displaySet?.instance;
     if (!instance) {
       return;
@@ -56,14 +58,10 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
   useEffect(() => {
     const subscription = displaySetService.subscribe(
       displaySetService.EVENTS.DISPLAY_SETS_ADDED,
-      () => updatePatientInfo()
+      props => updatePatientInfo(props)
     );
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    updatePatientInfo();
-  }, [displaySets]);
 
   return { patientInfo, isMixedPatients };
 }
