@@ -3,6 +3,39 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.10.0-beta.84](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.83...v3.10.0-beta.84) (2025-01-31)
+
+
+### Bug Fixes
+
+* Remove non-functional Tailwind class for SegmentationPanel ([#4745](https://github.com/OHIF/Viewers/issues/4745)) ([32017d1](https://github.com/OHIF/Viewers/commit/32017d15a4c11e0cb7717c13da022a01ee152ba5))
+
+
+
+
+
+# [3.10.0-beta.83](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.82...v3.10.0-beta.83) (2025-01-31)
+
+
+### Bug Fixes
+
+* publish dependency ([#4753](https://github.com/OHIF/Viewers/issues/4753)) ([0cb6106](https://github.com/OHIF/Viewers/commit/0cb6106d0fa576348ca3324685d5768b6ec80572))
+
+
+
+
+
+# [3.10.0-beta.82](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.81...v3.10.0-beta.82) (2025-01-31)
+
+
+### Bug Fixes
+
+* typo in pet_series_module ([#4748](https://github.com/OHIF/Viewers/issues/4748)) ([f10683c](https://github.com/OHIF/Viewers/commit/f10683c667ea8f20c8d3e99ee0fb206522757b71))
+
+
+
+
+
 # [3.10.0-beta.81](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.80...v3.10.0-beta.81) (2025-01-29)
 
 **Note:** Version bump only for package ohif-monorepo-root
