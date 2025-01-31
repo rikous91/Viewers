@@ -19,8 +19,9 @@ window.nolexToken = new URLSearchParams(new URL(window.location.href).search).ge
 let origin = window.location.origin;
 
 window.isSuite = true;
-window.storicoRemoto = true;
+window.storicoRemoto = false;
 window.portableVersion = false;
+window.gestioneMultiMonitor = false;
 
 let qidoRoot = `${origin}/viewer/qido`;
 let wadoRoot = `${origin}/viewer/wado`;

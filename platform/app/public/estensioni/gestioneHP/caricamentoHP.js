@@ -110,7 +110,6 @@ const _nolexhp = {
 const intervalCaricamentoHP = setInterval(() => {
   // if (window.servicesManager) {
   if (window.nolexAllReady && !window.caricamentoHP) {
-    return
     window.caricamentoHP = true;
     clearInterval(intervalCaricamentoHP);
     caricamentoHP();
