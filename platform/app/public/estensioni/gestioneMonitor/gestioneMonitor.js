@@ -31,7 +31,7 @@ const gestioneMonitorInitInterval = () => {
 };
 
 const injectMonitorBtn = () => {
-  if (document.getElementById('monitor-btn')) {
+  if (document.getElementById('monitor-btn') || !window.gestioneMultiMonitor) {
     return;
   }
   //Attacco pulsante sotto quello delle misurazioni nel pannello a dx

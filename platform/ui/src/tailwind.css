@@ -305,6 +305,10 @@
   border-color: #161616;
 }
 
+.active-tool-nolex {
+  background-color: #fff !important;
+}
+
 .border-secondary-main {
   border-color: #6b1616;
 }

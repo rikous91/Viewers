@@ -263,6 +263,10 @@ const SidePanel = ({
   );
 
   useEffect(() => {
+    //Evito loop infiniti scatenati dal primo handleOnMobile
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      return
+    }
     updatePanelOpen(isExpanded);
   }, [isExpanded, updatePanelOpen]);
 
@@ -473,7 +477,8 @@ const SidePanel = ({
   const handleOnMobile = () => {
 
     if (window.matchMedia("(max-width: 768px)").matches) {
-      updatePanelOpen(false); // Chiude il pannello
+      updatePanelOpen(!panelOpen); // Chiude il pannello
+      isExpanded = false
 
       const mainArea = document.querySelector('.nolex-main-area')
       const barraHeaderInBasso = document.querySelector('.nolex-bar')

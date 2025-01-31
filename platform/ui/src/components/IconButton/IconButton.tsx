@@ -81,7 +81,7 @@ const IconButton = ({
   disabled = false,
   type = 'button',
   fullWidth = false,
-  onClick = () => {},
+  onClick = () => { },
   className,
   id,
   ...rest
