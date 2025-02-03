@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.10.0-beta.86](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.85...v3.10.0-beta.86) (2025-02-03)
+
+
+### Bug Fixes
+
+* **store-segmentation:** storing segmentations was hitting the wrong command resulting in an undefined datasource ([#4755](https://github.com/OHIF/Viewers/issues/4755)) ([9b8e5cf](https://github.com/OHIF/Viewers/commit/9b8e5cfd1a6121a58991c0f75660a2fd9913a4e7))
+
+
+
+
+
+# [3.10.0-beta.85](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.84...v3.10.0-beta.85) (2025-02-03)
+
+
+### Features
+
+* Add customization support for more UI components  ([#4634](https://github.com/OHIF/Viewers/issues/4634)) ([f15eb44](https://github.com/OHIF/Viewers/commit/f15eb44b4cf49de1b73a22512571cec02effaef3))
+
+
+
+
+
 # [3.10.0-beta.84](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.83...v3.10.0-beta.84) (2025-01-31)
 
 **Note:** Version bump only for package @ohif/extension-cornerstone
