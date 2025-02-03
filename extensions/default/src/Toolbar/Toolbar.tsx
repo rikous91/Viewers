@@ -29,7 +29,7 @@ export function Toolbar({ servicesManager, buttonSection = 'primary' }) {
           />
         );
 
-        return <div key={id}>{tool}</div>;
+        return <div className={`parent-${id}`} key={id} > {tool}</div >;
       })}
     </>
   );
