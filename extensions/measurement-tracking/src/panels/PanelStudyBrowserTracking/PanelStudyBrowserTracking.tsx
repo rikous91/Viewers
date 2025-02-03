@@ -259,7 +259,7 @@ export default function PanelStudyBrowserTracking({
         }
         return ret;
       });
-      if (!storicoRemotoControllato) {
+      if (!storicoRemotoControllato && window.storicoRemoto) {
         await storicoRemoto(qidoStudiesForPatient);
       }
     }

@@ -336,8 +336,9 @@ function commandsModule({
      */
     setMeasurementLabel: ({ uid }) => {
       const labelConfig = customizationService.getCustomization('measurementLabels');
+      const renderContent = customizationService.getCustomization('ui.labellingComponent');
       const measurement = measurementService.getMeasurement(uid);
-      showLabelAnnotationPopup(measurement, uiDialogService, labelConfig).then(
+      showLabelAnnotationPopup(measurement, uiDialogService, labelConfig, renderContent).then(
         (val: Map<any, any>) => {
           measurementService.update(
             uid,
@@ -453,16 +454,19 @@ function commandsModule({
 
     renameMeasurement: ({ uid }) => {
       const labelConfig = customizationService.getCustomization('measurementLabels');
+      const renderContent = customizationService.getCustomization('ui.labellingComponent');
       const measurement = measurementService.getMeasurement(uid);
-      showLabelAnnotationPopup(measurement, uiDialogService, labelConfig).then(val => {
-        measurementService.update(
-          uid,
-          {
-            ...val,
-          },
-          true
-        );
-      });
+      showLabelAnnotationPopup(measurement, uiDialogService, labelConfig, renderContent).then(
+        val => {
+          measurementService.update(
+            uid,
+            {
+              ...val,
+            },
+            true
+          );
+        }
+      );
     },
 
     toggleLockMeasurement: ({ uid }) => {
@@ -504,7 +508,8 @@ function commandsModule({
     },
     arrowTextCallback: ({ callback, data, uid }) => {
       const labelConfig = customizationService.getCustomization('measurementLabels');
-      callLabelAutocompleteDialog(uiDialogService, callback, {}, labelConfig);
+      const renderContent = customizationService.getCustomization('ui.labellingComponent');
+      callLabelAutocompleteDialog(uiDialogService, callback, {}, labelConfig, renderContent);
     },
     toggleCine: () => {
       //Passo il comando anche all'eventuale iframe storico

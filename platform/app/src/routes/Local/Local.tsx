@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import classnames from 'classnames';
 import { useNavigate } from 'react-router-dom';
-import { DicomMetadataStore, MODULE_TYPES } from '@ohif/core';
+import { DicomMetadataStore, MODULE_TYPES, useSystem } from '@ohif/core';
 
 import Dropzone from 'react-dropzone';
 import filesToStudies from './filesToStudies';
@@ -50,11 +50,17 @@ type LocalProps = {
 };
 
 function Local({ modePath }: LocalProps) {
+  const { servicesManager } = useSystem();
+  const { customizationService } = servicesManager.services;
   const navigate = useNavigate();
   const dropzoneRef = useRef();
   const [dropInitiated, setDropInitiated] = React.useState(false);
 
   const [percentComplete, setPercentComplete] = useState(0);
+
+  const LoadingIndicatorProgress = customizationService.getCustomization(
+    'ui.loadingIndicatorProgress'
+  );
 
   // Initializing the dicom local dataSource
   const dataSourceModules = extensionManager.modules[MODULE_TYPES.DATA_SOURCE];
