@@ -38,6 +38,7 @@ function getDisplaySetInfo(instances) {
   let displaySetInfo;
 
   const { appConfig } = appContext;
+  const { nolexGroupByDinamic } = appConfig;
 
   if (isDynamicVolume) {
     const timePoint = timePoints[0];
