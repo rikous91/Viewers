@@ -1,9 +1,9 @@
 import { Types } from '@ohif/core';
 
-const frameView4x4: Types.HangingProtocol.Protocol = {
+const frameView: Types.HangingProtocol.Protocol = {
   id: '@ohif/frameView',
   description: 'Frame view for the active series',
-  name: 'Modalità Frame (Serie attiva) 4x4',
+  name: 'Frame View',
   icon: 'tool-stack-scroll',
   isPreset: true,
   toolGroupIds: ['default'],
@@ -1579,4 +1579,4 @@ const frameView4x4: Types.HangingProtocol.Protocol = {
   ],
 };
 
-export { frameView4x4 };
+export { frameView };
