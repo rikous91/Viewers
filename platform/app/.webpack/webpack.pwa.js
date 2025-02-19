@@ -185,6 +185,9 @@ module.exports = (env, argv) => {
       // https: true,
       open: true,
       port: OHIF_PORT,
+      headers: {
+        'Cache-Control': 'no-store', // Disabilita la cache durante lo sviluppo
+      },
       // host: '192.168.18.134',
       client: {
         overlay: { errors: true, warnings: false },
