@@ -44,8 +44,11 @@ class WriteVersionPlugin {
       // Assicurati che la cartella 'dist' esista
       fs.mkdirSync(path.dirname(versionFilePath), { recursive: true });
 
+      // Sostituisci "beta" con "prod" se presente in version_number
+      const updatedVersion = version_number.includes('beta') ? version_number.replace('beta', 'prod') : version_number;
+
       // Scrivi il numero di versione nel file version.txt
-      fs.writeFileSync(versionFilePath, `Version: ${version_number}`, 'utf8');
+      fs.writeFileSync(versionFilePath, `Version: ${updatedVersion}`, 'utf8');
       console.log('Versione aggiornata:', version_number);
     });
   }
