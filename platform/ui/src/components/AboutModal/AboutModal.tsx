@@ -83,7 +83,7 @@ const AboutModal = ({ buildNumber, versionNumber, commitHash }) => {
         />
         <Row
           title={t('Versione')}
-          value={versionNumber}
+          value={versionNumber.includes('beta') ? versionNumber.replace('beta', 'prod') : versionNumber}
         />
         {buildNumber && (
           <Row
