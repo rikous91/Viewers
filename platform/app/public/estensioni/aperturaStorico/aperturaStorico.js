@@ -145,381 +145,349 @@ function activateCommandOnIframe(command) {
     return;
   }
   console.log(command);
-  switch (command) {
-    case 'WindowLevel':
-      document.querySelector('[data-cy="WindowLevel"]').click();
-      break;
-    case 'Pan':
-      document.querySelector('[data-cy="Pan"]').click();
-      break;
-    case 'Zoom':
-      document.querySelector('[data-tool="Zoom"]').click();
-      break;
-    case 'rotateViewport-90':
-      document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="rotate-right"]').click();
-      }, 0);
-      break;
-    case 'rotateViewport--90':
-      document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="rotate-left"]').click();
-      }, 0);
-      break;
-    case 'flipViewportHorizontal':
-      document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="flipHorizontal"]').click();
-      }, 0);
-      break;
-    case 'flipViewportVertical':
-      document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="flipVertical"]').click();
-      }, 0);
-      break;
-    case 'Magnify':
-      document.querySelector('[data-cy="Magnify"]').click();
-      break;
-    case 'Length':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="Length"]').click();
-      }, 0);
-      break;
-    case 'Bidirectional':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="Bidirectional"]').click();
-      }, 0);
-      break;
-    case 'ArrowAnnotate':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="ArrowAnnotate"]').click();
-      }, 0);
-      break;
-    case 'Angle':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="Angle"]').click();
-      }, 0);
-      break;
-    case 'CobbAngle':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="CobbAngle"]').click();
-      }, 0);
-      break;
-    case 'UltrasoundDirectionalTool':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="UltrasoundDirectionalTool"]').click();
-      }, 0);
-      break;
-    case 'EllipticalROI':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="EllipticalROI"]').click();
-      }, 0);
-      break;
-    case 'RectangleROI':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="RectangleROI"]').click();
-      }, 0);
-      break;
-    case 'CircleROI':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="CircleROI"]').click();
-      }, 0);
-      break;
-    case 'PlanarFreehandROI':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="PlanarFreehandROI"]').click();
-      }, 0);
-      break;
-    case 'SplineROI':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="SplineROI"]').click();
-      }, 0);
-      break;
-    case 'LivewireContour':
-      document.querySelector('[data-cy="MeasurementTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="LivewireContour"]').click();
-      }, 0);
-      break;
-    case 'StackScroll':
-      document.querySelector('[data-cy="StackScroll"]').click();
-      break;
-    case 'mprDirectClick':
-      document.querySelector('[data-cy="LayoutMPR"]').click();
-      break;
-    case 'invertViewport':
-      document.querySelector('[data-cy="invert"]').click();
-      break;
-    case 'Probe':
-      document.querySelector('[data-cy="Probe"]').click();
-      break;
-    case 'cine':
-      document.querySelector('[data-cy="Cine"]').click();
-      break;
-    case 'ReferenceLines':
-      document.querySelector('[data-cy="ReferenceLines"]').click();
-      break;
-    case 'hideInfoDicom':
-      document.querySelector('[data-cy="hideInfoDicom"]').click();
-      break;
-    case 'attiva-mpr':
-      document.querySelector('[data-cy="LayoutMPR"]').click();
-      break;
-    case 'Crosshairs':
-      document.querySelector('[data-cy="Crosshairs"]').click();
-      break;
-    case 'TrackballRotate':
-      document.querySelector('[data-cy="TrackballRotate"]').click();
-      break;
-    case 'resetViewport':
-      document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="Reset"]').click();
-      }, 0);
-      break;
-    case 'ImageOverlayViewer':
-      document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="ImageOverlayViewer"]').click();
-      }, 0);
-      break;
-    case 'WindowLevelRegion':
-      document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="WindowLevelRegion"]').click();
-      }, 0);
-      break;
-    case 'CalibrationLine':
-      document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="CalibrationLine"]').click();
-      }, 0);
-      break;
-    case 'AdvancedMagnify':
-      document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
-      setTimeout(() => {
-        document.querySelector('[data-cy="AdvancedMagnify"]').click();
-      }, 0);
-      break;
+  try {
+    switch (command) {
+      case 'WindowLevel':
+        document.querySelector('[data-cy="WindowLevel"] button').click();
+        break;
+      case 'Pan':
+        document.querySelector('[data-cy="Pan"] button').click();
+        break;
+      case 'Zoom':
+        document.querySelector('[data-tool="Zoom"]').click();
+        break;
+      case 'rotateViewport-90':
+        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="rotate-right"]').click();
+        }, 0);
+        break;
+      case 'rotateViewport--90':
+        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="rotate-left"]').click();
+        }, 0);
+        break;
+      case 'flipViewportHorizontal':
+        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="flipHorizontal"]').click();
+        }, 0);
+        break;
+      case 'flipViewportVertical':
+        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="flipVertical"]').click();
+        }, 0);
+        break;
+      case 'Magnify':
+        document.querySelector('[data-cy="Magnify"]').click();
+        break;
+      case 'Length':
+        document.querySelector('.parent-LengthSeparata button').click()
+        break;
+      case 'Bidirectional':
+        document.querySelector('.parent-BidirectionalSeparata button').click()
+        break;
+      case 'ArrowAnnotate':
+        document.querySelector('.parent-ArrowAnnotateSeparata button').click()
+        break;
+      case 'Angle':
+        document.querySelector('.parent-AngleSeparata button').click()
+        break;
+      case 'CobbAngle':
+        document.querySelector('.parent-CobbAngleSeparata button').click()
+        break;
+      case 'UltrasoundDirectionalTool':
+        document.querySelector('.parent-UltrasoundDirectionalToolSeparata button').click()
+        break;
+      case 'EllipticalROI':
+        document.querySelector('.parent-EllipticalROISeparata button').click()
+        break;
+      case 'RectangleROI':
+        document.querySelector('.parent-RectangleROISeparata button').click()
+        break;
+      case 'CircleROI':
+        document.querySelector('.parent-CircleROISeparata button').click()
+        break;
+      case 'PlanarFreehandROI':
+        document.querySelector('.parent-PlanarFreehandROISeparata button').click()
+        break;
+      case 'SplineROI':
+        document.querySelector('.parent-SplineROISeparata button').click()
+        break;
+      case 'LivewireContour':
+        document.querySelector('.parent-LivewireContourSeparata button').click()
+        break;
+      case 'StackScroll':
+        document.querySelector('[data-cy="StackScroll"]').click();
+        break;
+      case 'mprDirectClick':
+        document.querySelector('[data-cy="LayoutMPR"]').click();
+        break;
+      case 'invertViewport':
+        document.querySelector('[data-cy="invert"]').click();
+        break;
+      case 'Probe':
+        document.querySelector('[data-cy="Probe"]').click();
+        break;
+      case 'cine':
+        document.querySelector('[data-cy="Cine"]').click();
+        break;
+      case 'ReferenceLines':
+        document.querySelector('[data-cy="ReferenceLines"]').click();
+        break;
+      case 'hideInfoDicom':
+        document.querySelector('[data-cy="hideInfoDicom"]').click();
+        break;
+      case 'attiva-mpr':
+        document.querySelector('[data-cy="LayoutMPR"]').click();
+        break;
+      case 'Crosshairs':
+        document.querySelector('[data-cy="Crosshairs"]').click();
+        break;
+      case 'TrackballRotate':
+        document.querySelector('[data-cy="TrackballRotate"]').click();
+        break;
+      case 'resetViewport':
+        document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="Reset"]').click();
+        }, 0);
+        break;
+      case 'ImageOverlayViewer':
+        document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="ImageOverlayViewer"]').click();
+        }, 0);
+        break;
+      case 'WindowLevelRegion':
+        document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="WindowLevelRegion"]').click();
+        }, 0);
+        break;
+      case 'CalibrationLine':
+        document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="CalibrationLine"]').click();
+        }, 0);
+        break;
+      case 'AdvancedMagnify':
+        document.querySelector('[data-cy="MoreTools-split-button-secondary"]').click();
+        setTimeout(() => {
+          document.querySelector('[data-cy="AdvancedMagnify"]').click();
+        }, 0);
+        break;
 
-    //LAYOUT SELECTOR
-    case 'layout-common-1x1':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.standard-layout .cursor-pointer')[0].click();
+      //LAYOUT SELECTOR
+      case 'layout-common-1x1':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.standard-layout .cursor-pointer')[0].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'layout-common-1x2':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.standard-layout .cursor-pointer')[1].click();
+        break;
+      case 'layout-common-1x2':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.standard-layout .cursor-pointer')[1].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'layout-common-2x2':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.standard-layout .cursor-pointer')[2].click();
+        break;
+      case 'layout-common-2x2':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.standard-layout .cursor-pointer')[2].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'layout-common-2x3':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.standard-layout .cursor-pointer')[3].click();
+        break;
+      case 'layout-common-2x3':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.standard-layout .cursor-pointer')[3].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
+        break;
 
-    //LAYOUT CUSTOM SELECTOR
-    case 'custom1x1':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[0].click();
+      //LAYOUT CUSTOM SELECTOR
+      case 'custom1x1':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[0].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom1x2':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[1].click();
+        break;
+      case 'custom1x2':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[1].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom1x3':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[2].click();
+        break;
+      case 'custom1x3':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[2].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom1x4':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[3].click();
+        break;
+      case 'custom1x4':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[3].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
+        break;
 
-    case 'custom2x1':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[4].click();
+      case 'custom2x1':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[4].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom2x2':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[5].click();
+        break;
+      case 'custom2x2':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[5].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom2x3':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[6].click();
+        break;
+      case 'custom2x3':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[6].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom2x4':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[7].click();
+        break;
+      case 'custom2x4':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[7].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
+        break;
 
-    case 'custom3x1':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[8].click();
+      case 'custom3x1':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[8].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom3x2':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[9].click();
+        break;
+      case 'custom3x2':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[9].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom3x3':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[10].click();
+        break;
+      case 'custom3x3':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[10].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'custom3x4':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelectorAll('.custom-layout .cursor-pointer')[11].click();
+        break;
+      case 'custom3x4':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelectorAll('.custom-layout .cursor-pointer')[11].click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
+        break;
 
-    //LAYOUT ADVANCED MPR SELECTOR
-    case 'MPR':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelector('.mpr').click();
+      //LAYOUT ADVANCED MPR SELECTOR
+      case 'MPR':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelector('.mpr').click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'fourUp':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelector('.fourUp').click();
+        break;
+      case 'fourUp':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelector('.fourUp').click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'main3D':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelector('.main3D').click();
+        break;
+      case 'main3D':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelector('.main3D').click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'primaryAxial':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelector('.primaryAxial').click();
+        break;
+      case 'primaryAxial':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelector('.primaryAxial').click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'only3D':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelector('.only3D').click();
+        break;
+      case 'only3D':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelector('.only3D').click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
-    case 'primary3D':
-      document.querySelector('[data-cy="Layout"]').click();
-      setTimeout(() => {
-        document.querySelector('.primary3D').click();
+        break;
+      case 'primary3D':
+        document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.nolex-selected').click();
+          document.querySelector('.primary3D').click();
+          setTimeout(() => {
+            document.querySelector('.nolex-selected').click();
+          }, 0);
         }, 0);
-      }, 0);
-      break;
+        break;
+    }
+  } catch (err) {
+    console.error('Errore passaggio comando ad iframe: ', err)
   }
 }
 
