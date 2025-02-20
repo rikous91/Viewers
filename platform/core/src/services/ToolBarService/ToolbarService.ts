@@ -45,9 +45,9 @@ export default class ToolbarService extends PubSubService {
     // the buttons in the toolbar, grouped by section, with their ids
     buttonSections: Record<string, string[]>;
   } = {
-    buttons: {},
-    buttonSections: {},
-  };
+      buttons: {},
+      buttonSections: {},
+    };
 
   _commandsManager: CommandsManager;
   _extensionManager: ExtensionManager;

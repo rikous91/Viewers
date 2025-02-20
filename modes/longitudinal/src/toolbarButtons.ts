@@ -526,6 +526,334 @@ const toolbarButtons: Button[] = [
       },
     },
   },
+  // Misurazioni separate singolarmente
+  {
+    id: 'LengthSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'Length',
+        icon: 'tool-length',
+        label: 'Lunghezza',
+        tooltip: 'Length Tool',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'Length',
+          icon: 'tool-length',
+          label: 'Lunghezza',
+          tooltip: 'Length Tool',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'BidirectionalSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'Bidirectional',
+        icon: 'tool-bidirectional',
+        label: 'Bidirezionale',
+        tooltip: 'Bidirectional Tool',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'Bidirectional',
+          icon: 'tool-bidirectional',
+          label: 'Bidirezionale',
+          tooltip: 'Bidirectional Tool',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'ArrowAnnotateSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'ArrowAnnotate',
+        icon: 'tool-annotate',
+        label: 'Annotazione',
+        tooltip: 'Arrow Annotate',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'ArrowAnnotate',
+          icon: 'tool-annotate',
+          label: 'Annotazione',
+          tooltip: 'Arrow Annotate',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'AngleSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'Angle',
+        icon: 'tool-angle',
+        label: 'Angolo',
+        tooltip: 'Angle',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'Angle',
+          icon: 'tool-angle',
+          label: 'Angolo',
+          tooltip: 'Angle',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'CobbAngleSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'CobbAngle',
+        icon: 'icon-tool-cobb-angle',
+        label: 'Angolo di Cobb',
+        tooltip: 'Cobb Angle',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'CobbAngle',
+          icon: 'icon-tool-cobb-angle',
+          label: 'Angolo di Cobb',
+          tooltip: 'Cobb Angle',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'UltrasoundDirectionalToolSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'UltrasoundDirectionalTool',
+        icon: 'icon-tool-ultrasound-bidirectional',
+        label: 'Ultrasuono direzionale',
+        tooltip: 'Ultrasound Directional',
+        commands: setToolActiveToolbar,
+        evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
+      }),
+      items: [
+        createButton({
+          id: 'UltrasoundDirectionalTool',
+          icon: 'icon-tool-ultrasound-bidirectional',
+          label: 'Ultrasuono direzionale',
+          tooltip: 'Ultrasound Directional',
+          commands: setToolActiveToolbar,
+          evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
+        }),
+      ]
+    }
+  },
+  {
+    id: 'EllipticalROISeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'EllipticalROI',
+        icon: 'tool-ellipse',
+        label: 'Ellisse',
+        tooltip: 'Ellipse ROI',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'EllipticalROI',
+          icon: 'tool-ellipse',
+          label: 'Ellisse',
+          tooltip: 'Ellipse ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'RectangleROISeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'RectangleROI',
+        icon: 'tool-rectangle',
+        label: 'Rettangolo',
+        tooltip: 'Rectangle ROI',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'RectangleROI',
+          icon: 'tool-rectangle',
+          label: 'Rettangolo',
+          tooltip: 'Rectangle ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'CircleROISeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'CircleROI',
+        icon: 'tool-circle',
+        label: 'Cerchio',
+        tooltip: 'Circle Tool',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'CircleROI',
+          icon: 'tool-circle',
+          label: 'Cerchio',
+          tooltip: 'Circle Tool',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'PlanarFreehandROISeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'PlanarFreehandROI',
+        icon: 'icon-tool-freehand-roi',
+        label: 'ROI mano libera',
+        tooltip: 'Freehand ROI',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'PlanarFreehandROI',
+          icon: 'icon-tool-freehand-roi',
+          label: 'ROI mano libera',
+          tooltip: 'Freehand ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'SplineROISeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'SplineROI',
+        icon: 'icon-tool-spline-roi',
+        label: 'ROI Spline',
+        tooltip: 'Spline ROI',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'SplineROI',
+          icon: 'icon-tool-spline-roi',
+          label: 'ROI Spline',
+          tooltip: 'Spline ROI',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+  {
+    id: 'LivewireContourSeparata',
+    uiType: 'ohif.toolButtonList',
+    props: {
+      groupId: 'MeasurementTools',
+      // group evaluate to determine which item should move to the top
+      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
+      primary: createButton({
+        id: 'LivewireContour',
+        icon: 'icon-tool-livewire',
+        label: 'Strumento Livewire',
+        tooltip: 'Livewire tool',
+        commands: setToolActiveToolbar,
+        evaluate: 'evaluate.cornerstoneTool',
+      }),
+      items: [
+        createButton({
+          id: 'LivewireContour',
+          icon: 'icon-tool-livewire',
+          label: 'Strumento Livewire',
+          tooltip: 'Livewire tool',
+          commands: setToolActiveToolbar,
+          evaluate: 'evaluate.cornerstoneTool',
+        }),
+      ]
+    }
+  },
+
+
+
 ];
 
 export default toolbarButtons;

@@ -836,10 +836,12 @@ function commandsModule({
             //Salva stato attuale
             storeState();
             //Verifico che la serie selezionata su cui attivare l'mpr sia dello studio attuale o magari dello storico così la clicco subito dopo l'attivazione
-            if (displaySets[0].studyInstanceUid !== window.nolexStudyInstanceUIDs) {
-              document.querySelectorAll('.qualestudio-btn')[1].click();
-            } else {
-              document.querySelectorAll('.qualestudio-btn')[0].click();
+            if (!document.body.classList.contains('storico-same-tab')) {
+              if (displaySets[0].studyInstanceUid !== window.nolexStudyInstanceUIDs) {
+                document.querySelectorAll('.qualestudio-btn')[1].click();
+              } else {
+                document.querySelectorAll('.qualestudio-btn')[0].click();
+              }
             }
             //Dopo il click della tab corretta applico un timeout
             setTimeout(() => {

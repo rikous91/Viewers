@@ -93,9 +93,48 @@ function modeFactory({ modeConfiguration }) {
 
       toolbarService.addButtons([...toolbarButtons, ...moreTools]);
       //Versione normale o mobile
+      console.log(document.body.classList)
       if (!window.portableVersion) {
+        //Storico
+        if (document.body.classList.contains('storico-same-tab')) {
+          toolbarService.createButtonSection('primary', [
+            'WindowLevel',
+            'Pan',
+            'ZoomTools',
+            'TransformTools',
+            'Magnify',
+            'LengthSeparata',
+            'BidirectionalSeparata',
+            'ArrowAnnotateSeparata',
+            'AngleSeparata',
+            'CobbAngleSeparata',
+            'UltrasoundDirectionalToolSeparata',
+            'EllipticalROISeparata',
+            'RectangleROISeparata',
+            'CircleROISeparata',
+            'PlanarFreehandROISeparata',
+            'SplineROISeparata',
+            'LivewireContourSeparata',
+            'StackScroll',
+            // 'Zoom',
+            'Layout',
+            'LayoutMPR',
+            'LayoutMPRStorico',
+            'Crosshairs',
+            'TrackballRotate',
+            'gestioneHP',
+            'invert',
+            'polygon',
+            'Probe',
+            'Cine',
+            'Capture',
+            'hideInfoDicom',
+            'ReferenceLines',
+            'MoreTools'
+          ]);
+        }
         //Mobile
-        if (window.matchMedia("(max-width: 768px)").matches) {
+        else if (window.matchMedia("(max-width: 768px)").matches) {
           toolbarService.createButtonSection('primary', [
             'Layout',
             'Pan',
@@ -113,8 +152,10 @@ function modeFactory({ modeConfiguration }) {
             'MoreTools',
           ]);
         }
+        //Versione standard
         else {
           toolbarService.createButtonSection('primary', [
+            'LengthSeparata',
             'WindowLevel',
             'Pan',
             'ZoomTools',
