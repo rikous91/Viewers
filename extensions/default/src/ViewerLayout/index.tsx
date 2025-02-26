@@ -220,7 +220,7 @@ function ViewerLayout({
           </ResizablePanelGroup>
         </React.Fragment>
       </div>
-      <Onboarding />
+      <Onboarding tours={customizationService.getCustomization('ohif.tours')} />
       <InvestigationalUseDialog dialogConfiguration={appConfig?.investigationalUseDialog} />
     </div>
   );
