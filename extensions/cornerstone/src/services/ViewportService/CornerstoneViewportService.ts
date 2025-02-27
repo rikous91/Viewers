@@ -776,10 +776,10 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     // If you call loadStudyMetadata and it's not in the DicomMetadataStore cache, it should fire
     // a request through the data source?
     // (This call may or may not create sub-requests for series metadata)
-    const { element } = viewportInfo;
-    element.classList.remove('viewport-loading');
+
     const volumeInputArray = [];
     const displaySetOptionsArray = viewportInfo.getDisplaySetOptions();
+    const { element } = viewportInfo;
     const { hangingProtocolService } = this.servicesManager.services;
 
     const volumeToLoad = [];
@@ -821,6 +821,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
 
       volumesNotLoaded.forEach(volume => {
         if (!volume.loadStatus?.loading && volume.load instanceof Function) {
+          this.createTooltipLoadingDynamicVolume(element)
           volume.load();
         }
       });
@@ -836,10 +837,30 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     return this.setVolumesForViewport(viewport, volumeInputArray, presentations);
   }
 
+  public createTooltipLoadingDynamicVolume = (element) => {
+    //Indico che la viewport per volume dinamico ha bisogno di caricamento
+    try {
+      element.insertAdjacentHTML('afterbegin', `
+        <div style="background: #952c2c;color: #fff;padding: 0 5px; font-size: 0.8rem; z-index: 9999; position:relative" class="tooltip-loading-dynamic">
+        <p>Volume dinamico in caricamento...</p>
+        </div>
+        `)
+      setTimeout(() => {
+        if (element.querySelector('.tooltip-loading-dynamic')) {
+          element.querySelector('.tooltip-loading-dynamic').remove()
+        }
+      }, 6000);
+    } catch (err) {
+      console.error('Errore creazione tooltip caricamento volume dinamico')
+    }
+  }
+
   public async setVolumesForViewport(viewport, volumeInputArray, presentations) {
     const { displaySetService, viewportGridService } = this.servicesManager.services;
 
     const viewportInfo = this.getViewportInfo(viewport.id);
+    const { element } = viewportInfo;
+    element.insertAdjacentHTML
     const displaySetOptions = viewportInfo.getDisplaySetOptions();
     const displaySetUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewport.id);
     const displaySet = displaySetService.getDisplaySetByUID(displaySetUIDs[0]);
@@ -896,12 +917,12 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
         imageIndex,
       });
     }
-
     viewport.render();
 
     this._broadcastEvent(this.EVENTS.VIEWPORT_VOLUMES_CHANGED, {
       viewportInfo,
     });
+    element.classList.remove('viewport-loading');
   }
 
   private _processExtraDisplaySetsForViewport(

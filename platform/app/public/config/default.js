@@ -18,7 +18,7 @@ window.nolexUsername = new URLSearchParams(new URL(window.location.href).search)
 window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
 let origin = window.location.origin;
 
-window.isSuite = true;
+window.isSuite = false;
 window.storicoRemoto = false;
 window.portableVersion = false;
 window.gestioneMultiMonitor = false;
