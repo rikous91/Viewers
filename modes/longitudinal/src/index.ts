@@ -156,7 +156,6 @@ function modeFactory({ modeConfiguration }) {
         //Versione standard
         else {
           toolbarService.createButtonSection('primary', [
-            'LengthSeparata',
             'WindowLevel',
             'Pan',
             'ZoomTools',
