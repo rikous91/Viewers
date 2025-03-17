@@ -8,8 +8,8 @@ import filesToStudies from './filesToStudies';
 
 import { extensionManager } from '../../App';
 
-import { Button, Icon, LoadingIndicatorProgress, LoadingIndicatorTotalPercent } from '@ohif/ui';
-import { Icons } from '@ohif/ui-next';
+import { Icon, LoadingIndicatorProgress, LoadingIndicatorTotalPercent } from '@ohif/ui';
+import { Icons, Button } from '@ohif/ui-next';
 let totalFiles = 0;
 
 const getLoadButton = (onDrop, text, isDir) => {
@@ -21,8 +21,8 @@ const getLoadButton = (onDrop, text, isDir) => {
       {({ getRootProps, getInputProps }) => (
         <div {...getRootProps()}>
           <Button
-            rounded="full"
-            variant="contained" // outlined
+            variant="default"
+            className="w-28"
             disabled={false}
             endIcon={<Icons.LaunchArrow />}
             className={classnames('font-medium', 'ml-2')}
@@ -34,9 +34,13 @@ const getLoadButton = (onDrop, text, isDir) => {
                 {...getInputProps()}
                 webkitdirectory="true"
                 mozdirectory="true"
+                style={{ display: 'none' }}
               />
             ) : (
-              <input {...getInputProps()} />
+              <input
+                {...getInputProps()}
+                style={{ display: 'none' }}
+              />
             )}
           </Button>
         </div>
@@ -203,16 +207,16 @@ function Local({ modePath }: LocalProps) {
           style={{ width: '100%', height: '100%' }}
         >
           <div className="flex h-screen w-screen items-center justify-center">
-            <div className="bg-secondary-dark mx-auto space-y-2 rounded-lg py-8 px-8 drop-shadow-md">
+            <div className="bg-muted border-primary/60 mx-auto space-y-2 rounded-xl border border-dashed py-12 px-12 drop-shadow-md">
               <div className="flex items-center justify-center">
                 <Icon
                   name="logoNolex"
                   className="h-14"
                 />
               </div>
-              <div className="space-y-2 pt-4 text-center">
+              <div className="space-y-2 py-6 text-center">
                 {dropInitiated ? (
-                  <div className="flex flex-col items-center justify-center pt-48">
+                  <div className="flex flex-col items-center justify-center pt-12">
                     <LoadingIndicatorProgress className={'h-full w-full bg-black'} />
                   </div>
                 ) : (
