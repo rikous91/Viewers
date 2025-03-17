@@ -18,10 +18,11 @@ window.nolexUsername = new URLSearchParams(new URL(window.location.href).search)
 window.nolexToken = new URLSearchParams(new URL(window.location.href).search).get('Token');
 let origin = window.location.origin;
 
-window.isSuite = false;
+window.isSuite = true;
 window.storicoRemoto = false;
 window.portableVersion = false;
-window.gestioneMultiMonitor = false;
+window.gestioneMultiMonitor = true;
+window.mostraErroriFrontend = false //Qualcosa è andato storto errore
 
 let qidoRoot = `${origin}/viewer/qido`;
 let wadoRoot = `${origin}/viewer/wado`;
@@ -75,6 +76,7 @@ window.config = {
   strictZSpacingForVolumeViewport: true,
   useSharedArrayBuffer: `${origin.includes('https') ? 'TRUE' : 'FALSE'}`,
   groupEnabledModesFirst: true,
+  allowMultiSelectExport: true,
   useExperimentalUI: true,
   useCPURendering: useCPURendering ? true : false,
   maxNumRequests: {

@@ -41,14 +41,14 @@ function getHangingProtocolModule() {
       name: primary3D.id,
       protocol: primary3D,
     },
-    {
-      name: frameView.id,
-      protocol: frameView,
-    },
-    {
-      name: frameView3x3.id,
-      protocol: frameView3x3,
-    },
+    // {
+    //   name: frameView.id,
+    //   protocol: frameView,
+    // },
+    // {
+    //   name: frameView3x3.id,
+    //   protocol: frameView3x3,
+    // },
     // {
     //   name: frameView4x4.id,
     //   protocol: frameView4x4,

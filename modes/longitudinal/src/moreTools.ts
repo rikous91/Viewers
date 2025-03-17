@@ -21,7 +21,7 @@ const moreTools = [
       primary: createButton({
         id: 'Reset',
         icon: 'tool-reset',
-        tooltip: 'Reset View',
+        tooltip: 'Reset',
         label: 'Reset',
         commands: 'resetViewport',
         evaluate: 'evaluate.action',
@@ -36,7 +36,7 @@ const moreTools = [
           id: 'Reset',
           icon: 'tool-reset',
           label: 'Reset',
-          tooltip: 'Reset View',
+          tooltip: 'Reset',
           commands: 'resetViewport',
           evaluate: 'evaluate.action',
         }),
@@ -60,7 +60,7 @@ const moreTools = [
           id: 'ImageSliceSync',
           icon: 'link',
           label: 'Collega serie',
-          tooltip: 'Enable position synchronization on stack viewports',
+          tooltip: 'Collega serie',
           commands: {
             commandName: 'toggleSynchronizer',
             commandOptions: {
@@ -97,7 +97,7 @@ const moreTools = [
           id: 'ImageOverlayViewer',
           icon: 'toggle-dicom-overlay',
           label: 'Image Overlay',
-          tooltip: 'Toggle Image Overlay',
+          tooltip: 'Attiva/Disattiva Image Overlay',
           commands: 'toggleEnabledDisabledToolbar',
           evaluate: [
             'evaluate.cornerstoneTool.toggle',
@@ -167,7 +167,7 @@ const moreTools = [
           id: 'CalibrationLine',
           icon: 'tool-calibration',
           label: 'Calibrazione',
-          tooltip: 'Calibration Line',
+          tooltip: 'Calibrazione',
           commands: setToolActiveToolbar,
           evaluate: [
             'evaluate.cornerstoneTool',
@@ -188,7 +188,7 @@ const moreTools = [
           id: 'AdvancedMagnify',
           icon: 'icon-tool-loupe',
           label: "Sonda con lente d'ingrandimento",
-          tooltip: 'Magnify Probe',
+          tooltip: 'Sonda con lente d\'ingrandimento',
           commands: 'toggleActiveDisabledToolbar',
           evaluate: [
             'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',

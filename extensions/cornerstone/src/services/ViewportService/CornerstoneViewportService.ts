@@ -821,7 +821,9 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
 
       volumesNotLoaded.forEach(volume => {
         if (!volume.loadStatus?.loading && volume.load instanceof Function) {
-          this.createTooltipLoadingDynamicVolume(element)
+          if (!document.body.classList.contains('hp-mpr-active')) {
+            this.createTooltipLoadingDynamicVolume(element)
+          }
           volume.load();
         }
       });

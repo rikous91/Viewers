@@ -3,6 +3,96 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.10.0-beta.121](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.120...v3.10.0-beta.121) (2025-03-11)
+
+
+### Features
+
+* **fonts:** bundle fonts in OHIF and dont use google cdn ([#4821](https://github.com/OHIF/Viewers/issues/4821)) ([1f634ba](https://github.com/OHIF/Viewers/commit/1f634bab456208a629747ef35a8ca7097d8ebf5f))
+* **viewport-gap:** remove viewport gap and update border behavior ([#4835](https://github.com/OHIF/Viewers/issues/4835)) ([3f70617](https://github.com/OHIF/Viewers/commit/3f70617c629a0ef569dd2602e1f4a16fe1f77ba5))
+
+
+
+
+
+# [3.10.0-beta.120](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.119...v3.10.0-beta.120) (2025-03-11)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
+# [3.10.0-beta.119](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.118...v3.10.0-beta.119) (2025-03-10)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
+# [3.10.0-beta.118](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.117...v3.10.0-beta.118) (2025-03-07)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
+# [3.10.0-beta.117](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.116...v3.10.0-beta.117) (2025-03-07)
+
+
+### Features
+
+* **toolbox:** Refactor Toolbar and Toolbox to enable sections ([#4825](https://github.com/OHIF/Viewers/issues/4825)) ([cc5cdfb](https://github.com/OHIF/Viewers/commit/cc5cdfb08158eaa1fa576875f959a665e72f9d5e))
+
+
+
+
+
+# [3.10.0-beta.116](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.115...v3.10.0-beta.116) (2025-03-06)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
+# [3.10.0-beta.115](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.114...v3.10.0-beta.115) (2025-02-28)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
+# [3.10.0-beta.114](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.113...v3.10.0-beta.114) (2025-02-28)
+
+
+### Bug Fixes
+
+* Cornerstone3D 3.0 ([#4816](https://github.com/OHIF/Viewers/issues/4816)) ([24567c4](https://github.com/OHIF/Viewers/commit/24567c4e92c404ba210f25e91ac23a2e7a228a54))
+
+
+
+
+
+# [3.10.0-beta.113](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.112...v3.10.0-beta.113) (2025-02-28)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
+# [3.10.0-beta.112](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.111...v3.10.0-beta.112) (2025-02-28)
+
+**Note:** Version bump only for package @ohif/ui-next
+
+
+
+
+
 # [3.10.0-beta.111](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.110...v3.10.0-beta.111) (2025-02-26)
 
 **Note:** Version bump only for package @ohif/ui-next

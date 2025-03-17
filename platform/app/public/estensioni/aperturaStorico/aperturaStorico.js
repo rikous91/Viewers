@@ -154,88 +154,76 @@ function activateCommandOnIframe(command) {
         document.querySelector('[data-cy="Pan"] button').click();
         break;
       case 'Zoom':
-        document.querySelector('[data-tool="Zoom"]').click();
+        document.querySelector('[data-cy="Zoom"] button').click();
         break;
       case 'rotateViewport-90':
-        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-        setTimeout(() => {
-          document.querySelector('[data-cy="rotate-right"]').click();
-        }, 0);
+        document.querySelector('[data-cy="rotate-right"] button').click();
         break;
       case 'rotateViewport--90':
-        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-        setTimeout(() => {
-          document.querySelector('[data-cy="rotate-left"]').click();
-        }, 0);
+        document.querySelector('[data-cy="rotate-left"] button').click();
         break;
       case 'flipViewportHorizontal':
-        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-        setTimeout(() => {
-          document.querySelector('[data-cy="flipHorizontal"]').click();
-        }, 0);
+        document.querySelector('[data-cy="flipHorizontal"] button').click();
         break;
       case 'flipViewportVertical':
-        document.querySelector('[data-cy="TransformTools-split-button-secondary"]').click();
-        setTimeout(() => {
-          document.querySelector('[data-cy="flipVertical"]').click();
-        }, 0);
+        document.querySelector('[data-cy="flipVertical"] button').click();
         break;
       case 'Magnify':
-        document.querySelector('[data-cy="Magnify"]').click();
+        document.querySelector('[data-cy="Magnify"] button').click();
         break;
       case 'Length':
-        document.querySelector('.parent-LengthSeparata button').click()
+        document.querySelectorAll('[data-cy="Length"] button')[1].click()
         break;
       case 'Bidirectional':
-        document.querySelector('.parent-BidirectionalSeparata button').click()
+        document.querySelector('[data-cy="Bidirectional"] button').click()
         break;
       case 'ArrowAnnotate':
-        document.querySelector('.parent-ArrowAnnotateSeparata button').click()
+        document.querySelector('[data-cy="ArrowAnnotate"] button').click()
         break;
       case 'Angle':
-        document.querySelector('.parent-AngleSeparata button').click()
+        document.querySelector('[data-cy="Angle"] button').click()
         break;
       case 'CobbAngle':
-        document.querySelector('.parent-CobbAngleSeparata button').click()
+        document.querySelector('[data-cy="CobbAngle"] button').click()
         break;
       case 'UltrasoundDirectionalTool':
-        document.querySelector('.parent-UltrasoundDirectionalToolSeparata button').click()
+        document.querySelector('[data-cy="UltrasoundDirectionalTool"] button').click()
         break;
       case 'EllipticalROI':
-        document.querySelector('.parent-EllipticalROISeparata button').click()
+        document.querySelector('[data-cy="EllipticalROI"] button').click()
         break;
       case 'RectangleROI':
-        document.querySelector('.parent-RectangleROISeparata button').click()
+        document.querySelector('[data-cy="RectangleROI"] button').click()
         break;
       case 'CircleROI':
-        document.querySelector('.parent-CircleROISeparata button').click()
+        document.querySelector('[data-cy="CircleROI"] button').click()
         break;
       case 'PlanarFreehandROI':
-        document.querySelector('.parent-PlanarFreehandROISeparata button').click()
+        document.querySelector('[data-cy="PlanarFreehandROI"] button').click()
         break;
       case 'SplineROI':
-        document.querySelector('.parent-SplineROISeparata button').click()
+        document.querySelector('[data-cy="SplineROI"] button').click()
         break;
       case 'LivewireContour':
-        document.querySelector('.parent-LivewireContourSeparata button').click()
+        document.querySelector('[data-cy="LivewireContour"] button').click()
         break;
       case 'StackScroll':
-        document.querySelector('[data-cy="StackScroll"]').click();
+        document.querySelector('[data-cy="StackScroll"] button').click()
         break;
       case 'mprDirectClick':
         document.querySelector('[data-cy="LayoutMPR"]').click();
         break;
       case 'invertViewport':
-        document.querySelector('[data-cy="invert"]').click();
+        document.querySelector('[data-cy="invert"] button').click();
         break;
       case 'Probe':
-        document.querySelector('[data-cy="Probe"]').click();
+        document.querySelector('[data-cy="Probe"] button').click();
         break;
       case 'cine':
-        document.querySelector('[data-cy="Cine"]').click();
+        document.querySelector('[data-cy="Cine"] button').click();
         break;
       case 'ReferenceLines':
-        document.querySelector('[data-cy="ReferenceLines"]').click();
+        document.querySelector('[data-cy="ReferenceLines"] button').click();
         break;
       case 'hideInfoDicom':
         document.querySelector('[data-cy="hideInfoDicom"]').click();
@@ -244,7 +232,7 @@ function activateCommandOnIframe(command) {
         document.querySelector('[data-cy="LayoutMPR"]').click();
         break;
       case 'Crosshairs':
-        document.querySelector('[data-cy="Crosshairs"]').click();
+        document.querySelector('[data-cy="Crosshairs"] button').click();
         break;
       case 'TrackballRotate':
         document.querySelector('[data-cy="TrackballRotate"]').click();
@@ -431,10 +419,10 @@ function activateCommandOnIframe(command) {
         break;
 
       //LAYOUT ADVANCED MPR SELECTOR
-      case 'MPR':
+      case 'mpr':
         document.querySelector('[data-cy="Layout"]').click();
         setTimeout(() => {
-          document.querySelector('.mpr').click();
+          document.querySelector('[data-cy="MPR"]').click();
           setTimeout(() => {
             document.querySelector('.nolex-selected').click();
           }, 0);
