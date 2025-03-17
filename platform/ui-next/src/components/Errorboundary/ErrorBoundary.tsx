@@ -55,6 +55,11 @@ Stack: ${error.stack}
     toast.success(t('Copied to clipboard'));
   };
 
+  if (!window.mostraErroriFrontend) {
+    return null;
+  }
+
+
   useEffect(() => {
     toast.error(title, {
       description: subtitle,
@@ -168,6 +173,7 @@ const ErrorBoundary = ({
     console.debug(`${context} Error Boundary`, error, componentStack, context);
     onError(error, componentStack, context);
   };
+
 
   return (
     <ReactErrorBoundary

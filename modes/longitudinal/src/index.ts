@@ -1,9 +1,7 @@
-import { hotkeys } from '@ohif/core';
 import i18n from 'i18next';
 import { id } from './id';
 import initToolGroups from './initToolGroups';
 import toolbarButtons from './toolbarButtons';
-import moreTools from './moreTools';
 
 // Allow this mode by excluding non-imaging modalities such as SR, SEG
 // Also, SM is not a simple imaging modalities, so exclude it.
@@ -84,40 +82,57 @@ function modeFactory({ modeConfiguration }) {
      * Lifecycle hooks
      */
     onModeEnter: function ({ servicesManager, extensionManager, commandsManager }: withAppTypes) {
-      const { measurementService, toolbarService, toolGroupService, customizationService } =
-        servicesManager.services;
+      const { measurementService, toolbarService, toolGroupService } = servicesManager.services;
 
       measurementService.clearMeasurements();
 
       // Init Default and SR ToolGroups
       initToolGroups(extensionManager, toolGroupService, commandsManager);
 
-      toolbarService.addButtons([...toolbarButtons, ...moreTools]);
+      toolbarService.addButtons(toolbarButtons);
+      toolbarService.createButtonSection('moreToolsSection', [
+        'Reset',
+        'ImageSliceSync',
+        'ImageOverlayViewer',
+        'CalibrationLine',
+        'TagBrowser',
+        'AdvancedMagnify',
+        'WindowLevelRegion',
+      ]);
+
+      toolbarService.createButtonSection('measurementSection', [
+        'Length',
+        'Bidirectional',
+        'ArrowAnnotate',
+        'Angle',
+        'CobbAngle',
+        'UltrasoundDirectionalTool',
+        'EllipticalROI',
+        'RectangleROI',
+        'CircleROI',
+        'PlanarFreehandROI',
+        'SplineROI',
+        'LivewireContour',
+      ]);
+
+      toolbarService.createButtonSection('TransformTools', [
+        'rotate-right',
+        'rotate-left',
+        'flipHorizontal',
+        'flipVertical',
+      ]);
+
       //Versione normale o mobile
-      console.log(document.body.classList)
       if (!window.portableVersion) {
         //Storico
         if (document.body.classList.contains('storico-same-tab')) {
           toolbarService.createButtonSection('primary', [
             'WindowLevel',
             'Pan',
-            'ZoomTools',
+            'Zoom',
             'TransformTools',
             'Magnify',
-            'LengthSeparata',
-            'BidirectionalSeparata',
-            'ArrowAnnotateSeparata',
-            'AngleSeparata',
-            'CobbAngleSeparata',
-            'UltrasoundDirectionalToolSeparata',
-            'EllipticalROISeparata',
-            'RectangleROISeparata',
-            'CircleROISeparata',
-            'PlanarFreehandROISeparata',
-            'SplineROISeparata',
-            'LivewireContourSeparata',
-            'StackScroll',
-            // 'Zoom',
+            'MeasurementTools',
             'Layout',
             'LayoutMPR',
             'LayoutMPRStorico',
@@ -131,7 +146,20 @@ function modeFactory({ modeConfiguration }) {
             'Capture',
             'hideInfoDicom',
             'ReferenceLines',
-            'MoreTools'
+            'MoreTools',
+            'Length',
+            'Bidirectional',
+            'ArrowAnnotate',
+            'EllipticalROI',
+            'RectangleROI',
+            'CircleROI',
+            'PlanarFreehandROI',
+            'SplineROI',
+            'LivewireContour',
+            'rotate-right',
+            'rotate-left',
+            'flipHorizontal',
+            'flipVertical',
           ]);
         }
         //Mobile
@@ -141,15 +169,14 @@ function modeFactory({ modeConfiguration }) {
             'Pan',
             'WindowLevel',
             'Magnify',
-            // 'Zoom',
-            'TransformTools',
-            'MeasurementTools',
             'StackScroll',
             'invert',
             'polygon',
             'Probe',
             'hideInfoDicom',
             'ReferenceLines',
+            'TransformTools',
+            'MeasurementTools',
             'MoreTools',
           ]);
         }
@@ -158,7 +185,7 @@ function modeFactory({ modeConfiguration }) {
           toolbarService.createButtonSection('primary', [
             'WindowLevel',
             'Pan',
-            'ZoomTools',
+            'Zoom',
             'TransformTools',
             'Magnify',
             'MeasurementTools',
@@ -169,6 +196,7 @@ function modeFactory({ modeConfiguration }) {
             'LayoutMPRStorico',
             'Crosshairs',
             'TrackballRotate',
+            // 'Reset3DRotate',
             'gestioneHP',
             'invert',
             'polygon',
@@ -190,7 +218,7 @@ function modeFactory({ modeConfiguration }) {
         toolbarService.createButtonSection('primary', [
           'WindowLevel',
           'Pan',
-          'ZoomTools',
+          'Zoom',
           'TransformTools',
           'Magnify',
           'MeasurementTools',
@@ -249,7 +277,7 @@ function modeFactory({ modeConfiguration }) {
       _activatePanelTriggersSubscriptions.forEach(sub => sub.unsubscribe());
       _activatePanelTriggersSubscriptions = [];
 
-      uiDialogService.dismissAll();
+      uiDialogService.hideAll();
       uiModalService.hide();
       toolGroupService.destroy();
       syncGroupService.destroy();
@@ -283,10 +311,10 @@ function modeFactory({ modeConfiguration }) {
             id: ohif.layout,
             props: {
               leftPanels: [tracked.thumbnailList],
-              leftPanelResizable: true,
+              leftPanelResizable: false,
               rightPanels: [cornerstone.segmentation, tracked.measurements],
               rightPanelClosed: true,
-              rightPanelResizable: true,
+              rightPanelResizable: false,
               viewports: [
                 {
                   namespace: tracked.viewport,
@@ -352,4 +380,4 @@ const mode = {
 };
 
 export default mode;
-export { initToolGroups, moreTools, toolbarButtons };
+export { initToolGroups, toolbarButtons };

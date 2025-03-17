@@ -1,9 +1,8 @@
-// TODO: torn, can either bake this here; or have to create a whole new button type
-// Only ways that you can pass in a custom React component for render :l
-import { ToolbarService, ViewportGridService } from '@ohif/core';
-import type { Button, RunCommand } from '@ohif/core/types';
+import type { Button } from '@ohif/core/types';
 
-const { createButton } = ToolbarService;
+import { EVENTS } from '@cornerstonejs/core';
+import { ViewportGridService } from '@ohif/core';
+
 
 export const setToolActiveToolbar = {
   commandName: 'setToolActiveToolbar',
@@ -20,225 +19,445 @@ const ReferenceLinesListeners: RunCommand = [
 ];
 
 const toolbarButtons: Button[] = [
+  // sections
   {
     id: 'MeasurementTools',
     uiType: 'ohif.toolButtonList',
     props: {
+      buttonSection: 'measurementSection',
       groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'Length',
-        icon: 'tool-length',
-        label: 'Lunghezza',
-        tooltip: 'Length Tool',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      secondary: {
-        icon: 'chevron-down',
-        tooltip: 'Altri strumenti di misurazione',
-      },
-      items: [
-        createButton({
-          id: 'Length',
-          icon: 'tool-length',
-          label: 'Lunghezza',
-          tooltip: 'Length Tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'Bidirectional',
-          icon: 'tool-bidirectional',
-          label: 'Bidirezionale',
-          tooltip: 'Bidirectional Tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'ArrowAnnotate',
-          icon: 'tool-annotate',
-          label: 'Annotazione',
-          tooltip: 'Arrow Annotate',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'Angle',
-          icon: 'tool-angle',
-          label: 'Angolo',
-          tooltip: 'Angle',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'CobbAngle',
-          icon: 'icon-tool-cobb-angle',
-          label: 'Angolo di Cobb',
-          tooltip: 'Cobb Angle',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'UltrasoundDirectionalTool',
-          icon: 'icon-tool-ultrasound-bidirectional',
-          label: 'Ultrasuono direzionale',
-          tooltip: 'Ultrasound Directional',
-          commands: setToolActiveToolbar,
-          evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
-        }),
-        createButton({
-          id: 'EllipticalROI',
-          icon: 'tool-ellipse',
-          label: 'Ellisse',
-          tooltip: 'Ellipse ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'RectangleROI',
-          icon: 'tool-rectangle',
-          label: 'Rettangolo',
-          tooltip: 'Rectangle ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'CircleROI',
-          icon: 'tool-circle',
-          label: 'Cerchio',
-          tooltip: 'Circle Tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'PlanarFreehandROI',
-          icon: 'icon-tool-freehand-roi',
-          label: 'ROI mano libera',
-          tooltip: 'Freehand ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'SplineROI',
-          icon: 'icon-tool-spline-roi',
-          label: 'ROI Spline',
-          tooltip: 'Spline ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'LivewireContour',
-          icon: 'icon-tool-livewire',
-          label: 'Strumento Livewire',
-          tooltip: 'Livewire tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ],
     },
   },
   {
     id: 'TransformTools',
-    uiType: 'ohif.splitButton',
+    uiType: 'ohif.toolButtonList',
     props: {
+      buttonSection: 'TransformTools',
       groupId: 'TransformTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'rotate-right',
-        icon: 'tool-rotate-right',
-        label: 'Ruota a destra',
-        tooltip: 'Rotate +90',
-        commands: 'rotateViewportCW',
-        evaluate: 'evaluate.action',
-      }),
-      secondary: {
-        icon: 'chevron-down',
-        tooltip: 'Altri strumenti di trasformazione',
-      },
-      items: [
-        createButton({
-          id: 'rotate-right',
-          icon: 'tool-rotate-right',
-          label: 'Ruota a destra',
-          tooltip: 'Rotate +90',
-          commands: 'rotateViewportCW',
-          evaluate: 'evaluate.action',
-        }),
-        createButton({
-          id: 'rotate-left',
-          icon: 'tool-rotate-right',
-          label: 'Ruota a sinistra',
-          tooltip: 'Rotate -90',
-          commands: 'rotateViewportCCW',
-          evaluate: 'evaluate.action',
-        }),
-        createButton({
-          id: 'flipHorizontal',
-          icon: 'tool-flip-horizontal',
-          label: 'Rifletti orizzontalmente',
-          tooltip: 'Rifletti orizzontalmente',
-          commands: 'flipViewportHorizontal',
-          evaluate: ['evaluate.viewportProperties.toggle', 'evaluate.not3D'],
-        }),
-        createButton({
-          id: 'flipVertical',
-          icon: 'tool-flip-horizontal',
-          label: 'Rifletti verticalmente',
-          tooltip: 'Rifletti verticalmente',
-          commands: 'flipViewportVertical',
-          evaluate: ['evaluate.viewportProperties.toggle', 'evaluate.not3D'],
-        }),
-      ],
     },
   },
   {
-    id: 'ZoomTools',
-    uiType: 'ohif.splitButton',
+    id: 'MoreTools',
+    uiType: 'ohif.toolButtonList',
     props: {
-      groupId: 'ZoomTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'Zoom',
-        icon: 'tool-zoom',
-        label: 'Zoom',
-        tooltip: 'Zoom',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      secondary: {
-        icon: 'chevron-down',
-        tooltip: 'Altri strumenti zoom',
-      },
-      items: [
-        createButton({
-          id: 'Zoom',
-          icon: 'tool-zoom',
-          label: 'Zoom',
-          tooltip: 'Zoom',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-        createButton({
-          id: 'fitViewportToWindow',
-          icon: 'tool-zoom',
-          label: 'Riadatta alla viewport',
-          tooltip: 'Riadatta alla viewport',
-          commands: 'fitViewportToWindow',
-          evaluate: 'evaluate.action',
-        }),
-      ],
+      buttonSection: 'moreToolsSection',
+      groupId: 'MoreTools',
     },
   },
+  // tool defs
   {
-    id: 'Zoom',
+    id: 'Reset',
     uiType: 'ohif.toolButton',
     props: {
-      icon: 'tool-zoom',
-      label: 'Zoom',
+      icon: 'tool-reset',
+      label: 'Reset',
+      tooltip: 'Reset',
+      commands: 'resetViewport',
+      evaluate: 'evaluate.action',
+    },
+  },
+  {
+    id: 'rotate-right',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-rotate-right',
+      label: 'Ruota a destra',
+      tooltip: 'Ruota a destra',
+      commands: 'rotateViewportCW',
+      evaluate: [
+        'evaluate.action',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'rotate-left',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-rotate-left',
+      label: 'Ruota a sinistra',
+      tooltip: 'Ruota a sinistra',
+      commands: 'rotateViewportCCW',
+      evaluate: [
+        'evaluate.action',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'flipHorizontal',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-flip-horizontal',
+      label: 'Rifletti orizzontalmente',
+      tooltip: 'Rifletti orizzontalmente',
+      commands: 'flipViewportHorizontal',
+      evaluate: [
+        'evaluate.viewportProperties.toggle',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video', 'volume3d'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'flipVertical',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-flip-vertical',
+      label: 'Rifletti verticalmente',
+      tooltip: 'Rifletti verticalmente',
+      commands: 'flipViewportVertical',
+      evaluate: [
+        'evaluate.viewportProperties.toggle',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video', 'volume3d'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'ImageSliceSync',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'link',
+      label: 'Collega immagini',
+      tooltip: 'Collega immagini',
+      commands: {
+        commandName: 'toggleSynchronizer',
+        commandOptions: {
+          type: 'imageSlice',
+        },
+      },
+      listeners: {
+        [EVENTS.VIEWPORT_NEW_IMAGE_SET]: {
+          commandName: 'toggleImageSliceSync',
+          commandOptions: { toggledState: true },
+        },
+      },
+      evaluate: [
+        'evaluate.cornerstone.synchronizer',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video', 'volume3d'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'ReferenceLines',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-referenceLines',
+      label: 'Linee di riferimento',
+      tooltip: 'Mostra linee di riferimento',
+      commands: 'toggleEnabledDisabledToolbar',
+      listeners: {
+        [ViewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED]: ReferenceLinesListeners,
+        [ViewportGridService.EVENTS.VIEWPORTS_READY]: ReferenceLinesListeners,
+      },
+      evaluate: [
+        'evaluate.cornerstoneTool.toggle',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'ImageOverlayViewer',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'toggle-dicom-overlay',
+      label: 'Image Overlay',
+      tooltip: 'Attiva o disattiva Image Overlay',
+      commands: 'toggleEnabledDisabledToolbar',
+      evaluate: [
+        'evaluate.cornerstoneTool.toggle',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'StackScroll',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-stack-scroll',
+      label: 'Scorrimento con mouse',
+      tooltip: 'Scorrimento con mouse',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'invert',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-invert',
+      label: 'Inverti',
+      tooltip: 'Inverti Colori',
+      commands: 'invertViewport',
+      evaluate: [
+        'evaluate.viewportProperties.toggle',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'Probe',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-probe',
+      label: 'Sonda',
+      tooltip: 'Sonda',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'Cine',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-cine',
+      label: 'Cine',
+      tooltip: 'Cine',
+      commands: 'toggleCine',
+      evaluate: [
+        'evaluate.cine',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['volume3d'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'Angle',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-angle',
+      label: 'Angolo',
+      tooltip: 'Angolo',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'CobbAngle',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-cobb-angle',
+      label: 'Angolo di Cobb',
+      tooltip: 'Angolo di Cobb',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'Magnify',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-magnify',
+      label: 'Lente d\'ingrandimento',
+      tooltip: 'Lente d\'ingrandimento',
+      commands: setToolActiveToolbar,
+      evaluate: [
+        'evaluate.cornerstoneTool',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'CalibrationLine',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-calibration',
+      label: 'Calibrazione',
+      tooltip: 'Calibrazione',
+      commands: setToolActiveToolbar,
+      evaluate: [
+        'evaluate.cornerstoneTool',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'TagBrowser',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'dicom-tag-browser',
+      label: 'Dicom Tag Browser',
+      tooltip: 'Dicom Tag Browser',
+      commands: 'openDICOMTagViewer',
+    },
+  },
+  {
+    id: 'AdvancedMagnify',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-loupe',
+      label: 'Sonda con lente d\ingrandimento',
+      tooltip: 'Sonda con lente d\ingrandimento',
+      commands: 'toggleActiveDisabledToolbar',
+      evaluate: [
+        'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'UltrasoundDirectionalTool',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-ultrasound-bidirectional',
+      label: 'Ultrasuono direzionale',
+      tooltip: 'Ultrasuono direzionale',
+      commands: setToolActiveToolbar,
+      evaluate: [
+        'evaluate.cornerstoneTool',
+        {
+          name: 'evaluate.modality.supported',
+          supportedModalities: ['US'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'WindowLevelRegion',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-window-region',
+      label: 'Window Level Region',
+      tooltip: 'Window Level Region',
+      commands: setToolActiveToolbar,
+      evaluate: [
+        'evaluate.cornerstoneTool',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'Length',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-length',
+      label: 'Lunghezza',
+      tooltip: 'Lunghezza',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'Bidirectional',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-bidirectional',
+      label: 'Bidirezionale',
+      tooltip: 'Bidirezionale',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'ArrowAnnotate',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-annotate',
+      label: 'Annotazione',
+      tooltip: 'Annotazione',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'EllipticalROI',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-ellipse',
+      label: 'Ellisse',
+      tooltip: 'Ellisse',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'RectangleROI',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-rectangle',
+      label: 'Rettangolo',
+      tooltip: 'Rettangolo',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'CircleROI',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-circle',
+      label: 'Cerchio',
+      tooltip: 'Cerchio',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'PlanarFreehandROI',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-freehand-roi',
+      label: 'ROI Mano libera',
+      tooltip: 'ROI Mano libera',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'SplineROI',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-spline-roi',
+      label: 'ROI Spline',
+      tooltip: 'ROI Spline',
+      commands: setToolActiveToolbar,
+      evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'LivewireContour',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-livewire',
+      label: 'Strumento Livewire',
+      tooltip: 'Strumento Livewire',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',
     },
@@ -260,7 +479,6 @@ const toolbarButtons: Button[] = [
       ],
     },
   },
-  // Pan...
   {
     id: 'Pan',
     uiType: 'ohif.toolButton',
@@ -272,78 +490,13 @@ const toolbarButtons: Button[] = [
       evaluate: 'evaluate.cornerstoneTool',
     },
   },
-  //Inversione
   {
-    id: 'invert',
-    uiType: 'ohif.radioGroup',
+    id: 'Zoom',
+    uiType: 'ohif.toolButton',
     props: {
       type: 'tool',
-      icon: 'tool-invert',
-      label: 'Inverti colori',
-      commands: 'invertViewport',
-      evaluate: 'evaluate.viewportProperties.toggle',
-    },
-  },
-  //Sonda
-  {
-    id: 'Probe',
-    uiType: 'ohif.radioGroup',
-    props: {
-      type: 'tool',
-      icon: 'tool-probe',
-      label: 'Sonda',
-      commands: setToolActiveToolbar,
-      evaluate: 'evaluate.cornerstoneTool',
-    },
-  },
-  //Cine
-  {
-    id: 'Cine',
-    uiType: 'ohif.radioGroup',
-    props: {
-      type: 'tool',
-      icon: 'tool-cine',
-      label: 'Cine',
-      commands: 'toggleCine',
-      evaluate: ['evaluate.cine', 'evaluate.not3D'],
-    },
-  },
-  //Magnify
-  {
-    id: 'Magnify',
-    uiType: 'ohif.radioGroup',
-    props: {
-      type: 'tool',
-      icon: 'tool-magnify',
-      label: "Lente d'ingrandimento",
-      commands: setToolActiveToolbar,
-      evaluate: 'evaluate.cornerstoneTool',
-    },
-  },
-  //Linee riferimento
-  {
-    id: 'ReferenceLines',
-    uiType: 'ohif.radioGroup',
-    props: {
-      type: 'tool',
-      icon: 'tool-referenceLines',
-      label: 'Linee di riferimento',
-      commands: 'toggleEnabledDisabledToolbar',
-      listeners: {
-        [ViewportGridService.EVENTS.ACTIVE_VIEWPORT_ID_CHANGED]: ReferenceLinesListeners,
-        [ViewportGridService.EVENTS.VIEWPORTS_READY]: ReferenceLinesListeners,
-      },
-      evaluate: 'evaluate.cornerstoneTool.toggle',
-    },
-  },
-  //Scorrimento con mouse
-  {
-    id: 'StackScroll',
-    uiType: 'ohif.radioGroup',
-    props: {
-      type: 'tool',
-      icon: 'toolStackScroll',
-      label: 'Scorrimento con mouse',
+      icon: 'tool-zoom',
+      label: 'Zoom',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',
     },
@@ -525,331 +678,6 @@ const toolbarButtons: Button[] = [
         disabledText: 'Seleziona una viewport MPR per abilitare questo strumento.',
       },
     },
-  },
-  // Misurazioni separate singolarmente
-  {
-    id: 'LengthSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'Length',
-        icon: 'tool-length',
-        label: 'Lunghezza',
-        tooltip: 'Length Tool',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'Length',
-          icon: 'tool-length',
-          label: 'Lunghezza',
-          tooltip: 'Length Tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'BidirectionalSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'Bidirectional',
-        icon: 'tool-bidirectional',
-        label: 'Bidirezionale',
-        tooltip: 'Bidirectional Tool',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'Bidirectional',
-          icon: 'tool-bidirectional',
-          label: 'Bidirezionale',
-          tooltip: 'Bidirectional Tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'ArrowAnnotateSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'ArrowAnnotate',
-        icon: 'tool-annotate',
-        label: 'Annotazione',
-        tooltip: 'Arrow Annotate',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'ArrowAnnotate',
-          icon: 'tool-annotate',
-          label: 'Annotazione',
-          tooltip: 'Arrow Annotate',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'AngleSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'Angle',
-        icon: 'tool-angle',
-        label: 'Angolo',
-        tooltip: 'Angle',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'Angle',
-          icon: 'tool-angle',
-          label: 'Angolo',
-          tooltip: 'Angle',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'CobbAngleSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'CobbAngle',
-        icon: 'icon-tool-cobb-angle',
-        label: 'Angolo di Cobb',
-        tooltip: 'Cobb Angle',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'CobbAngle',
-          icon: 'icon-tool-cobb-angle',
-          label: 'Angolo di Cobb',
-          tooltip: 'Cobb Angle',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'UltrasoundDirectionalToolSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'UltrasoundDirectionalTool',
-        icon: 'icon-tool-ultrasound-bidirectional',
-        label: 'Ultrasuono direzionale',
-        tooltip: 'Ultrasound Directional',
-        commands: setToolActiveToolbar,
-        evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
-      }),
-      items: [
-        createButton({
-          id: 'UltrasoundDirectionalTool',
-          icon: 'icon-tool-ultrasound-bidirectional',
-          label: 'Ultrasuono direzionale',
-          tooltip: 'Ultrasound Directional',
-          commands: setToolActiveToolbar,
-          evaluate: ['evaluate.cornerstoneTool', 'evaluate.isUS'],
-        }),
-      ]
-    }
-  },
-  {
-    id: 'EllipticalROISeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'EllipticalROI',
-        icon: 'tool-ellipse',
-        label: 'Ellisse',
-        tooltip: 'Ellipse ROI',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'EllipticalROI',
-          icon: 'tool-ellipse',
-          label: 'Ellisse',
-          tooltip: 'Ellipse ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'RectangleROISeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'RectangleROI',
-        icon: 'tool-rectangle',
-        label: 'Rettangolo',
-        tooltip: 'Rectangle ROI',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'RectangleROI',
-          icon: 'tool-rectangle',
-          label: 'Rettangolo',
-          tooltip: 'Rectangle ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'CircleROISeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'CircleROI',
-        icon: 'tool-circle',
-        label: 'Cerchio',
-        tooltip: 'Circle Tool',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'CircleROI',
-          icon: 'tool-circle',
-          label: 'Cerchio',
-          tooltip: 'Circle Tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'PlanarFreehandROISeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'PlanarFreehandROI',
-        icon: 'icon-tool-freehand-roi',
-        label: 'ROI mano libera',
-        tooltip: 'Freehand ROI',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'PlanarFreehandROI',
-          icon: 'icon-tool-freehand-roi',
-          label: 'ROI mano libera',
-          tooltip: 'Freehand ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'SplineROISeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'SplineROI',
-        icon: 'icon-tool-spline-roi',
-        label: 'ROI Spline',
-        tooltip: 'Spline ROI',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'SplineROI',
-          icon: 'icon-tool-spline-roi',
-          label: 'ROI Spline',
-          tooltip: 'Spline ROI',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
-  },
-  {
-    id: 'LivewireContourSeparata',
-    uiType: 'ohif.toolButtonList',
-    props: {
-      groupId: 'MeasurementTools',
-      // group evaluate to determine which item should move to the top
-      evaluate: 'evaluate.group.promoteToPrimaryIfCornerstoneToolNotActiveInTheList',
-      primary: createButton({
-        id: 'LivewireContour',
-        icon: 'icon-tool-livewire',
-        label: 'Strumento Livewire',
-        tooltip: 'Livewire tool',
-        commands: setToolActiveToolbar,
-        evaluate: 'evaluate.cornerstoneTool',
-      }),
-      items: [
-        createButton({
-          id: 'LivewireContour',
-          icon: 'icon-tool-livewire',
-          label: 'Strumento Livewire',
-          tooltip: 'Livewire tool',
-          commands: setToolActiveToolbar,
-          evaluate: 'evaluate.cornerstoneTool',
-        }),
-      ]
-    }
   },
 
 

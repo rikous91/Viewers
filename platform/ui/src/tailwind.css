@@ -1,5 +1,5 @@
 /* IMPORT CUSTOM FONT */
-@import url('https://fonts.googleapis.com/css?family=Inter:100,300,400,500,700&display=swap');
+@import './assets/styles/fonts.css';
 
 @tailwind base;
 @tailwind components;
@@ -298,7 +298,7 @@
 }
 
 .border-primary-light {
-  border-color: #8a1818;
+  border-color: #8a1818 !important;
 }
 
 .border-primary-dark {
@@ -787,6 +787,10 @@ input[type='range']::-webkit-slider-thumb {
   width: 0;
 }
 
+.nolex-noselected {
+  border-color: #424242 !important;
+}
+
 .nolex-scrolling-loading-p {
   /* display: none !important; */
   top: 54px;
@@ -844,6 +848,31 @@ input[type='range']::-webkit-slider-thumb {
   top: -2px;
 }
 
+[role='dialog'] {
+  background: #141414;
+  .text-muted-foreground {
+    color: hsl(0deg 46% 65%);
+  }
+  .text-primary {
+    color: hsl(0deg 98% 60%);
+  }
+  .border-input {
+    border-color: hsl(0deg 45% 21%);
+  }
+  .border-input {
+    border-color: hsl(0deg 45% 21%);
+  }
+  .text-secondary-foreground {
+    color: hsl(0deg 50% 84%);
+  }
+  .bg-primary\/40 {
+    background-color: hsl(0deg 98% 60% / 40%);
+  }
+  .bg-primary\/60 {
+    background-color: hsl(0deg 98% 60% / 60%);
+  }
+}
+
 .storico-injected-iframe {
   .div-icone-right-viewport {
     .all-in-one-menu {
@@ -875,6 +904,9 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 .storico-same-tab {
+  .tab-studio-nolex {
+    display: none !important;
+  }
   .right.nolex-new-panel {
     display: block !important;
   }

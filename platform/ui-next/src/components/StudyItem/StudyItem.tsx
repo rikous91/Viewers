@@ -2,8 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
-import { Icon, Tooltip } from '@ohif/ui';
+import { Icon } from '@ohif/ui';
 import { Icons } from '@ohif/ui-next';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import openStorico from '../../../../app/public/estensioni/aperturaStorico/aperturaStorico.js';
@@ -46,14 +47,32 @@ const StudyItem = ({
       defaultValue={isActive ? 'study-item' : undefined}
     >
       <AccordionItem value="study-item">
-        <AccordionTrigger className={classnames('hover:bg-accent bg-popover group rounded')}>
-          <div className="flex h-[40px] flex-1 flex-row">
-            <div className="flex w-full flex-row items-center">
-              <div className="flex flex-col items-start text-[13px]">
-                <div className="text-white">{date}</div>
-                <div className="text-muted-foreground _truncate _whitespace-nowrap h-[18px] max-w-[160px] overflow-hidden">
-                  {description}
-                </div>
+        <AccordionTrigger className={classnames('hover:bg-accent bg-popover group w-full rounded')}>
+          <div className="flex h-[40px] w-full flex-row overflow-hidden">
+            <div className="flex w-full flex-row items-center justify-between">
+              <div className="flex min-w-0 flex-col items-start text-[13px]">
+                <Tooltip>
+                  <TooltipContent>{date}</TooltipContent>
+                  <TooltipTrigger
+                    className="w-full"
+                    asChild
+                  >
+                    <div className="h-[18px] w-full max-w-[160px] overflow-hidden truncate whitespace-nowrap text-left text-white">
+                      {date}
+                    </div>
+                  </TooltipTrigger>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipContent>{description}</TooltipContent>
+                  <TooltipTrigger
+                    className="w-full"
+                    asChild
+                  >
+                    <div className="text-muted-foreground h-[18px] w-full overflow-hidden truncate whitespace-nowrap text-left">
+                      {description}
+                    </div>
+                  </TooltipTrigger>
+                </Tooltip>
               </div>
               <div className="text-muted-foreground flex flex-col items-end pl-[10px] text-[12px]">
                 <div className="max-w-[150px] overflow-hidden text-ellipsis">{modalities}</div>

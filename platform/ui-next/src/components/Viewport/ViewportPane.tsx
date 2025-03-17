@@ -61,24 +61,21 @@ function ViewportPane({
         'group/pane h-full w-full overflow-hidden rounded-md transition duration-300 viewport-parent-div',
         {
           'border-primary-light border-2 nolex-selected': isActive,
-          'border-2 border-transparent': !isActive,
+          'border-2 border-transparent nolex-noselected': !isActive,
         },
         className
       )}
       style={customStyle}
     >
+      <div className={classNames('relative h-full w-full', className)}>{children}</div>
+
+      {/* Border overlay */}
       <div
-        className={classNames(
-          'h-full w-full overflow-hidden rounded-md',
-          {
-            'border border-transparent': isActive,
-            'border-secondary-light group-hover/pane:border-primary-light/70 border': !isActive,
-          },
-          className
-        )}
-      >
-        {children}
-      </div>
+        className={classNames('pointer-events-none absolute inset-0', {
+          'border-primary-light border': isActive,
+          'group-hover:border-primary-light/70 border border-transparent': !isActive,
+        })}
+      />
     </div>
   );
 }

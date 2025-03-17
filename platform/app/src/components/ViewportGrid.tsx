@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useRef } from 'react';
 import { useResizeDetector } from 'react-resize-detector';
 import { Types, MeasurementService } from '@ohif/core';
-import { ViewportGrid, ViewportPane } from '@ohif/ui';
+import { ViewportGrid, ViewportPane } from '@ohif/ui-next';
 import { useViewportGrid } from '@ohif/ui-next';
 import EmptyViewport from './EmptyViewport';
 import classNames from 'classnames';
@@ -284,6 +284,29 @@ function ViewerViewportGrid(props: withAppTypes) {
         viewportGridService.setActiveViewportId(viewportId);
       };
 
+      const getBorderStyle = viewportIndex => {
+        const style = {} as any;
+        const layoutOptions = viewportGridService.getLayoutOptionsFromState(
+          viewportGridService.getState()
+        );
+        const vp = layoutOptions[viewportIndex];
+        if (!vp) {
+          return style;
+        }
+        const { x, y, width, height } = vp;
+        const tolerance = 0.01;
+
+        if (x + width < 1 - tolerance) {
+          style.borderRight = '1px solid #3a3f99';
+        }
+
+        if (y + height < 1 - tolerance) {
+          style.borderBottom = '1px solid #3a3f99';
+        }
+
+        return style;
+      };
+
       viewportPanes[i] = (
         <ViewportPane
           // Note: It is highly important that the key is the viewportId here,
@@ -305,6 +328,7 @@ function ViewerViewportGrid(props: withAppTypes) {
             left: viewportX * 100 + '%',
             width: viewportWidth * 100 + '%',
             height: viewportHeight * 100 + '%',
+            ...getBorderStyle(i),
           }}
           isActive={isActive}
         >
@@ -343,7 +367,7 @@ function ViewerViewportGrid(props: withAppTypes) {
   return (
     <div
       ref={resizeRef}
-      className="h-full w-full"
+      className="border-secondary-light h-full w-full border"
     >
       <ViewportGrid
         numRows={numRows}

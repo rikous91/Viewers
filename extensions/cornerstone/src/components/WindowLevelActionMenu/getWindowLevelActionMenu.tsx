@@ -21,7 +21,7 @@ export function getWindowLevelActionMenu({
   const { volumeRenderingPresets, volumeRenderingQualityRange } =
     customizationService.getCustomization('cornerstone.3dVolumeRendering');
   const WindowLevelActionMenu = customizationService.getCustomization(
-    'cornerstone.windowLevelActionMenu'
+    'viewportActionMenu.windowLevelActionMenu'
   );
   //Filtro i preset per modality
   // const displaySetPresets = displaySets
@@ -41,8 +41,10 @@ export function getWindowLevelActionMenu({
     return null;
   }
 
+  const WindowLevelActionMenuComponent = WindowLevelActionMenu?.component;
+
   return (
-    <WindowLevelActionMenu
+    <WindowLevelActionMenuComponent
       viewportId={viewportId}
       element={element}
       presets={displaySetPresets}

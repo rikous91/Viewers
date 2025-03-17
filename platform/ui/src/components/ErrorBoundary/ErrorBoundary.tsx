@@ -67,6 +67,11 @@ const ErrorBoundary = ({
   fallbackRoute = null,
   isPage,
 }) => {
+
+  if (!window.mostraErroriFrontend) {
+    return
+  }
+
   const [isOpen, setIsOpen] = useState(true);
 
   const onErrorHandler = (error, componentStack) => {

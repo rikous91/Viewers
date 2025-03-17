@@ -10,21 +10,19 @@ export function VolumeRenderingPresets({
   commandsManager,
   volumeRenderingPresets,
 }: VolumeRenderingPresetsProps): ReactElement {
-  const { uiModalService } = servicesManager.services;
+  const { uiDialogService } = servicesManager.services;
 
   const onClickPresets = () => {
-    uiModalService.show({
+    uiDialogService.show({
+      id: 'volume-rendering-presets',
       content: VolumeRenderingPresetsContent,
-      title: 'Preset Rendering',
-      movable: true,
+      title: 'Preset rendering',
+      isDraggable: true,
       contentProps: {
-        onClose: uiModalService.hide,
         presets: volumeRenderingPresets,
         viewportId,
         commandsManager,
       },
-      containerDimensions: 'h-[543px] w-[460px]',
-      contentDimensions: 'h-[493px] w-[460px]  pl-[12px] pr-[12px]',
     });
   };
 
