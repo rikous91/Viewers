@@ -1,145 +1,211 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+// Updated ToolbarLayoutSelector.tsx
+import React, { useCallback, useState } from 'react';
 import PropTypes from 'prop-types';
-import { LayoutSelector as OHIFLayoutSelector, ToolbarButton, LayoutPreset } from '@ohif/ui';
+import { CommandsManager } from '@ohif/core';
+
+import { LayoutSelector } from '../../../../platform/ui-next/src/components/LayoutSelector';
 
 let hpSelezionato = 'mpr';
 let hpSelezionatoStorico = 'mpr';
 let showLayoutPresetsForStorico = false;
-const defaultCommonPresets = [
-  {
-    icon: 'layout-common-1x1',
-    commandOptions: {
-      numRows: 1,
-      numCols: 1,
-    },
-  },
-  {
-    icon: 'layout-common-1x2',
-    commandOptions: {
-      numRows: 1,
-      numCols: 2,
-    },
-  },
-  {
-    icon: 'layout-common-2x2',
-    commandOptions: {
-      numRows: 2,
-      numCols: 2,
-    },
-  },
-  {
-    icon: 'layout-common-2x3',
-    commandOptions: {
-      numRows: 2,
-      numCols: 3,
-    },
-  },
-];
-
-const _areSelectorsValid = (hp, displaySets, hangingProtocolService) => {
-  if (!hp.displaySetSelectors || Object.values(hp.displaySetSelectors).length === 0) {
-    return true;
-  }
-
-  return hangingProtocolService.areRequiredSelectorsValid(
-    Object.values(hp.displaySetSelectors),
-    displaySets[0]
-  );
-};
-
-const generateAdvancedPresets = ({ servicesManager }: withAppTypes) => {
-  const { hangingProtocolService, viewportGridService, displaySetService } =
-    servicesManager.services;
-
-  const hangingProtocols = Array.from(hangingProtocolService.protocols.values());
-
-  const viewportId = viewportGridService.getActiveViewportId();
-
-  if (!viewportId) {
-    return [];
-  }
-  const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
-
-  if (!displaySetInsaneUIDs) {
-    return [];
-  }
-
-  const displaySets = displaySetInsaneUIDs.map(uid => displaySetService.getDisplaySetByUID(uid));
-
-  return hangingProtocols
-    .map(hp => {
-      if (!hp.isPreset) {
-        return null;
-      }
-
-      const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
-
-      return {
-        icon: hp.icon,
-        title: hp.name,
-        commandOptions: {
-          protocolId: hp.id,
-        },
-        disabled: !areValid || hpSelezionato === hp.id,
-      };
-    })
-    .filter(preset => preset !== null);
-};
-
-const generateAdvancedPresetsStorico = ({ servicesManager }: withAppTypes) => {
-  const { hangingProtocolService, viewportGridService, displaySetService } =
-    servicesManager.services;
-
-  const hangingProtocols = Array.from(hangingProtocolService.protocols.values());
-
-  const viewportId = viewportGridService.getActiveViewportId();
-
-  if (!viewportId) {
-    return [];
-  }
-  const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
-
-  if (!displaySetInsaneUIDs) {
-    return [];
-  }
-
-  const displaySets = displaySetInsaneUIDs.map(uid => displaySetService.getDisplaySetByUID(uid));
-
-  return hangingProtocols
-    .map(hp => {
-      if (!hp.isPreset) {
-        return null;
-      }
-
-      const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
-
-      return {
-        icon: hp.icon,
-        title: hp.name,
-        commandOptions: {
-          protocolId: hp.id,
-        },
-        disabled: hpSelezionatoStorico === hp.id,
-      };
-    })
-    .filter(preset => preset !== null);
-};
-
-const onSelectionPresetStorico = preset => {
-  hpSelezionatoStorico = preset.commandOptions.protocolId;
-  document.getElementById('iframe-storico').contentWindow.postMessage(hpSelezionatoStorico);
-};
 
 function ToolbarLayoutSelectorWithServices({
   commandsManager,
   servicesManager,
+  rows = 3,
+  columns = 4,
   ...props
-}: withAppTypes) {
+}) {
   const [isDisabled, setIsDisabled] = useState(false);
+  const { customizationService } = servicesManager.services;
+  showLayoutPresetsForStorico = document.getElementById('iframe-storico') ? true : false;
 
-  const handleMouseEnter = () => {
-    setIsDisabled(false);
+  // Get the presets from the customization service
+  const commonPresets = customizationService?.getCustomization('layoutSelector.commonPresets') || [
+    {
+      icon: 'layout-single',
+      commandOptions: {
+        numRows: 1,
+        numCols: 1,
+      },
+    },
+    {
+      icon: 'layout-side-by-side',
+      commandOptions: {
+        numRows: 1,
+        numCols: 2,
+      },
+    },
+    {
+      icon: 'layout-four-up',
+      commandOptions: {
+        numRows: 2,
+        numCols: 2,
+      },
+    },
+    {
+      icon: 'layout-three-row',
+      commandOptions: {
+        numRows: 3,
+        numCols: 1,
+      },
+    },
+  ];
+
+  const _areSelectorsValid = (hp, displaySets, hangingProtocolService) => {
+    if (!hp.displaySetSelectors || Object.values(hp.displaySetSelectors).length === 0) {
+      return true;
+    }
+
+    return hangingProtocolService.areRequiredSelectorsValid(
+      Object.values(hp.displaySetSelectors),
+      displaySets[0]
+    );
   };
+
+  const generateAdvancedPresets = ({ servicesManager }: withAppTypes) => {
+    const { hangingProtocolService, viewportGridService, displaySetService } =
+      servicesManager.services;
+
+    const hangingProtocols = Array.from(hangingProtocolService.protocols.values());
+
+    const viewportId = viewportGridService.getActiveViewportId();
+
+    if (!viewportId) {
+      return [];
+    }
+    const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
+
+    if (!displaySetInsaneUIDs) {
+      return [];
+    }
+
+    const displaySets = displaySetInsaneUIDs.map(uid => displaySetService.getDisplaySetByUID(uid));
+
+    return hangingProtocols
+      .map(hp => {
+        if (!hp.isPreset) {
+          return null;
+        }
+
+        const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
+
+        return {
+          icon: hp.icon,
+          title: hp.name,
+          commandOptions: {
+            protocolId: hp.id,
+          },
+          disabled: !areValid || hpSelezionato === hp.id,
+        };
+      })
+      .filter(preset => preset !== null);
+  };
+
+  const generateAdvancedPresetsStorico = ({ servicesManager }: withAppTypes) => {
+    const { hangingProtocolService, viewportGridService, displaySetService } =
+      servicesManager.services;
+
+    const hangingProtocols = Array.from(hangingProtocolService.protocols.values());
+
+    const viewportId = viewportGridService.getActiveViewportId();
+
+    if (!viewportId) {
+      return [];
+    }
+    const displaySetInsaneUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
+
+    if (!displaySetInsaneUIDs) {
+      return [];
+    }
+
+    const displaySets = displaySetInsaneUIDs.map(uid => displaySetService.getDisplaySetByUID(uid));
+
+    return hangingProtocols
+      .map(hp => {
+        if (!hp.isPreset) {
+          return null;
+        }
+
+        const areValid = _areSelectorsValid(hp, displaySets, hangingProtocolService);
+
+        return {
+          icon: hp.icon,
+          title: hp.name,
+          commandOptions: {
+            protocolId: hp.id,
+          },
+          disabled: hpSelezionatoStorico === hp.id,
+        };
+      })
+      .filter(preset => preset !== null);
+  };
+
+  const onSelectionPresetStorico = preset => {
+    document.getElementById('iframe-storico').contentWindow.postMessage(preset);
+  };
+
+  // Get the advanced presets generator from the customization service
+  const advancedPresetsGenerator = customizationService?.getCustomization(
+    'layoutSelector.advancedPresetGenerator'
+  );
+
+  const advancedPresetsStorico = generateAdvancedPresetsStorico({ servicesManager });
+
+  // Generate the advanced presets
+  const advancedPresets = advancedPresetsGenerator
+    ? advancedPresetsGenerator({ servicesManager })
+    : [
+      {
+        title: 'MPR',
+        icon: 'layout-three-col',
+        commandOptions: {
+          protocolId: 'mpr',
+        },
+      },
+      {
+        title: '3D four up',
+        icon: 'layout-four-up',
+        commandOptions: {
+          protocolId: '3d-four-up',
+        },
+      },
+      {
+        title: '3D main',
+        icon: 'layout-three-row',
+        commandOptions: {
+          protocolId: '3d-main',
+        },
+      },
+      {
+        title: 'Axial Primary',
+        icon: 'layout-side-by-side',
+        commandOptions: {
+          protocolId: 'axial-primary',
+        },
+      },
+      {
+        title: '3D only',
+        icon: 'layout-single',
+        commandOptions: {
+          protocolId: '3d-only',
+        },
+      },
+      {
+        title: '3D primary',
+        icon: 'layout-side-by-side',
+        commandOptions: {
+          protocolId: '3d-primary',
+        },
+      },
+      {
+        title: 'Frame View',
+        icon: 'icon-stack',
+        commandOptions: {
+          protocolId: 'frame-view',
+        },
+      },
+    ];
 
   const onSelection = useCallback(props => {
     commandsManager.run({
@@ -153,13 +219,6 @@ function ToolbarLayoutSelectorWithServices({
     window.mprIsActive = false;
   }, []);
 
-  const _onSelectionPreset = useCallback(props => {
-    commandsManager.run({
-      commandName: 'setHangingProtocol',
-      commandOptions: { ...props },
-    });
-    setIsDisabled(true);
-  }, []);
 
   const onSelectionPreset = preset => {
     try {
@@ -171,10 +230,9 @@ function ToolbarLayoutSelectorWithServices({
           document.body.classList.remove(preset);
         }
       });
-      const presetIDSelezionato = preset.commandOptions.protocolId;
-      document.body.classList.add(presetIDSelezionato);
+      document.body.classList.add(preset);
 
-      hpSelezionato = presetIDSelezionato;
+      hpSelezionato = preset;
       const { hangingProtocolService, viewportGridService } = servicesManager.services;
 
       const { activeViewportId, viewports } = viewportGridService.getState();
@@ -188,7 +246,7 @@ function ToolbarLayoutSelectorWithServices({
 
       hangingProtocolService.setProtocol(hpSelezionato);
       //Memorizzo globalmente il preset selezionato così da riapplicare lo stesso eventualmente alla riattivazione dell'mpr (mprDirectClick)
-      window.nolexProtocolToApply = presetIDSelezionato;
+      window.nolexProtocolToApply = preset;
 
       setTimeout(() => {
         if (ActiveThumbnail) {
@@ -201,215 +259,150 @@ function ToolbarLayoutSelectorWithServices({
     }
   };
 
-  return (
-    <div onMouseEnter={handleMouseEnter}>
-      <LayoutSelector
-        {...props}
-        onSelection={onSelection}
-        onSelectionPreset={onSelectionPreset}
-        servicesManager={servicesManager}
-        tooltipDisabled={isDisabled}
-      />
-    </div>
-  );
-}
-
-function LayoutSelector({
-  rows = 3,
-  columns = 4,
-  onLayoutChange = () => { },
-  className,
-  onSelection,
-  onSelectionPreset,
-  servicesManager,
-  tooltipDisabled,
-  ...rest
-}: withAppTypes) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  showLayoutPresetsForStorico = document.getElementById('iframe-storico') ? true : false;
-
-  const { customizationService } = servicesManager.services;
-
-  const commonPresets = customizationService.getCustomization('layoutSelector.commonPresets');
-  const advancedPresetsGenerator = customizationService.getCustomization(
-    'layoutSelector.advancedPresetGenerator'
-  );
-
-  const advancedPresets = advancedPresetsGenerator({ servicesManager });
-  const advancedPresetsStorico = generateAdvancedPresetsStorico({ servicesManager });
-
-  const closeOnOutsideClick = event => {
-    if (isOpen && dropdownRef.current) {
-      setIsOpen(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    setTimeout(() => {
-      window.addEventListener('click', closeOnOutsideClick);
-    }, 0);
-    return () => {
-      window.removeEventListener('click', closeOnOutsideClick);
-      dropdownRef.current = null;
-    };
-  }, [isOpen]);
-
-  const onInteractionHandler = () => {
-    setIsOpen(!isOpen);
-  };
-  const DropdownContent = isOpen ? OHIFLayoutSelector : null;
-
   const onSelectionStudioStorico = layout => {
     document.getElementById('iframe-storico').contentWindow.postMessage(layout);
   };
 
+  // Unified selection handler that dispatches to the appropriate command
+  const handleSelectionChange = useCallback(
+    (commandOptions, isPreset) => {
+      if (commandOptions.storicoCommonPreset) {
+        const { numCols, numRows } = commandOptions
+        return onSelectionStudioStorico(`layout-common-${numRows}x${numCols}`,)
+      }
+
+      if (commandOptions.storicoAdvancedPreset) {
+        const { protocolId } = commandOptions
+        return onSelectionPresetStorico(protocolId)
+      }
+
+
+      if (isPreset) {
+        // Advanced preset selection
+        commandsManager.run({
+          commandName: 'setHangingProtocol',
+          commandOptions,
+        });
+      } else {
+        // Common preset or custom grid selection
+        commandsManager.run({
+          commandName: 'setViewportGridLayout',
+          commandOptions,
+        });
+      }
+    },
+    [commandsManager]
+  );
+
   return (
-    <ToolbarButton
+    <div
       id="Layout"
-      label="Layout"
-      icon="tool-layout"
-      onInteraction={onInteractionHandler}
-      className={className}
-      rounded={rest.rounded}
-      disableToolTip={tooltipDisabled}
-      dropdownContent={
-        DropdownContent !== null && (
-          <div
-            className="flex"
-            ref={dropdownRef}
-          >
-            <div className="bg-secondary-dark flex flex-col gap-2.5 p-2">
-              <div className="standard-layout">
-                <div className="text-aqua-pale text-xs">
-                  {showLayoutPresetsForStorico ? 'Standard - Studio principale' : 'Standard'}
-                </div>
-
-                <div className="flex gap-4">
-                  {commonPresets.map((preset, index) => (
-                    <LayoutPreset
-                      key={index}
-                      classNames="hover:bg-primary-dark group p-1 cursor-pointer"
-                      icon={preset.icon}
-                      commandOptions={preset.commandOptions}
-                      onSelection={onSelection}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="separatore-layout h-[2px] bg-black"></div>
-
-              <div className="advanced-layout">
-                <div className="text-aqua-pale text-xs">
-                  {' '}
-                  {showLayoutPresetsForStorico ? 'Avanzato - Studio principale' : 'Avanzato'}
-                </div>
-
-                <div className="flex flex-col gap-2.5">
-                  {advancedPresets.map((preset, index) => (
-                    <LayoutPreset
-                      key={index + commonPresets.length}
-                      classNames="hover:bg-primary-dark group flex gap-2 p-1 cursor-pointer"
-                      icon={preset.icon}
-                      title={preset.title}
-                      disabled={preset.disabled}
-                      commandOptions={preset.commandOptions}
-                      onSelection={() => onSelectionPreset(preset)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Griglia eventuale per storico nella stessa tab */}
-              {showLayoutPresetsForStorico && (
-                <div className="standard-layout-storico-same-tab">
-                  <div className="text-aqua-pale text-xs">Standard - Studio precedente</div>
-
-                  <div className="flex gap-4">
-                    {commonPresets.map((preset, index) => (
-                      <LayoutPreset
-                        key={index}
-                        classNames="hover:bg-primary-dark group p-1 cursor-pointer"
-                        icon={preset.icon}
-                        commandOptions={preset.commandOptions}
-                        onSelection={() => onSelectionStudioStorico(preset.icon)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {showLayoutPresetsForStorico && (
-                <div className="advanced-layout-storico-same-tab">
-                  <div className="text-aqua-pale text-xs">Avanzato - Studio precedente</div>
-
-                  <div className="flex flex-col gap-2.5">
-                    {advancedPresetsStorico.map((preset, index) => (
-                      <LayoutPreset
-                        key={index + commonPresets.length}
-                        classNames="hover:bg-primary-dark group flex gap-2 p-1 cursor-pointer"
-                        icon={preset.icon}
-                        title={preset.title}
-                        disabled={preset.disabled}
-                        commandOptions={preset.commandOptions}
-                        onSelection={() => onSelectionPresetStorico(preset)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-primary-dark custom-layout flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
-              <div className="text-aqua-pale text-xs">
-                {' '}
-                {showLayoutPresetsForStorico
-                  ? 'Personalizzato - Studio principale'
-                  : 'Personalizzato'}
-              </div>
-              <DropdownContent
-                rows={rows}
-                columns={columns}
-                onSelection={onSelection}
-              />
-
-              {showLayoutPresetsForStorico && (
+      data-cy="Layout"
+    >
+      <LayoutSelector
+        onSelectionChange={handleSelectionChange}
+        {...props}
+      >
+        <LayoutSelector.Trigger tooltip="Change layout" />
+        <LayoutSelector.Content>
+          {/* Left side - Presets */}
+          {(commonPresets.length > 0 || advancedPresets.length > 0) && (
+            <div className="bg-popover flex flex-col gap-2.5 rounded-lg p-2">
+              {commonPresets.length > 0 && (
                 <>
-                  <div className="custom-layout-storico-same-tab">
-                    <div className="text-aqua-pale text-xs">Personalizzato - Studio precedente</div>
-                    <DropdownContent
-                      rows={rows}
-                      columns={columns}
-                      onSelection={e => onSelectionStudioStorico(`custom${e.numRows}x${e.numCols}`)}
-                    />
-                  </div>
+                  <LayoutSelector.PresetSection
+                    className={`standard-layout`}
+                    title={showLayoutPresetsForStorico ? 'Standard - Studio principale' : 'Standard'}>
+                    {commonPresets.map((preset, index) => (
+                      <LayoutSelector.Preset
+                        key={`common-preset-${index}`}
+                        icon={preset.icon}
+                        commandOptions={preset.commandOptions}
+                        isPreset={false}
+                      />
+                    ))}
+                  </LayoutSelector.PresetSection>
+                  <LayoutSelector.Divider />
                 </>
               )}
 
-              <p className="tip-custom-layout text-aqua-pale text-xs leading-tight">
-                Seleziona un preset di<br></br>righe e colonne <br></br> Clicca per applicare
-              </p>
+              {showLayoutPresetsForStorico && (
+                <LayoutSelector.PresetSection
+                  className={`standard-layout standard-layout-storico`}
+                  title='Standard - Studio precedente'>
+                  {commonPresets.map((preset, index) => (
+                    <LayoutSelector.Preset
+                      key={`advanced-preset-${index}`}
+                      title={preset.title}
+                      icon={preset.icon}
+                      commandOptions={{ ...preset.commandOptions, storicoCommonPreset: true }}
+                      disabled={preset.disabled}
+                      isPreset={true}
+                    />
+                  ))}
+                </LayoutSelector.PresetSection>
+              )}
+
+              {advancedPresets.length > 0 && (
+                <LayoutSelector.PresetSection className={`advanced-layout`}
+                  title={showLayoutPresetsForStorico ? 'Avanzato - Studio principale' : 'Avanzato'}>
+                  {advancedPresets.map((preset, index) => (
+                    <LayoutSelector.Preset
+                      key={`advanced-preset-${index}`}
+                      title={preset.title}
+                      icon={preset.icon}
+                      commandOptions={preset.commandOptions}
+                      disabled={preset.disabled}
+                      isPreset={true}
+                    />
+                  ))}
+                </LayoutSelector.PresetSection>
+              )}
+
+              {advancedPresets.length > 0 && (
+                <LayoutSelector.PresetSection className={`advanced-layout advanced-layout-storico`}
+                  title='Avanzato - Studio precedente'>
+                  {advancedPresets.map((preset, index) => (
+                    <LayoutSelector.Preset
+                      key={`advanced-preset-${index}`}
+                      title={preset.title}
+                      icon={preset.icon}
+                      commandOptions={{ ...preset.commandOptions, storicoAdvancedPreset: true }}
+                      disabled={preset.disabled}
+                      isPreset={true}
+                    />
+                  ))}
+                </LayoutSelector.PresetSection>
+              )}
+
+
+
             </div>
+          )}
+
+          {/* Right Side - Grid Layout */}
+          <div className="bg-muted flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
+            <div className="text-muted-foreground text-xs">Custom</div>
+            <LayoutSelector.GridSelector
+              rows={rows}
+              columns={columns}
+            />
+            <LayoutSelector.HelpText>
+              Hover to select <br />
+              rows and columns <br /> Click to apply
+            </LayoutSelector.HelpText>
           </div>
-        )
-      }
-      isActive={isOpen}
-      type="toggle"
-    />
+        </LayoutSelector.Content>
+      </LayoutSelector>
+    </div>
   );
 }
 
-LayoutSelector.propTypes = {
+ToolbarLayoutSelectorWithServices.propTypes = {
+  commandsManager: PropTypes.instanceOf(CommandsManager),
+  servicesManager: PropTypes.object,
   rows: PropTypes.number,
   columns: PropTypes.number,
-  onLayoutChange: PropTypes.func,
-  servicesManager: PropTypes.object.isRequired,
 };
 
 export default ToolbarLayoutSelectorWithServices;

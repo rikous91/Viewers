@@ -723,6 +723,24 @@ input[type='range']::-webkit-slider-thumb {
   display: none;
 }
 
+.standard-layout {
+  .flex.flex-col.gap-0 {
+    flex-direction: row;
+  }
+}
+
+.standard-layout-storico {
+  .text-muted-foreground {
+    color: hsl(204.92deg 46% 65%) !important;
+  }
+}
+
+.advanced-layout-storico {
+  .text-muted-foreground {
+    color: hsl(204.92deg 46% 65%) !important;
+  }
+}
+
 .separatore-layout {
   display: none;
 }
@@ -870,6 +888,9 @@ input[type='range']::-webkit-slider-thumb {
   }
   .bg-primary\/60 {
     background-color: hsl(0deg 98% 60% / 60%);
+  }
+  .bg-background {
+    background-color: hsl(0deg 62% 5%);
   }
 }
 
