@@ -194,7 +194,7 @@ const toolbarButtons: Button[] = [
     id: 'StackScroll',
     uiType: 'ohif.toolButton',
     props: {
-      icon: 'tool-stack-scroll',
+      icon: 'toolStackScroll',
       label: 'Scorrimento con mouse',
       tooltip: 'Scorrimento con mouse',
       commands: setToolActiveToolbar,

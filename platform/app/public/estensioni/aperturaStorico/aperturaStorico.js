@@ -270,7 +270,7 @@ function activateCommandOnIframe(command) {
 
       //LAYOUT SELECTOR
       case 'layout-common-1x1':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.standard-layout .cursor-pointer')[0].click();
           setTimeout(() => {
@@ -279,7 +279,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'layout-common-1x2':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.standard-layout .cursor-pointer')[1].click();
           setTimeout(() => {
@@ -288,7 +288,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'layout-common-2x2':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.standard-layout .cursor-pointer')[2].click();
           setTimeout(() => {
@@ -297,7 +297,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'layout-common-2x3':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.standard-layout .cursor-pointer')[3].click();
           setTimeout(() => {
@@ -308,7 +308,7 @@ function activateCommandOnIframe(command) {
 
       //LAYOUT CUSTOM SELECTOR
       case 'custom1x1':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[0].click();
           setTimeout(() => {
@@ -317,7 +317,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom1x2':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[1].click();
           setTimeout(() => {
@@ -326,7 +326,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom1x3':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[2].click();
           setTimeout(() => {
@@ -335,7 +335,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom1x4':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[3].click();
           setTimeout(() => {
@@ -345,7 +345,7 @@ function activateCommandOnIframe(command) {
         break;
 
       case 'custom2x1':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[4].click();
           setTimeout(() => {
@@ -354,7 +354,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom2x2':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[5].click();
           setTimeout(() => {
@@ -363,7 +363,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom2x3':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[6].click();
           setTimeout(() => {
@@ -372,7 +372,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom2x4':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[7].click();
           setTimeout(() => {
@@ -382,7 +382,7 @@ function activateCommandOnIframe(command) {
         break;
 
       case 'custom3x1':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[8].click();
           setTimeout(() => {
@@ -391,7 +391,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom3x2':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[9].click();
           setTimeout(() => {
@@ -400,7 +400,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom3x3':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[10].click();
           setTimeout(() => {
@@ -409,7 +409,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'custom3x4':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelectorAll('.custom-layout .cursor-pointer')[11].click();
           setTimeout(() => {
@@ -420,7 +420,7 @@ function activateCommandOnIframe(command) {
 
       //LAYOUT ADVANCED MPR SELECTOR
       case 'mpr':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelector('[data-cy="MPR"]').click();
           setTimeout(() => {
@@ -429,7 +429,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'fourUp':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelector('.fourUp').click();
           setTimeout(() => {
@@ -438,7 +438,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'main3D':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelector('.main3D').click();
           setTimeout(() => {
@@ -447,7 +447,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'primaryAxial':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelector('.primaryAxial').click();
           setTimeout(() => {
@@ -456,7 +456,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'only3D':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelector('.only3D').click();
           setTimeout(() => {
@@ -465,7 +465,7 @@ function activateCommandOnIframe(command) {
         }, 0);
         break;
       case 'primary3D':
-        document.querySelector('[data-cy="Layout"]').click();
+        document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
           document.querySelector('.primary3D').click();
           setTimeout(() => {
