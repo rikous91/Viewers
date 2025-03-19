@@ -344,7 +344,7 @@ function ToolbarLayoutSelectorWithServices({
               )}
 
               {advancedPresets.length > 0 && (
-                <LayoutSelector.PresetSection className={`advanced-layout`}
+                <LayoutSelector.PresetSection className={`advanced-layout advanced-layout-studio-principale`}
                   title={showLayoutPresetsForStorico ? 'Avanzato - Studio principale' : 'Avanzato'}>
                   {advancedPresets.map((preset, index) => (
                     <LayoutSelector.Preset
@@ -382,16 +382,32 @@ function ToolbarLayoutSelectorWithServices({
 
           {/* Right Side - Grid Layout */}
           <div className="bg-muted flex flex-col gap-2.5 border-l-2 border-solid border-black p-2">
-            <div className="text-muted-foreground text-xs">Custom</div>
-            <LayoutSelector.GridSelector
-              rows={rows}
-              columns={columns}
-            />
+            <div className="custom-layout">
+              <div className="text-muted-foreground text-xs">{showLayoutPresetsForStorico ? 'Personalizzato - Studio principale' : 'Personalizzato'}</div>
+              <LayoutSelector.GridSelector
+                rows={rows}
+                columns={columns}
+              />
+
+            </div>
+
+            <div className="custom-layout custom-layout-storico">
+              <div className="text-muted-foreground text-xs"> Personalizzato - Studio precedente</div>
+              <LayoutSelector.GridSelector
+                rows={rows}
+                columns={columns}
+              />
+
+            </div>
+
+
             <LayoutSelector.HelpText>
-              Hover to select <br />
-              rows and columns <br /> Click to apply
+              Seleziona un preset  <br />  di righe e colonne.
+              <br /> Clicca per applicare
             </LayoutSelector.HelpText>
           </div>
+
+
         </LayoutSelector.Content>
       </LayoutSelector>
     </div>

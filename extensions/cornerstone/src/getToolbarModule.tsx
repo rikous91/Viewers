@@ -237,15 +237,17 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
       },
     },
     {
-      name: 'evaluate.mpr',
+      name: 'evaluate.displaySetIsReconstructable',
       evaluate: ({ viewportId, disabledText = 'Selected viewport is not reconstructable' }) => {
+        const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+
+        if (!viewport) {
+          return;
+        }
+
         const { protocol } = hangingProtocolService.getActiveProtocol();
 
         const displaySetUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);
-
-        if (!displaySetUIDs?.length) {
-          return;
-        }
 
         const displaySets = displaySetUIDs.map(displaySetService.getDisplaySetByUID);
 

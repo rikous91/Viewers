@@ -736,8 +736,22 @@ input[type='range']::-webkit-slider-thumb {
 }
 
 .advanced-layout-storico {
+  display: none;
   .text-muted-foreground {
     color: hsl(204.92deg 46% 65%) !important;
+  }
+}
+
+.custom-layout-storico {
+  display: none;
+  .text-muted-foreground {
+    color: hsl(204.92deg 46% 65%) !important;
+  }
+}
+
+.secondo-mpr-attivo {
+  .advanced-layout-storico {
+    display: block;
   }
 }
 
@@ -760,7 +774,7 @@ input[type='range']::-webkit-slider-thumb {
   .parent-TrackballRotate {
     display: block;
   }
-  .advanced-layout {
+  .advanced-layout-studio-principale {
     display: block;
   }
 
@@ -899,6 +913,9 @@ input[type='range']::-webkit-slider-thumb {
     .all-in-one-menu {
       min-width: 193px !important;
     }
+  }
+  .custom-layout-storico {
+    display: block;
   }
   .nolex-main-area {
     border: 1px solid #2a2a2a;
