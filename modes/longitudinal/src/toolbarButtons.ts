@@ -559,7 +559,7 @@ const toolbarButtons: Button[] = [
       label: 'MPR',
       commands: 'mprDirectClick',
       evaluate: {
-        name: 'evaluate.mpr',
+        name: 'evaluate.displaySetIsReconstructable',
         disabledText: 'Seleziona una serie ricostrubile in MPR per abilitare questo strumento.',
       },
     },

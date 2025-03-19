@@ -52,8 +52,8 @@ type LayoutSelectorProps = {
 
 const LayoutSelector = ({
   onSelectionChange,
-  onSelection = commandOptions => {},
-  onSelectionPreset = commandOptions => {},
+  onSelection = commandOptions => { },
+  onSelectionPreset = commandOptions => { },
   children,
   open,
   onOpenChange,
@@ -300,9 +300,31 @@ const GridSelector = ({ rows = 3, columns = 4, className }: GridSelectorProps) =
     return x <= hoverX && y <= hoverY;
   };
 
-  const handleSelection = (index: number) => {
+  const isSelectionFromStorico = (e) => {
+    try {
+      const classeElClicked = e.currentTarget.parentElement.parentElement.className
+      if (classeElClicked.includes('custom-layout-storico')) {
+        return true
+      }
+      return false
+    } catch (err) {
+      console.error('Errore funzione isSelectionFromStorico')
+      return false
+    }
+  }
+
+  const handleSelection = (e: any, index: number) => {
+
     const x = index % columns;
     const y = Math.floor(index / columns);
+
+    if (isSelectionFromStorico(e)) {
+      console.log('Cliccato da storico')
+      const numRows = y + 1
+      const numCols = x + 1
+      const customLayoutStorico = `custom${numRows}x${numCols}`
+      return document.getElementById('iframe-storico').contentWindow.postMessage(customLayoutStorico);
+    }
     onSelection({
       numRows: y + 1,
       numCols: x + 1,
@@ -324,7 +346,8 @@ const GridSelector = ({ rows = 3, columns = 4, className }: GridSelectorProps) =
           key={index}
           className={cn('cursor-pointer', isHovered(index) ? 'bg-primary-active' : 'bg-[#04225b]')}
           data-cy={`Layout-${index % columns}-${Math.floor(index / columns)}`}
-          onClick={() => handleSelection(index)}
+          onClick={(e) => handleSelection(e, index)}
+
           onMouseEnter={() => setHoveredIndex(index)}
           onMouseLeave={() => setHoveredIndex(undefined)}
         />

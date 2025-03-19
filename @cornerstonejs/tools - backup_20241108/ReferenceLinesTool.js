@@ -81,7 +81,6 @@ class ReferenceLines extends AnnotationDisplayTool {
             this._init();
         };
         this.renderAnnotation = (enabledElement, svgDrawingHelper) => {
-            console.log('nolex')
             const { viewport: targetViewport } = enabledElement;
             if (!this.editData) {
                 return false;
@@ -92,6 +91,21 @@ class ReferenceLines extends AnnotationDisplayTool {
             if (!sourceViewport) {
                 return renderStatus;
             }
+
+            if (sourceViewport.id === targetViewport.id) {
+                return renderStatus;
+            }
+
+            if (!annotation || !annotation?.data?.handles?.points) {
+                return renderStatus;
+            }
+            if (
+                this.configuration.enforceSameFrameOfReference &&
+                sourceViewport.getFrameOfReferenceUID() !== targetViewport.getFrameOfReferenceUID()
+            ) {
+                return renderStatus;
+            }
+
             //Nolex cornerstone - Attivo linee di riferimento solo per lo stesso studio evitando così di disegnare le linee anche tra storico e studio attuale
             let studyInstanceUidSource = sourceViewport.csImage?.imageId;
             let studyInstanceUidTarget = targetViewport.csImage?.imageId;
@@ -106,21 +120,10 @@ class ReferenceLines extends AnnotationDisplayTool {
                 studyInstanceUidTarget = matchTarget[1]; // Output: 1.2.380.0.57129767.17204606.56177047
             }
 
-            if (sourceViewport.id === targetViewport.id) {
-                return renderStatus;
-            }
             if (studyInstanceUidSource !== studyInstanceUidTarget) {
                 return renderStatus;
             }
-            if (!annotation || !annotation?.data?.handles?.points) {
-                return renderStatus;
-            }
-            if (
-                this.configuration.enforceSameFrameOfReference &&
-                sourceViewport.getFrameOfReferenceUID() !== targetViewport.getFrameOfReferenceUID()
-            ) {
-                return renderStatus;
-            }
+
             const styleSpecifier = {
                 toolGroupId: this.toolGroupId,
                 toolName: this.getToolName(),
