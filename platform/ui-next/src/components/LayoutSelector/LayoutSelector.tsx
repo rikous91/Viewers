@@ -319,7 +319,7 @@ const GridSelector = ({ rows = 3, columns = 4, className }: GridSelectorProps) =
     const y = Math.floor(index / columns);
 
     if (isSelectionFromStorico(e)) {
-      console.log('Cliccato da storico')
+      document.querySelector('[data-cy="Layout"] button').click() //Riclicco il pulsante griglia così da nasconderlo in automatico
       const numRows = y + 1
       const numCols = x + 1
       const customLayoutStorico = `custom${numRows}x${numCols}`
