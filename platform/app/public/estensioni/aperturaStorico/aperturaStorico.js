@@ -431,7 +431,7 @@ function activateCommandOnIframe(command) {
       case 'fourUp':
         document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
-          document.querySelector('.fourUp').click();
+          document.querySelector('[data-cy="Volume 3D a destra"]').click();
           setTimeout(() => {
             document.querySelector('.nolex-selected').click();
           }, 0);
@@ -440,7 +440,7 @@ function activateCommandOnIframe(command) {
       case 'main3D':
         document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
-          document.querySelector('.main3D').click();
+          document.querySelector('[data-cy="Volume 3D principale in alto"]').click();
           setTimeout(() => {
             document.querySelector('.nolex-selected').click();
           }, 0);
@@ -449,7 +449,7 @@ function activateCommandOnIframe(command) {
       case 'primaryAxial':
         document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
-          document.querySelector('.primaryAxial').click();
+          document.querySelector('[data-cy="Piano Assiale primario"]').click();
           setTimeout(() => {
             document.querySelector('.nolex-selected').click();
           }, 0);
@@ -458,7 +458,7 @@ function activateCommandOnIframe(command) {
       case 'only3D':
         document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
-          document.querySelector('.only3D').click();
+          document.querySelector('[data-cy="Solo Volume 3D"]').click();
           setTimeout(() => {
             document.querySelector('.nolex-selected').click();
           }, 0);
@@ -467,7 +467,7 @@ function activateCommandOnIframe(command) {
       case 'primary3D':
         document.querySelector('[data-cy="Layout"] button').click();
         setTimeout(() => {
-          document.querySelector('.primary3D').click();
+          document.querySelector('[data-cy="Volume 3D principale a sx"]').click();
           setTimeout(() => {
             document.querySelector('.nolex-selected').click();
           }, 0);

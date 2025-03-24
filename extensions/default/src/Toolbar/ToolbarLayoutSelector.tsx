@@ -141,7 +141,7 @@ function ToolbarLayoutSelectorWithServices({
       .filter(preset => preset !== null);
   };
 
-  const onSelectionPresetStorico = preset => {
+  const onSelectionAdvancedPresetStorico = preset => {
     document.getElementById('iframe-storico').contentWindow.postMessage(preset);
   };
 
@@ -271,9 +271,15 @@ function ToolbarLayoutSelectorWithServices({
         return onSelectionStudioStorico(`layout-common-${numRows}x${numCols}`,)
       }
 
+
+      if (commandOptions.advancedPreset) {
+        const { protocolId } = commandOptions
+        return onSelectionPreset(protocolId)
+      }
+
       if (commandOptions.storicoAdvancedPreset) {
         const { protocolId } = commandOptions
-        return onSelectionPresetStorico(protocolId)
+        return onSelectionAdvancedPresetStorico(protocolId)
       }
 
 
@@ -351,7 +357,7 @@ function ToolbarLayoutSelectorWithServices({
                       key={`advanced-preset-${index}`}
                       title={preset.title}
                       icon={preset.icon}
-                      commandOptions={preset.commandOptions}
+                      commandOptions={{ ...preset.commandOptions, advancedPreset: true }}
                       disabled={preset.disabled}
                       isPreset={true}
                     />
