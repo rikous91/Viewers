@@ -7,6 +7,8 @@ import {
   Types as CoreTypes,
   cache,
   BaseVolumeViewport,
+  triggerEvent,
+  eventTarget,
 } from '@cornerstonejs/core';
 import {
   ToolGroupManager,
@@ -14,6 +16,7 @@ import {
   utilities as cstUtils,
   ReferenceLinesTool,
   annotation,
+  Types as ToolTypes,
 } from '@cornerstonejs/tools';
 import * as cornerstoneTools from '@cornerstonejs/tools';
 import * as labelmapInterpolation from '@cornerstonejs/labelmap-interpolation';
@@ -37,6 +40,7 @@ import { toolNames } from './initCornerstoneTools';
 import CornerstoneViewportDownloadForm from './utils/CornerstoneViewportDownloadForm';
 import { updateSegmentBidirectionalStats } from './utils/updateSegmentationStats';
 import { generateSegmentationCSVReport } from './utils/generateSegmentationCSVReport';
+
 const { DefaultHistoryMemo } = csUtils.HistoryMemo;
 const toggleSyncFunctions = {
   imageSlice: toggleImageSliceSync,
@@ -45,6 +49,23 @@ const toggleSyncFunctions = {
 
 const debounceTime = 200;
 let debounceTimeout;
+
+const getLabelmapTools = ({ toolGroupService }) => {
+  const labelmapTools = [];
+  const toolGroupIds = toolGroupService.getToolGroupIds();
+  toolGroupIds.forEach(toolGroupId => {
+    const toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+    const tools = toolGroup.getToolInstances();
+    // tools is an object with toolName as the key and tool as the value
+    Object.keys(tools).forEach(toolName => {
+      const tool = tools[toolName];
+      if (tool instanceof cornerstoneTools.LabelmapBaseTool) {
+        labelmapTools.push(tool);
+      }
+    });
+  });
+  return labelmapTools;
+};
 
 function commandsModule({
   servicesManager,
@@ -63,6 +84,7 @@ function commandsModule({
     hangingProtocolService,
     displaySetService,
     syncGroupService,
+    toolbarService,
     segmentationService,
   } = servicesManager.services as AppTypes.Services;
 
@@ -545,25 +567,26 @@ function commandsModule({
     },
 
     removeMeasurement: ({ uid }) => {
-      measurementService.remove(uid);
+      if (Array.isArray(uid)) {
+        measurementService.removeMany(uid);
+      } else {
+        measurementService.remove(uid);
+      }
     },
 
     toggleLockMeasurement: ({ uid }) => {
       measurementService.toggleLockMeasurement(uid);
     },
 
-    toggleVisibilityMeasurement: ({ uid }) => {
-      measurementService.toggleVisibilityMeasurement(uid);
-    },
-
-    /**
-     * Clear the measurements
-     */
-    clearMeasurements: options => {
-      const { measurementFilter } = options;
-      measurementService.clearMeasurements(
-        measurementFilter ? measurementFilter.bind(options) : null
-      );
+    toggleVisibilityMeasurement: ({ uid, items, visibility }) => {
+      if (visibility === undefined && items?.length) {
+        visibility = !items[0].isVisible;
+      }
+      if (Array.isArray(uid)) {
+        measurementService.toggleVisibilityMeasurementMany(uid, visibility);
+      } else {
+        measurementService.toggleVisibilityMeasurement(uid, visibility);
+      }
     },
 
     /**
@@ -623,16 +646,18 @@ function commandsModule({
 
       viewportGridService.setActiveViewportId(viewportId);
     },
-    arrowTextCallback: ({ callback }) => {
+    arrowTextCallback: async ({ callback }) => {
       const labelConfig = customizationService.getCustomization('measurementLabels');
       const renderContent = customizationService.getCustomization('ui.labellingComponent');
 
-      callInputDialogAutoComplete({
+      const value = await callInputDialogAutoComplete({
         uiDialogService,
         labelConfig,
         renderContent,
       });
+      callback?.(value);
     },
+
     toggleCine: () => {
       //Passo il comando anche all'eventuale iframe storico
       if (document.getElementById('iframe-storico')) {
@@ -1238,7 +1263,7 @@ function commandsModule({
       const options = { imageIndex: jumpIndex };
       csUtils.jumpToSlice(viewport.element, options);
     },
-    scroll: ({ direction }) => {
+    scroll: (options: ToolTypes.ScrollOptions) => {
       const enabledElement = _getActiveViewportEnabledElement();
 
       if (!enabledElement) {
@@ -1246,7 +1271,6 @@ function commandsModule({
       }
 
       const { viewport } = enabledElement;
-      const options = { delta: direction };
 
       csUtils.scroll(viewport, options);
     },
@@ -1855,6 +1879,7 @@ function commandsModule({
         viewportGridService.getActiveViewportId()
       );
     },
+
     deleteActiveAnnotation: () => {
       const activeAnnotationsUID = cornerstoneTools.annotation.selection.getAnnotationsSelected();
       activeAnnotationsUID.forEach(activeAnnotationUID => {
@@ -1866,6 +1891,41 @@ function commandsModule({
     },
     redo: () => {
       DefaultHistoryMemo.redo();
+    },
+    toggleSegmentPreviewEdit: ({ toggle }) => {
+      const labelmapTools = getLabelmapTools({ toolGroupService });
+      labelmapTools.forEach(tool => {
+        tool.configuration = {
+          ...tool.configuration,
+          preview: {
+            ...tool.configuration.preview,
+            enabled: toggle,
+          },
+        };
+      });
+    },
+    toggleSegmentSelect: ({ toggle }) => {
+      const toolGroupIds = toolGroupService.getToolGroupIds();
+      toolGroupIds.forEach(toolGroupId => {
+        const toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup(toolGroupId);
+        if (toggle) {
+          toolGroup.setToolActive(cornerstoneTools.SegmentSelectTool.toolName);
+        } else {
+          toolGroup.setToolDisabled(cornerstoneTools.SegmentSelectTool.toolName);
+        }
+      });
+    },
+    acceptPreview: () => {
+      const labelmapTools = getLabelmapTools({ toolGroupService });
+      labelmapTools.forEach(tool => {
+        tool.acceptPreview();
+      });
+    },
+    rejectPreview: () => {
+      const labelmapTools = getLabelmapTools({ toolGroupService });
+      labelmapTools.forEach(tool => {
+        tool.rejectPreview();
+      });
     },
   };
 
@@ -1906,9 +1966,6 @@ function commandsModule({
     },
     updateMeasurement: {
       commandFn: actions.updateMeasurement,
-    },
-    clearMeasurements: {
-      commandFn: actions.clearMeasurements,
     },
     jumpToMeasurement: {
       commandFn: actions.jumpToMeasurement,
@@ -2166,6 +2223,10 @@ function commandsModule({
     interpolateLabelmap: actions.interpolateLabelmap,
     runSegmentBidirectional: actions.runSegmentBidirectional,
     downloadCSVSegmentationReport: actions.downloadCSVSegmentationReport,
+    toggleSegmentPreviewEdit: actions.toggleSegmentPreviewEdit,
+    toggleSegmentSelect: actions.toggleSegmentSelect,
+    acceptPreview: actions.acceptPreview,
+    rejectPreview: actions.rejectPreview,
   };
 
   return {
