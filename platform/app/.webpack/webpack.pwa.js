@@ -110,6 +110,7 @@ module.exports = (env, argv) => {
       },
     },
     resolve: {
+      cache: false,
       modules: [
         // Modules specific to this package
         path.resolve(__dirname, '../node_modules'),
@@ -244,9 +245,14 @@ module.exports = (env, argv) => {
     );
   }
 
+  // mergedConfig.watchOptions = {
+  //   ignored: /node_modules\/@cornerstonejs/,  //Ignora @cornerstonejs
+  // };
+
   mergedConfig.watchOptions = {
-    ignored: /node_modules\/@cornerstonejs/,
+    ignored: /node_modules\/(?!@cornerstonejs)/, // Ignora tutto tranne @cornerstonejs
   };
+
 
   return mergedConfig;
 };

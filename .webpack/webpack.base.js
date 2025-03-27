@@ -102,7 +102,6 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
           : [
             {
               test: /\.[jt]sx?$/,
-              exclude: /node_modules/,
               loader: 'babel-loader',
               options: {
                 plugins: isProdBuild ? [] : ['react-refresh/babel'],
@@ -147,6 +146,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
         {
           test: /\.m?js/,
           resolve: {
+            cache: false,
             fullySpecified: false,
           },
         },
@@ -176,6 +176,7 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
       ], //.concat(vtkRules),
     },
     resolve: {
+      cache: false,
       mainFields: ['module', 'browser', 'main'],
       alias: {
         // Viewer project
@@ -223,7 +224,14 @@ module.exports = (env, argv, { SRC_DIR, ENTRY }) => {
     config.optimization.minimizer = [
       new TerserJSPlugin({
         parallel: true,
-        terserOptions: {},
+        terserOptions: {
+          compress: true,  // Abilita compressione
+          mangle: true,    // Offusca i nomi delle variabili
+          format: {
+            comments: false, // Rimuove i commenti
+          },
+        },
+        extractComments: false, // Evita di generare file .LICENSE
       }),
     ];
   }

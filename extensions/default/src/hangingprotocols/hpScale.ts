@@ -1,9 +1,8 @@
 import { Types } from '@ohif/core';
 
 const displayAreaScale1: Types.HangingProtocol.DisplayArea = {
-  type: 'SCALE',
-  scale: 1,
-  storeAsInitialCamera: true,
+  type: 'FIT',
+  interpolationType: 'bicubic'
 };
 const displayAreaScale15: Types.HangingProtocol.DisplayArea = { ...displayAreaScale1, scale: 15 };
 
