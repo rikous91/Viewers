@@ -86,7 +86,7 @@ function Local({ modePath }: LocalProps) {
   );
 
   const getFileNumber = async () => {
-    const response = await fetch(`http://localhost:8088/getFileNumber`);
+    const response = await fetch(`http://localhost:6287/getFileNumber`);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
@@ -104,7 +104,7 @@ function Local({ modePath }: LocalProps) {
 
       for (let i = 0; i < numeroFile; i++) {
         promises.push(
-          fetch(`http://localhost:8088/getFileByIndex/${i}`).then(response => {
+          fetch(`http://localhost:6287/getFileByIndex/${i}`).then(response => {
             if (!response.ok) {
               throw new Error('Network response was not ok');
             }
@@ -172,7 +172,7 @@ function Local({ modePath }: LocalProps) {
   }, []);
 
   useEffect(() => {
-    if (window.window.portableVersion) {
+    if (window.portableVersion) {
       fetchLocalFile();
     }
   }, []);

@@ -117,9 +117,9 @@ function ViewportDownloadFormNew({
             checked={showAnnotations}
             onCheckedChange={onAnnotationsChange}
           >
-            Include annotations
+            Includi misurazioni
           </ImageModal.SwitchOption>
-          {warningState.enabled && (
+          {/* {warningState.enabled && (
             <ImageModal.SwitchOption
               defaultChecked={showWarningMessage}
               checked={showWarningMessage}
@@ -127,17 +127,17 @@ function ViewportDownloadFormNew({
             >
               Include warning message
             </ImageModal.SwitchOption>
-          )}
+          )} */}
           <FooterAction className="mt-2">
             <FooterAction.Right>
-              <FooterAction.Secondary onClick={onClose}>Cancel</FooterAction.Secondary>
+              <FooterAction.Secondary onClick={onClose}>Annulla</FooterAction.Secondary>
               <FooterAction.Primary
                 onClick={() => {
                   onDownload(filename || DEFAULT_FILENAME, fileType);
                   onClose();
                 }}
               >
-                Save
+                Salva
               </FooterAction.Primary>
             </FooterAction.Right>
           </FooterAction>

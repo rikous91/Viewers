@@ -5,10 +5,7 @@ import {
   VolumeViewport,
   utilities as csUtils,
   Types as CoreTypes,
-  cache,
   BaseVolumeViewport,
-  triggerEvent,
-  eventTarget,
 } from '@cornerstonejs/core';
 import {
   ToolGroupManager,
@@ -84,11 +81,8 @@ function commandsModule({
     hangingProtocolService,
     displaySetService,
     syncGroupService,
-    toolbarService,
     segmentationService,
   } = servicesManager.services as AppTypes.Services;
-
-  const { measurementServiceSource } = this;
 
   function _getActiveViewportEnabledElement() {
     return getActiveViewportEnabledElement(viewportGridService);
@@ -412,12 +406,6 @@ function commandsModule({
       return nearbyToolData?.metadata?.toolName && isAnnotation(nearbyToolData.metadata.toolName)
         ? nearbyToolData
         : null;
-    },
-    /** Delete the given measurement */
-    deleteMeasurement: ({ uid }) => {
-      if (uid) {
-        measurementServiceSource.remove(uid);
-      }
     },
     /**
      * Common logic for handling measurement label updates through dialog
@@ -1957,9 +1945,6 @@ function commandsModule({
     },
     toggleViewportColorbar: {
       commandFn: actions.toggleViewportColorbar,
-    },
-    deleteMeasurement: {
-      commandFn: actions.deleteMeasurement,
     },
     setMeasurementLabel: {
       commandFn: actions.setMeasurementLabel,

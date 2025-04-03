@@ -309,7 +309,7 @@ function ToolbarLayoutSelectorWithServices({
         onSelectionChange={handleSelectionChange}
         {...props}
       >
-        <LayoutSelector.Trigger tooltip="Change layout" />
+        <LayoutSelector.Trigger tooltip="Cambia layout" />
         <LayoutSelector.Content>
           {/* Left side - Presets */}
           {(commonPresets.length > 0 || advancedPresets.length > 0) && (

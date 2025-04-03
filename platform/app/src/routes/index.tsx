@@ -46,23 +46,23 @@ NotFoundStudy.propTypes = {
 // TODO: Include "routes" debug route if dev build
 const bakedInRoutes = [
   {
-    path: `${publicUrl}notfoundserver`,
+    path: `/notfoundserver`,
     children: NotFoundServer,
   },
   {
-    path: `${publicUrl}notfoundstudy`,
+    path: `/notfoundstudy`,
     children: NotFoundStudy,
   },
   {
-    path: `${publicUrl}debug`,
+    path: `/debug`,
     children: Debug,
   },
   {
-    path: `${publicUrl}local`,
+    path: `/local`,
     children: Local.bind(null, { modePath: '' }), // navigate to the worklist
   },
   {
-    path: `${publicUrl}localbasic`,
+    path: `/localbasic`,
     children: Local.bind(null, { modePath: 'viewer/dicomlocal' }),
   },
   {

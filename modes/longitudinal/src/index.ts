@@ -224,14 +224,17 @@ function modeFactory({ modeConfiguration }) {
           'MeasurementTools',
           'StackScroll',
           'Layout',
+          'Crosshairs',
+          'TrackballRotate',
+          'gestioneHP',
           'invert',
           'polygon',
           'Probe',
           'Cine',
           'Capture',
           'hideInfoDicom',
-          // 'ReferenceLines',  //Controllare linee riferimento per versione portable, eventuale modifica al modulo cornerstone
-          'Reset',
+          'ReferenceLines',
+          'MoreTools',
         ]);
       }
 

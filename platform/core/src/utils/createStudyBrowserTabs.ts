@@ -84,7 +84,16 @@ export function createStudyBrowserTabs(
 
     return dateB - dateA;
   };
-  const tabs = [
+
+  const tabsSoloStudioAttuale = [
+    {
+      name: 'primary',
+      label: 'Studio attuale',
+      studies: primaryStudies.sort((studyA, studyB) => _byDate(studyA.date, studyB.date)),
+    }
+  ];
+
+  const tabsConStorico = [
     {
       name: 'primary',
       label: 'Studio attuale',
@@ -98,7 +107,7 @@ export function createStudyBrowserTabs(
   ];
 
   //Tabs con storico remoto
-  const tabsStoricoRemoto = [
+  const tabsConStoricoEStoricoRemoto = [
     {
       name: 'primary',
       label: 'Studio attuale',
@@ -126,9 +135,16 @@ export function createStudyBrowserTabs(
     },
   ];
 
-  if (window.storicoRemoto) {
-    return tabsStoricoRemoto;
+  if (window.portableVersion) {
+    document.body.classList.add('portableVersion')
+  }
+
+  if (window.soloStudioAttuale) {
+    document.body.classList.add('soloStudioAttuale')
+    return tabsSoloStudioAttuale;
+  } else if (window.storicoRemoto) {
+    return tabsConStoricoEStoricoRemoto;
   } else {
-    return tabs;
+    return tabsConStorico
   }
 }

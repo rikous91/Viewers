@@ -19,10 +19,23 @@ window.nolexToken = new URLSearchParams(new URL(window.location.href).search).ge
 let origin = window.location.origin;
 
 window.isSuite = true;
+window.soloStudioAttuale = false
 window.storicoRemoto = false;
-window.portableVersion = false;
+window.portableVersion = true;
 window.gestioneMultiMonitor = true;
 window.mostraErroriFrontend = false //Qualcosa è andato storto errore
+window.mostraPulsantiDoRedo = false
+
+
+if (!window.isSuite) {
+  window.storicoRemoto = false;
+}
+if (window.portableVersion) {
+
+  window.gestioneMultiMonitor = false;
+  // window.isSuite = false;
+  window.soloStudioAttuale = true
+}
 
 let qidoRoot = `${origin}/viewer/qido`;
 let wadoRoot = `${origin}/viewer/wado`;
@@ -60,7 +73,7 @@ window.config = {
   name: 'config/default.js',
   routerBasename: '/',
   // routerBasename: '/viewer',
-  // routerBasename: `${window.portableVersion ? '/' : '/nolexviewer'}`,
+  // routerBasename: `${window.portableVersion ? '/nolexviewer' : '/'}`,
   // whiteLabeling: {},
   extensions: [],
   modes: [],
@@ -373,7 +386,7 @@ window.config = {
     createLogoComponentFn: function (React) {
       return React.createElement('img', {
         // src: '../assets/logo_nolex.png',
-        src: `${isMobile() ? './assets/logo_nolex_mobile.png' : './assets/logo_nolex.png'}`, //Produzione - build
+        src: `${isMobile() ? './assets/logo_nolex_mobile.png' : window.portableVersion ? '../assets/logo_nolex.png' : './assets/logo_nolex.png'}`, //Produzione - build
         className: 'logo',
       });
     },

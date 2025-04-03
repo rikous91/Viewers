@@ -100,7 +100,9 @@
 }
 
 /*CUSTOM*/
-
+.hide {
+  display: none !important;
+}
 .logo {
   max-width: 200px;
 }
@@ -142,6 +144,20 @@
 [data-cy='panelSegmentation-btn'] .bg-customblue-40,
 [data-cy='trackedMeasurements-btn'] .bg-customblue-40 {
   background-color: #8a1818 !important;
+}
+
+.portableVersion {
+  #viewerLayoutResizableRightPanel,
+  .preferiti-btn,
+  .nolex-bar .flex-shrink-0 {
+    display: none !important;
+  }
+}
+
+.soloStudioAttuale {
+  .tab-studio-nolex {
+    display: none;
+  }
 }
 
 #SplitButton {
@@ -1059,10 +1075,14 @@ input[type='range']::-webkit-slider-thumb {
     height: calc(-105px + 100vh) !important;
     top: 1px;
   } */
-
+  .toolbar-child-flex {
+    .relative.flex.justify-center {
+      padding-left: 78%;
+    }
+  }
   .logo {
     max-width: 10vw !important;
-    left: 75px;
+    left: 80px;
     position: relative;
   }
   .tab-studio-nolex {
@@ -1213,7 +1233,7 @@ input[type='range']::-webkit-slider-thumb {
   .parent-Cine,
   .parent-Probe {
     visibility: hidden;
-    margin-right: -60px;
+    margin-right: -43px;
   }
   [data-cy='TransformTools-split-button-secondary'],
   [data-cy='ZoomTools-split-button-secondary'],
