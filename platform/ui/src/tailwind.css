@@ -149,7 +149,8 @@
 .portableVersion {
   #viewerLayoutResizableRightPanel,
   .preferiti-btn,
-  .nolex-bar .flex-shrink-0 {
+  .nolex-bar .flex-shrink-0,
+  .parent-gestioneHP {
     display: none !important;
   }
 }
@@ -172,8 +173,25 @@
   }
 }
 
+[role='slider'].bg-primary {
+  background-color: #b71c1c;
+}
+
 #SplitButton .hover\:\!bg-primary-dark:hover {
   background-color: transparent !important;
+}
+
+.dicom-tag-browser-content.bg-muted {
+  background-color: hsl(0deg 33.26% 8.97%);
+  .focus\:ring-ring:focus {
+    --tw-ring-color: #f44336;
+  }
+  .bg-primary {
+    background-color: hsl(4.11deg 29.18% 40.34%);
+  }
+  .bg-primary\/30 {
+    background-color: hsl(0deg 98% 60% / 30%);
+  }
 }
 
 .text-primary-active {

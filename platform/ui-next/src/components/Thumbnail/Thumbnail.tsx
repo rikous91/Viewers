@@ -357,7 +357,7 @@ const Thumbnail = ({
           : 'study-browser-thumbnail'
       }
       data-series={seriesNumber}
-      onClick={onClick}
+      onClick={onDoubleClick}
       onDoubleClick={onDoubleClick}
       onTouchEnd={handleTouchEnd}
       role="button"

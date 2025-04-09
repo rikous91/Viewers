@@ -11,7 +11,7 @@ import NotFound from './NotFound';
 import buildModeRoutes from './buildModeRoutes';
 import PrivateRoute from './PrivateRoute';
 import PropTypes from 'prop-types';
-import publicUrl from '../utils/publicUrl';
+import { routerBase, routerBasename } from '../utils/publicUrl';
 
 const NotFoundServer = ({
   message = 'Unable to query for studies at this time. Check your data source configuration or network connection',
@@ -81,7 +81,6 @@ const createRoutes = ({
   servicesManager,
   commandsManager,
   hotkeysManager,
-  routerBasename,
   showStudyList,
 }: withAppTypes) => {
   const routes =
@@ -96,8 +95,15 @@ const createRoutes = ({
 
   const { customizationService } = servicesManager.services;
 
+  const path =
+    routerBasename.length > 1 && routerBasename.endsWith('/')
+      ? routerBasename.substring(0, routerBasename.length - 1)
+      : routerBasename;
+
+  console.log('Registering worklist route', routerBasename, path);
+
   const WorkListRoute = {
-    path: publicUrl,
+    path: '/',
     children: DataSourceWrapper,
     private: true,
     props: { children: WorkList, servicesManager, extensionManager },
@@ -108,7 +114,6 @@ const createRoutes = ({
   const allRoutes = [
     ...routes,
     ...(showStudyList ? [WorkListRoute] : []),
-    ...(publicUrl !== '/' && showStudyList ? [{ ...WorkListRoute, path: publicUrl }] : []),
     ...(customRoutes?.routes || []),
     ...bakedInRoutes,
     customRoutes?.notFoundRoute || notFoundRoute,

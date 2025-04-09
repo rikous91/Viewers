@@ -46,7 +46,7 @@ export function getToolbarModule({ servicesManager }: withAppTypes) {
         if (!toolNames) {
           return {
             disabled: false,
-            // isActive: true,
+            // isActive: false,
           };
         }
 

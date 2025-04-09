@@ -71,7 +71,8 @@ const isMobile = () => {
 
 window.config = {
   name: 'config/default.js',
-  routerBasename: '/',
+  routerBasename: null,
+  // routerBasename: '/',
   // routerBasename: '/viewer',
   // routerBasename: `${window.portableVersion ? '/nolexviewer' : '/'}`,
   // whiteLabeling: {},
