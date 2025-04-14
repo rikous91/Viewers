@@ -45,9 +45,9 @@ function HeaderPatientInfo({ servicesManager, appConfig }: withAppTypes) {
       onClick={handleOnClick}
     >
       {isMixedPatients ? (
-        <Icons.MultiplePatients className="text-primary-active" />
+        <Icons.MultiplePatients className="text-primary" />
       ) : (
-        <Icons.Patient className="text-primary-active" />
+        <Icons.Patient className="text-primary" />
       )}
       <div className="flex flex-col justify-center">
         {expanded ? (
@@ -67,7 +67,7 @@ function HeaderPatientInfo({ servicesManager, appConfig }: withAppTypes) {
           </div>
         )}
       </div>
-      <Icons.ArrowLeft className={`text-primary-active ${expanded ? 'rotate-180' : ''}`} />
+      <Icons.ArrowLeft className={`text-primary ${expanded ? 'rotate-180' : ''}`} />
     </div>
   );
 }

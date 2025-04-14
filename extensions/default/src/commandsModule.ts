@@ -625,7 +625,7 @@ const commandsModule = ({
         });
       }
 
-      viewportGridService.setDisplaySetsForViewports(updatedViewports);
+      commandsManager.run('setDisplaySetsForViewports', { viewportsToUpdate: updatedViewports });
 
       setTimeout(() => actions.scrollActiveThumbnailIntoView(), 0);
     },

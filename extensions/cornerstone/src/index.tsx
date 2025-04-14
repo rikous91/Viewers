@@ -82,6 +82,7 @@ const stackRetrieveOptions = {
   },
 };
 
+const unsubscriptions = [];
 /**
  *
  */
@@ -145,6 +146,8 @@ const cornerstoneExtension: Types.Extensions.Extension = {
     useToggleOneUpViewportGridStore.getState().clearToggleOneUpViewportGridStore();
     useSegmentationPresentationStore.getState().clearSegmentationPresentationStore();
     segmentationService.removeAllSegmentations();
+
+    unsubscriptions.forEach(unsubscribe => unsubscribe());
   },
 
   /**
@@ -152,7 +155,7 @@ const cornerstoneExtension: Types.Extensions.Extension = {
    *
    * @param configuration.csToolsConfig - Passed directly to `initCornerstoneTools`
    */
-  preRegistration: function (props: Types.Extensions.ExtensionParams): Promise<void> {
+  preRegistration: async function (props: Types.Extensions.ExtensionParams): Promise<void> {
     const { servicesManager, serviceProvidersManager } = props;
     servicesManager.registerService(CornerstoneViewportService.REGISTRATION);
     servicesManager.registerService(ToolGroupService.REGISTRATION);
@@ -170,7 +173,13 @@ const cornerstoneExtension: Types.Extensions.Extension = {
     const { syncGroupService } = servicesManager.services;
     syncGroupService.registerCustomSynchronizer('frameview', createFrameViewSynchronizer);
 
-    return init.call(this, props);
+    const initResult = await init.call(this, props);
+
+    unsubscriptions.push(...initResult.unsubscriptions);
+
+    return {
+      ...initResult,
+    };
   },
   getToolbarModule,
   getHangingProtocolModule,

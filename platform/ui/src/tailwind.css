@@ -29,6 +29,7 @@
   }
   :root {
     --highlight: 191 74% 63%;
+    --neutral: 213 22% 59%;
     --background: 236 62% 5%;
     --foreground: 0 0% 98%;
     --card: 236 62% 5%;
@@ -46,7 +47,7 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
-    --input: 236 45% 21%;
+    --input: 236 52% 30%;
     --ring: 214 98% 60%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -89,7 +90,7 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
-    --input: 236 45% 21%;
+    --input: 236 52% 30%;
     --ring: 214 98% 60%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -128,6 +129,14 @@
   filter: invert(1);
 }
 
+.orientation-marker-value {
+  color: #e57373;
+}
+
+.overlay-info-dicom {
+  color: #fff;
+}
+
 .hide-info-dicom {
   .overlay-info-dicom {
     display: none;
@@ -159,6 +168,14 @@
   .tab-studio-nolex {
     display: none;
   }
+}
+
+.text-primary {
+  color: #fff;
+}
+
+.tool-activated {
+  color: #b31b1b !important;
 }
 
 #SplitButton {
@@ -997,6 +1014,12 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
+[data-cy='side-panel-header-left'] {
+  svg {
+    color: #fff;
+  }
+}
+
 [data-cy='trackedMeasurements-panel'] {
   .text-primary {
     color: #ffcfcf;
@@ -1115,7 +1138,6 @@ input[type='range']::-webkit-slider-thumb {
     flex: 0 !important;
     min-width: fit-content !important;
   }
-
   .nolex-new-panel {
     height: 100vh !important;
     .ohif-scrollbar {
