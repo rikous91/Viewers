@@ -3,6 +3,65 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.11.0-beta.4](https://github.com/OHIF/Viewers/compare/v3.11.0-beta.3...v3.11.0-beta.4) (2025-04-11)
+
+**Note:** Version bump only for package ohif-docs
+
+
+
+
+
+# [3.11.0-beta.3](https://github.com/OHIF/Viewers/compare/v3.11.0-beta.2...v3.11.0-beta.3) (2025-04-11)
+
+**Note:** Version bump only for package ohif-docs
+
+
+
+
+
+# [3.11.0-beta.2](https://github.com/OHIF/Viewers/compare/v3.11.0-beta.1...v3.11.0-beta.2) (2025-04-11)
+
+**Note:** Version bump only for package ohif-docs
+
+
+
+
+
+# [3.11.0-beta.1](https://github.com/OHIF/Viewers/compare/v3.11.0-beta.0...v3.11.0-beta.1) (2025-04-10)
+
+**Note:** Version bump only for package ohif-docs
+
+
+
+
+
+# [3.11.0-beta.0](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.159...v3.11.0-beta.0) (2025-04-10)
+
+**Note:** Version bump only for package ohif-docs
+
+
+
+
+
+# [3.10.0-beta.159](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.158...v3.10.0-beta.159) (2025-04-09)
+
+
+### Bug Fixes
+
+* **ui:** Enhance UI Components and Update CornerstoneJS Dependencies and resizable panels ([#4938](https://github.com/OHIF/Viewers/issues/4938)) ([43bc142](https://github.com/OHIF/Viewers/commit/43bc142439aab1a6514ba1711f86d64ac8bb1acb))
+
+
+
+
+
+# [3.10.0-beta.158](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.157...v3.10.0-beta.158) (2025-04-09)
+
+**Note:** Version bump only for package ohif-docs
+
+
+
+
+
 # [3.10.0-beta.157](https://github.com/OHIF/Viewers/compare/v3.10.0-beta.156...v3.10.0-beta.157) (2025-04-09)
 
 **Note:** Version bump only for package ohif-docs

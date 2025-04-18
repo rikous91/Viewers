@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { StudyItem } from '../StudyItem';
 import { StudyBrowserSort } from '../StudyBrowserSort';
 import { StudyBrowserViewOptions } from '../StudyBrowserViewOptions';
+import { ScrollArea } from '../ScrollArea';
 
 const noop = () => { };
 
@@ -67,7 +68,7 @@ const StudyBrowser = ({
   };
 
   return (
-    <>
+    <ScrollArea>
       <div
         className="ohif-scrollbar invisible-scrollbar bg-bkg-low flex flex-1 flex-col gap-[4px] overflow-auto"
         data-cy={'studyBrowser-panel'}
@@ -101,7 +102,7 @@ const StudyBrowser = ({
           {getTabContent()}
         </div>
       </div>
-    </>
+    </ScrollArea>
   );
 };
 

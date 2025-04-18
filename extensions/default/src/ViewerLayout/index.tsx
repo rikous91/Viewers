@@ -53,7 +53,9 @@ function ViewerLayout({
     leftPanelClosed,
     setLeftPanelClosed,
     rightPanelClosed,
-    setRightPanelClosed
+    setRightPanelClosed,
+    hasLeftPanels,
+    hasRightPanels
   );
 
   const handleMouseEnter = () => {
