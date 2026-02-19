@@ -758,6 +758,26 @@ function commandsModule({
 
       toolIsEnabled ? toolGroup.setToolDisabled(toolName) : toolGroup.setToolEnabled(toolName);
     },
+    togglePassiveDisabledToolbar({ value, itemId, toolGroupId }) {
+      const toolName = itemId || value;
+      toolGroupId = toolGroupId ?? _getActiveViewportToolGroupId();
+
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage(toolName);
+      }
+
+      const toolGroup = toolGroupService.getToolGroup(toolGroupId);
+      if (!toolGroup || !toolGroup.hasTool(toolName)) {
+        return;
+      }
+
+      const toolMode = toolGroup.getToolOptions(toolName).mode;
+      const isDisabled = toolMode === Enums.ToolModes.Disabled;
+
+      isDisabled
+        ? toolGroup.setToolPassive(toolName, { removeAllBindings: true })
+        : toolGroup.setToolDisabled(toolName);
+    },
     toggleActiveDisabledToolbar({ value, itemId, toolGroupId }) {
       const toolName = itemId || value;
       toolGroupId = toolGroupId ?? _getActiveViewportToolGroupId();
@@ -1180,6 +1200,28 @@ function commandsModule({
 
       viewport.render();
     },
+    zoomOneToOne: () => {
+      //Passo il comando anche all'eventuale iframe storico
+      if (document.getElementById('iframe-storico')) {
+        document.getElementById('iframe-storico').contentWindow.postMessage('zoomOneToOne');
+      }
+
+      const enabledElement = _getActiveViewportEnabledElement();
+
+      if (!enabledElement) {
+        return;
+      }
+
+      const { viewport } = enabledElement;
+
+      if (viewport.setViewPresentation) {
+        viewport.setViewPresentation({ zoom: 1 });
+      } else if (viewport.setCamera) {
+        viewport.resetCamera?.();
+      }
+
+      viewport.render();
+    },
     Reset3DRotate: () => { },
     scaleViewport: ({ direction }) => {
       const enabledElement = _getActiveViewportEnabledElement();
@@ -1321,15 +1363,28 @@ function commandsModule({
      * @param options.syncId - The synchronization group ID
      * @param options.type - The type of synchronization to perform
      */
-    toggleSynchronizer: ({ type, viewports, syncId }) => {
-      const synchronizer = syncGroupService.getSynchronizer(syncId);
+    toggleSynchronizer: ({ type, viewports, syncId, toggledState }) => {
+      const fn = toggleSyncFunctions[type];
 
-      if (synchronizer) {
-        synchronizer.isDisabled() ? synchronizer.setEnabled(true) : synchronizer.setEnabled(false);
+      if (toggledState !== undefined) {
+        if (fn) {
+          fn({
+            servicesManager,
+            viewports,
+            syncId,
+            toggledState,
+          });
+        }
         return;
       }
 
-      const fn = toggleSyncFunctions[type];
+      const synchronizer = syncGroupService.getSynchronizer(syncId);
+
+      if (synchronizer) {
+        const isEnabled = synchronizer?._enabled !== false;
+        synchronizer.setEnabled(!isEnabled);
+        return;
+      }
 
       if (fn) {
         fn({
@@ -1995,6 +2050,9 @@ function commandsModule({
     resetViewport: {
       commandFn: actions.resetViewport,
     },
+    zoomOneToOne: {
+      commandFn: actions.zoomOneToOne,
+    },
     Reset3DRotate: {
       commandFn: actions.Reset3DRotate,
     },
@@ -2076,6 +2134,9 @@ function commandsModule({
     },
     toggleEnabledDisabledToolbar: {
       commandFn: actions.toggleEnabledDisabledToolbar,
+    },
+    togglePassiveDisabledToolbar: {
+      commandFn: actions.togglePassiveDisabledToolbar,
     },
     toggleActiveDisabledToolbar: {
       commandFn: actions.toggleActiveDisabledToolbar,

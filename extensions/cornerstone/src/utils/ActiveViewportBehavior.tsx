@@ -36,10 +36,15 @@ const ActiveViewportBehavior = memo(
       const isDynamicVolume = displaySets.some(displaySet => displaySet?.isDynamicVolume);
 
       const sourceModalities = customizationService.getCustomization('autoCineModalities');
+      const autoCineDynamicVolume =
+        customizationService.getCustomization('autoCineDynamicVolume') === true;
 
       const requiresCine = modalities.some(modality => sourceModalities.includes(modality));
 
-      if ((requiresCine || isDynamicVolume) && !cineService.getState().isCineEnabled) {
+      if (
+        (requiresCine || (isDynamicVolume && autoCineDynamicVolume)) &&
+        !cineService.getState().isCineEnabled
+      ) {
         cineService.setIsCineEnabled(true);
       }
     }, [

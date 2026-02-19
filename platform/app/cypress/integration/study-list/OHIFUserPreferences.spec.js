@@ -1,5 +1,5 @@
 /*describe('OHIF User Preferences', () => {
-  context('Study List Page', function() {
+  context('Lista studi Page', function() {
     before(() => {
       cy.visit('/');
     });
@@ -153,7 +153,7 @@
         .should('be.greaterThan', 1);
     });
 
-    it('checks if Preferences set in Study List Page will be consistent on Viewer Page', function() {
+    it('checks if Preferences set in Lista studi Page will be consistent on Viewer Page', function() {
       // Go go hotkeys tab
       cy.selectPreferencesTab('@userPreferencesHotkeysTab');
 

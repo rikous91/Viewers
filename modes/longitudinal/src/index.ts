@@ -82,7 +82,8 @@ function modeFactory({ modeConfiguration }) {
      * Lifecycle hooks
      */
     onModeEnter: function ({ servicesManager, extensionManager, commandsManager }: withAppTypes) {
-      const { measurementService, toolbarService, toolGroupService } = servicesManager.services;
+      const { measurementService, toolbarService, toolGroupService, viewportGridService } =
+        servicesManager.services;
 
       measurementService.clearMeasurements();
 
@@ -92,7 +93,6 @@ function modeFactory({ modeConfiguration }) {
       toolbarService.addButtons(toolbarButtons);
       toolbarService.createButtonSection('moreToolsSection', [
         'Reset',
-        'ImageSliceSync',
         'ImageOverlayViewer',
         'CalibrationLine',
         'TagBrowser',
@@ -127,18 +127,20 @@ function modeFactory({ modeConfiguration }) {
         //Storico
         if (document.body.classList.contains('storico-same-tab')) {
           toolbarService.createButtonSection('primary', [
-            'WindowLevel',
+            'MeasurementTools',
             'Pan',
+            'ReferenceCursors',
+            'ImageSliceSync',
+            //'ZoomOneToOne',
+            'WindowLevel',
             'Zoom',
             'TransformTools',
             'Magnify',
-            'MeasurementTools',
             'Layout',
             'LayoutMPR',
             'LayoutMPRStorico',
             'Crosshairs',
             'TrackballRotate',
-            'gestioneHP',
             'invert',
             'polygon',
             'Probe',
@@ -146,6 +148,7 @@ function modeFactory({ modeConfiguration }) {
             'Capture',
             'hideInfoDicom',
             'ReferenceLines',
+            'ScaleOverlay',
             'MoreTools',
             'Length',
             'Bidirectional',
@@ -160,36 +163,44 @@ function modeFactory({ modeConfiguration }) {
             'rotate-left',
             'flipHorizontal',
             'flipVertical',
+            'gestioneHP',
           ]);
         }
         //Mobile
         else if (window.matchMedia("(max-width: 768px)").matches) {
           toolbarService.createButtonSection('primary', [
             'Layout',
+            'MeasurementTools',
             'Pan',
+            'StackScroll',
+            'ReferenceCursors',
+            'ImageSliceSync',
+            //'ZoomOneToOne',
             'WindowLevel',
             'Magnify',
-            'StackScroll',
             'invert',
             'polygon',
             'Probe',
             'hideInfoDicom',
             'ReferenceLines',
+            'ScaleOverlay',
             'TransformTools',
-            'MeasurementTools',
             'MoreTools',
           ]);
         }
         //Versione standard
         else {
           toolbarService.createButtonSection('primary', [
-            'WindowLevel',
+            'MeasurementTools',
             'Pan',
+            'StackScroll',
+            'ReferenceCursors',
+            'ImageSliceSync',
+            'WindowLevel',
+            //'ZoomOneToOne',
             'Zoom',
             'TransformTools',
             'Magnify',
-            'MeasurementTools',
-            'StackScroll',
             // 'Zoom',
             'Layout',
             'LayoutMPR',
@@ -197,7 +208,6 @@ function modeFactory({ modeConfiguration }) {
             'Crosshairs',
             'TrackballRotate',
             // 'Reset3DRotate',
-            'gestioneHP',
             'invert',
             'polygon',
             'Probe',
@@ -205,7 +215,9 @@ function modeFactory({ modeConfiguration }) {
             'Capture',
             'hideInfoDicom',
             'ReferenceLines',
+            'ScaleOverlay',
             'MoreTools',
+            'gestioneHP',
             // 'setCamera',
             // 'storeState',
             // 'restoreState',
@@ -216,13 +228,15 @@ function modeFactory({ modeConfiguration }) {
       } else {
         //Versione portable
         toolbarService.createButtonSection('primary', [
-          'WindowLevel',
+          'MeasurementTools',
           'Pan',
+          'StackScroll',
+          'ImageSliceSync',
+          'WindowLevel',
+          //'ZoomOneToOne',
           'Zoom',
           'TransformTools',
           'Magnify',
-          'MeasurementTools',
-          'StackScroll',
           'Layout',
           'invert',
           'polygon',
@@ -233,6 +247,37 @@ function modeFactory({ modeConfiguration }) {
           // 'ReferenceLines',  //Controllare linee riferimento per versione portable, eventuale modifica al modulo cornerstone
           'Reset',
         ]);
+      }
+
+      const autoImageSliceSync =
+        modeConfiguration?.autoImageSliceSync ?? window.config?.autoImageSliceSync;
+
+      if (autoImageSliceSync) {
+        const enableImageSliceSync = () => {
+          commandsManager.runCommand('toggleSynchronizer', {
+            type: 'imageSlice',
+            syncId: 'IMAGE_SLICE_SYNC',
+            toggledState: true,
+          });
+
+          const viewportId = viewportGridService.getActiveViewportId();
+          if (viewportId) {
+            toolbarService.refreshToolbarState({ viewportId });
+          }
+        };
+
+        enableImageSliceSync();
+
+        _activatePanelTriggersSubscriptions.push(
+          viewportGridService.subscribe(
+            viewportGridService.EVENTS.VIEWPORTS_READY,
+            enableImageSliceSync
+          ),
+          viewportGridService.subscribe(
+            viewportGridService.EVENTS.GRID_STATE_CHANGED,
+            enableImageSliceSync
+          )
+        );
       }
 
       // // ActivatePanel event trigger for when a segmentation or measurement is added.

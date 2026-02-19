@@ -118,7 +118,7 @@ window.config = {
             inheritsFrom: 'ohif.overlayItem',
             attribute: 'PatientName',
             label: 'PN:',
-            title: 'Patient Name',
+            title: 'Nome paziente',
             color: 'yellow',
             condition: ({ instance }) =>
               instance &&

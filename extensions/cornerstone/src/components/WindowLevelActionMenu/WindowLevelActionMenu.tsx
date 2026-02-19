@@ -14,8 +14,7 @@ import { WindowLevel } from './WindowLevel';
 import { VolumeRenderingPresets } from './VolumeRenderingPresets';
 import { VolumeRenderingOptions } from './VolumeRenderingOptions';
 import { ViewportPreset } from '../../types/ViewportPresets';
-import { VolumeViewport, VolumeViewport3D } from '@cornerstonejs/core';
-import { utilities } from '@cornerstonejs/core';
+import { Enums, metaData, VolumeViewport, VolumeViewport3D, utilities } from '@cornerstonejs/core';
 import { CrosshairsTool } from '@cornerstonejs/tools';
 
 export const nonWLModalities = ['SR', 'SEG', 'SM', 'RTSTRUCT', 'RTPLAN', 'RTDOSE'];
@@ -67,6 +66,7 @@ export function WindowLevelActionMenu({
   const [is3DVolume, setIs3DVolume] = useState(false);
   const [rangeValue, setRangeValue] = useState(0);
   const [selectedRenderingMethod, setSelectedRenderingMethod] = useState('mip');
+  const [isPreferito, setIsPreferito] = useState(false);
 
   let _selectedRenderingMethod;
 
@@ -177,6 +177,83 @@ export function WindowLevelActionMenu({
     activeViewportId,
     viewportGrid,
   ]);
+
+  useEffect(() => {
+    const viewportInfo = cornerstoneViewportService.getViewportInfo(viewportId);
+    const element = viewportInfo?.getElement?.();
+    if (!element) {
+      return;
+    }
+
+    const seriesInstanceUID = displaySets?.[0]?.instance?.SeriesInstanceUID;
+    if (!seriesInstanceUID) {
+      setIsPreferito(false);
+    }
+
+    const getCurrentSopUID = () => {
+      const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+      if (viewport && typeof viewport.getImageIds === 'function') {
+        try {
+          const imageIds = viewport.getImageIds() || [];
+          const index = viewport.getCurrentImageIdIndex?.() ?? 0;
+          const imageId = imageIds[index];
+          if (imageId) {
+            const sop = metaData.get('sopCommonModule', imageId)?.sopInstanceUID;
+            if (sop) {
+              return sop;
+            }
+          }
+        } catch (err) {
+          // Volume viewport without actor yet: fall back to displaySets instances
+        }
+      }
+
+      const instances = displaySets?.[0]?.instances || [];
+      let currentIndex = 0;
+      try {
+        currentIndex = viewport?.getCurrentImageIdIndex?.() ?? 0;
+      } catch (err) {
+        currentIndex = 0;
+      }
+      const safeIndex = Math.min(Math.max(currentIndex, 0), Math.max(instances.length - 1, 0));
+      return instances[safeIndex]?.SOPInstanceUID || displaySets?.[0]?.instance?.SOPInstanceUID;
+    };
+
+    const updatePreferitoState = () => {
+      const sopUID = getCurrentSopUID();
+      const isCurrentPreferito = !!(
+        seriesInstanceUID &&
+        sopUID &&
+        window.preferiti?.some(
+          preferito =>
+            preferito.SeriesInstanceUID === seriesInstanceUID &&
+            preferito.SOPInstanceUID === sopUID
+        )
+      );
+      setIsPreferito(isCurrentPreferito);
+    };
+
+    const viewportType =
+      viewportInfo.getViewportType?.() ||
+      viewportInfo.getViewportData?.()?.viewportType ||
+      Enums.ViewportType.STACK;
+
+    const eventId =
+      (viewportType === Enums.ViewportType.STACK && Enums.Events.STACK_VIEWPORT_SCROLL) ||
+      (viewportType === Enums.ViewportType.ORTHOGRAPHIC && Enums.Events.VOLUME_NEW_IMAGE) ||
+      Enums.Events.IMAGE_RENDERED;
+
+    const onPreferitiUpdated = () => updatePreferitoState();
+
+    element.addEventListener(eventId, updatePreferitoState);
+    window.addEventListener('nolex-preferiti-updated', onPreferitiUpdated);
+    updatePreferitoState();
+
+    return () => {
+      element.removeEventListener(eventId, updatePreferitoState);
+      window.removeEventListener('nolex-preferiti-updated', onPreferitiUpdated);
+    };
+  }, [cornerstoneViewportService, viewportId, displaySets]);
 
   return (
     <>
@@ -310,7 +387,7 @@ export function WindowLevelActionMenu({
       {/* Preferiti */}
       {!isMPR && (
         <AllInOneMenu.IconMenu
-          icon="preferiti"
+          icon={isPreferito ? 'preferitiActive' : 'preferiti'}
           verticalDirection={verticalDirection}
           horizontalDirection={horizontalDirection}
           iconClassName={classNames(

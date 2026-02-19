@@ -11,6 +11,7 @@ import {
   cache,
   Enums as csEnums,
   BaseVolumeViewport,
+  eventTarget,
 } from '@cornerstonejs/core';
 
 import { utilities as csToolsUtils, Enums as csToolsEnums } from '@cornerstonejs/tools';
@@ -60,6 +61,12 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
   viewportGridResizeObserver: ResizeObserver | null;
   viewportsDisplaySets: Map<string, string[]> = new Map();
   beforeResizePositionPresentations: Map<string, PositionPresentation> = new Map();
+  volumeIdToViewportIds: Map<string, Set<string>> = new Map();
+  tooltipTimeoutByElement: Map<HTMLElement, ReturnType<typeof setTimeout>> = new Map();
+  viewportIdToPendingVolumeIds: Map<string, Set<string>> = new Map();
+  volumeIdleTimeoutByViewportId: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  lastVolumeInputArrayByViewportId: Map<string, any[]> = new Map();
+  lastPresentationsByViewportId: Map<string, Presentations> = new Map();
 
   // Some configs
   enableResizeDetector: true;
@@ -78,6 +85,14 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     this.renderingEngine = null;
     this.viewportGridResizeObserver = null;
     this.servicesManager = servicesManager;
+    eventTarget.addEventListener(
+      csEnums.Events.IMAGE_VOLUME_LOADING_COMPLETED,
+      this._handleVolumeLoadingCompleted
+    );
+    eventTarget.addEventListener(
+      csEnums.Events.IMAGE_VOLUME_MODIFIED,
+      this._handleVolumeLoadingProgress
+    );
   }
 
   hangingProtocolService: unknown;
@@ -677,24 +692,41 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
       if (!window.viewportsAlreadyHPApplied) {
         window.viewportsAlreadyHPApplied = [];
       }
-      //Sperimentale - Applico le camera settings se presenti nell'hanging protocol
-      if (
-        viewport.id &&
-        window.cameraSettingsFromHPNolex &&
-        window.cameraSettingsFromHPNolex[viewport.id] &&
-        !window.viewportsAlreadyHPApplied.includes(viewport.id)
-      ) {
-        window.viewportsAlreadyHPApplied.push(viewport.id);
-        const cameraSettings = window.cameraSettingsFromHPNolex[viewport.id];
-        console.log(viewport.id);
-        console.log(window.cameraSettingsFromHPNolex[viewport.id]);
-        viewport.setCamera({
-          parallelScale: cameraSettings.parallelscale,
-          focalPoint: cameraSettings.focalpoint,
-          position: cameraSettings.position,
-        });
-        viewport.render();
-      }
+        //Sperimentale - Applico le camera settings se presenti nell'hanging protocol
+        if (
+          viewport.id &&
+          window.cameraSettingsFromHPNolex &&
+          window.cameraSettingsFromHPNolex[viewport.id] &&
+          !window.viewportsAlreadyHPApplied.includes(viewport.id)
+        ) {
+          const applyCameraSettings = () => {
+            if (window.viewportsAlreadyHPApplied.includes(viewport.id)) {
+              return;
+            }
+            const cameraSettings = window.cameraSettingsFromHPNolex[viewport.id];
+            if (cameraSettings?.viewPresentation) {
+              viewport.setViewPresentation(cameraSettings.viewPresentation);
+            } else {
+              viewport.setCamera({
+                parallelScale: cameraSettings.parallelscale,
+                focalPoint: cameraSettings.focalpoint,
+                position: cameraSettings.position,
+              });
+            }
+            viewport.render();
+            window.viewportsAlreadyHPApplied.push(viewport.id);
+          };
+
+          if (viewport.getImageData && viewport.getImageData()) {
+            applyCameraSettings();
+          } else {
+            const onImageRendered = () => {
+              element.removeEventListener(csEnums.Events.IMAGE_RENDERED, onImageRendered);
+              applyCameraSettings();
+            };
+            element.addEventListener(csEnums.Events.IMAGE_RENDERED, onImageRendered);
+          }
+        }
       setTimeout(() => {
         element.classList.remove('viewport-loading');
       }, 0);
@@ -805,18 +837,58 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
         blendMode: displaySetOptions.blendMode,
         slabThickness: this._getSlabThickness(displaySetOptions, volumeId),
       });
+      if (volumeId) {
+        let viewportIds = this.volumeIdToViewportIds.get(volumeId);
+        if (!viewportIds) {
+          viewportIds = new Set();
+          this.volumeIdToViewportIds.set(volumeId, viewportIds);
+        }
+        viewportIds.add(viewport.id);
+      }
     }
 
     this.viewportsDisplaySets.set(viewport.id, displaySetInstanceUIDs);
+    this.lastVolumeInputArrayByViewportId.set(viewport.id, volumeInputArray);
+    this.lastPresentationsByViewportId.set(viewport.id, presentations);
 
     const volumesNotLoaded = volumeToLoad.filter(volume => !volume.loadStatus?.loaded);
+    const pendingVolumeIds = new Set(
+      volumeToLoad
+        .filter(volume => volume.loadStatus?.loading || !volume.loadStatus?.loaded)
+        .map(volume => volume.volumeId)
+        .filter(Boolean)
+    );
+    if (pendingVolumeIds.size) {
+      this.viewportIdToPendingVolumeIds.set(viewport.id, pendingVolumeIds);
+      element.classList.add('viewport-loading');
+      if (!document.body.classList.contains('hp-mpr-active')) {
+        this.createTooltipLoadingDynamicVolume(element);
+      }
+      this._scheduleVolumeIdleClear(viewport.id, element);
+    } else {
+      this.viewportIdToPendingVolumeIds.delete(viewport.id);
+      const idleTimeout = this.volumeIdleTimeoutByViewportId.get(viewport.id);
+      if (idleTimeout) {
+        clearTimeout(idleTimeout);
+        this.volumeIdleTimeoutByViewportId.delete(viewport.id);
+      }
+      this.removeTooltipLoadingDynamicVolume(element);
+      element.classList.remove('viewport-loading');
+    }
     if (volumesNotLoaded.length) {
-      if (hangingProtocolService.getShouldPerformCustomImageLoad()) {
+      const hasDynamicVolume = volumeToLoad.some(
+        volume => volume?.isDynamicVolume?.() || volume?.isDynamicVolume
+      );
+      if (!hasDynamicVolume && hangingProtocolService.getShouldPerformCustomImageLoad()) {
         // delegate the volume loading to the hanging protocol service if it has a custom image load strategy
-        return hangingProtocolService.runImageLoadStrategy({
+        const customApplied = hangingProtocolService.runImageLoadStrategy({
           viewportId: viewport.id,
           volumeInputArray,
         });
+        if (customApplied) {
+          return customApplied;
+        }
+        console.warn('Custom image load strategy failed, fallback to default volume loading');
       }
 
       volumesNotLoaded.forEach(volume => {
@@ -842,18 +914,127 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
   public createTooltipLoadingDynamicVolume = (element) => {
     //Indico che la viewport per volume dinamico ha bisogno di caricamento
     try {
+      if (element.querySelector('.tooltip-loading-dynamic')) {
+        return;
+      }
       element.insertAdjacentHTML('afterbegin', `
         <div style="background: #952c2c;color: #fff;padding: 0 5px; font-size: 0.8rem; z-index: 9999; position:relative" class="tooltip-loading-dynamic">
         <p>Volume dinamico in caricamento...</p>
         </div>
         `)
-      setTimeout(() => {
-        if (element.querySelector('.tooltip-loading-dynamic')) {
-          element.querySelector('.tooltip-loading-dynamic').remove()
-        }
-      }, 6000);
+      const existingTimeout = this.tooltipTimeoutByElement.get(element);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+      const timeoutId = setTimeout(() => {
+        this.removeTooltipLoadingDynamicVolume(element);
+        element.classList.remove('viewport-loading');
+      }, 60000);
+      this.tooltipTimeoutByElement.set(element, timeoutId);
     } catch (err) {
       console.error('Errore creazione tooltip caricamento volume dinamico')
+    }
+  }
+
+  public removeTooltipLoadingDynamicVolume = (element) => {
+    if (!element) {
+      return;
+    }
+    const timeoutId = this.tooltipTimeoutByElement.get(element);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.tooltipTimeoutByElement.delete(element);
+    }
+    const tooltip = element.querySelector('.tooltip-loading-dynamic');
+    if (tooltip) {
+      tooltip.remove();
+    }
+  }
+
+  private _scheduleVolumeIdleClear(viewportId: string, element: HTMLElement) {
+    const existingTimeout = this.volumeIdleTimeoutByViewportId.get(viewportId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+    const timeoutId = setTimeout(() => {
+      this.volumeIdleTimeoutByViewportId.delete(viewportId);
+      this.viewportIdToPendingVolumeIds.delete(viewportId);
+      this.removeTooltipLoadingDynamicVolume(element);
+      element.classList.remove('viewport-loading');
+    }, 15000);
+    this.volumeIdleTimeoutByViewportId.set(viewportId, timeoutId);
+  }
+
+  private _handleVolumeLoadingProgress = (evt: any) => {
+    const volumeId = evt?.detail?.volumeId;
+    if (!volumeId) {
+      return;
+    }
+    const viewportIds = this.volumeIdToViewportIds.get(volumeId);
+    if (!viewportIds) {
+      return;
+    }
+    viewportIds.forEach(viewportId => {
+      const viewportInfo = this.getViewportInfo(viewportId);
+      const element = viewportInfo?.element;
+      if (!element) {
+        return;
+      }
+      element.classList.add('viewport-loading');
+      if (!document.body.classList.contains('hp-mpr-active')) {
+        this.createTooltipLoadingDynamicVolume(element);
+      }
+      this._scheduleVolumeIdleClear(viewportId, element);
+    });
+  }
+
+  private _handleVolumeLoadingCompleted = (evt: any) => {
+    const volumeId = evt?.detail?.volumeId;
+    if (!volumeId) {
+      return;
+    }
+    const viewportIds = this.volumeIdToViewportIds.get(volumeId);
+    if (!viewportIds) {
+      return;
+    }
+    viewportIds.forEach(viewportId => {
+      const pending = this.viewportIdToPendingVolumeIds.get(viewportId);
+      if (pending) {
+        pending.delete(volumeId);
+        if (!pending.size) {
+          this.viewportIdToPendingVolumeIds.delete(viewportId);
+        } else {
+          this.viewportIdToPendingVolumeIds.set(viewportId, pending);
+        }
+      }
+      const viewportInfo = this.getViewportInfo(viewportId);
+      const element = viewportInfo?.element;
+      const viewport = this.getCornerstoneViewport(viewportId);
+      if (element) {
+        const stillPending = this.viewportIdToPendingVolumeIds.get(viewportId);
+        if (!stillPending || !stillPending.size) {
+          const idleTimeout = this.volumeIdleTimeoutByViewportId.get(viewportId);
+          if (idleTimeout) {
+            clearTimeout(idleTimeout);
+            this.volumeIdleTimeoutByViewportId.delete(viewportId);
+          }
+          this.removeTooltipLoadingDynamicVolume(element);
+          element.classList.remove('viewport-loading');
+        }
+      }
+      if (viewport instanceof BaseVolumeViewport) {
+        const hasActors = viewport.getActors?.()?.length;
+        if (!hasActors) {
+          const volumeInputArray = this.lastVolumeInputArrayByViewportId.get(viewportId);
+          const presentations = this.lastPresentationsByViewportId.get(viewportId) || {};
+          if (volumeInputArray?.length) {
+            this.setVolumesForViewport(viewport, volumeInputArray, presentations);
+          }
+        }
+      }
+    });
+    if (!window.nolexAllReady) {
+      window.nolexAllReady = true;
     }
   }
 
@@ -911,6 +1092,9 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     });
 
     this.setPresentations(viewport.id, presentations, viewportInfo);
+    if (!window.nolexAllReady) {
+      window.nolexAllReady = true;
+    }
 
     const imageIndex = this._getInitialImageIndexForViewport(viewportInfo);
 
@@ -924,7 +1108,10 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     this._broadcastEvent(this.EVENTS.VIEWPORT_VOLUMES_CHANGED, {
       viewportInfo,
     });
-    element.classList.remove('viewport-loading');
+    const pending = this.viewportIdToPendingVolumeIds.get(viewport.id);
+    if (!pending || !pending.size) {
+      element.classList.remove('viewport-loading');
+    }
   }
 
   private _processExtraDisplaySetsForViewport(

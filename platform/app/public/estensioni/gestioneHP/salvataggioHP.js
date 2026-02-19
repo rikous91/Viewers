@@ -1,3 +1,4 @@
+import { metaData } from '@cornerstonejs/core';
 import { letturaPreferenzeAPI } from './caricamentoHP';
 
 let uiNotificationService;
@@ -289,13 +290,31 @@ let istanzeSpecifiche = [];
 const aetitle = window.nolexAETitle;
 const username = window.nolexUsername;
 const studyInstanceUIDs = window.nolexStudyInstanceUIDs;
-const studyDescription = window.nolexStudyDescription;
-const modality = window.nolexModality;
+let studyDescription = window.nolexStudyDescription;
+let modality = window.nolexModality;
+
+const syncStudyInfo = () => {
+  studyDescription = window.nolexStudyDescription || studyDescription || '';
+  modality = window.nolexModality || modality || '';
+};
+
+const logHpSalvataggio = (tipo, entry) => {
+  console.log('[HP] Salvataggio', {
+    tipo,
+    aetitle,
+    username,
+    studyInstanceUIDs,
+    studyDescription,
+    modality,
+    entry,
+  });
+};
 async function salvataggioHP() {
   creaDIV();
 }
 
 function hpAttualmenteSalvati() {
+  syncStudyInfo();
   const configAttiva = [];
   if (!localStorage.getItem(`preferenzeUtente-${aetitle}`)) {
     return configAttiva;
@@ -328,6 +347,7 @@ function hpAttualmenteSalvati() {
 let preferenzeRemote;
 
 async function creaDIV() {
+  syncStudyInfo();
   //Toggle
   if (document.getElementById('menu-hp')) {
     document.getElementById('menu-hp').remove();
@@ -422,37 +442,57 @@ async function componiHP(modalita) {
   const renderingEngine = cornerstoneViewportService.getRenderingEngine();
   let i = 0;
   let cameraHP = {};
+  let cameraByIndex = [];
   viewports.forEach(_viewport => {
     const { viewportId } = _viewport;
     const viewport = renderingEngine.getViewport(viewportId);
     const { element } = viewport;
     const cameraViewport = viewport.getCamera();
-    cameraHP[`nolexhp-${i}`] = {};
-    cameraHP[`nolexhp-${i}`].focalpoint = cameraViewport.focalPoint;
-    cameraHP[`nolexhp-${i}`].parallelscale = cameraViewport.parallelScale;
-    cameraHP[`nolexhp-${i}`].position = cameraViewport.position;
-    const descrizioneSerie = element.parentElement.querySelector(
-      '[title="Series description"]'
-    )?.textContent;
+    const viewPresentation = viewport.getViewPresentation
+      ? viewport.getViewPresentation({ pan: true, zoom: true })
+      : null;
+    const hpViewportId = `nolexhp-${i}`;
+    const cameraData = {
+      focalpoint: cameraViewport.focalPoint,
+      parallelscale: cameraViewport.parallelScale,
+      position: cameraViewport.position,
+      viewPresentation,
+    };
+    cameraHP[hpViewportId] = cameraData;
+    cameraByIndex.push(cameraData);
+    const descrizioneSerie =
+      element.parentElement.querySelector('[title="Series description"]')?.textContent?.trim() ||
+      '';
     //Estraggo SeriesInstanceUID
     const imageId = viewport.csImage?.imageId || '';
     const match = imageId.match(/series\/([^\/]+)/);
     const seriesInstanceUID = match ? match[1] : null;
+    const seriesNumber = imageId ? metaData.get('instance', imageId)?.SeriesNumber : null;
     // // //
     const numeroIstanza = viewport.currentImageIdIndex + 1;
     istanzeSpecifiche.push(numeroIstanza);
     const displaySetKey = `DisplaySet${i}`;
     //Serie (se salvo come studio specifico mi vado a settare la SeriesInstanceUID piuttosto che la SeriesDescription)
+    const usaSeriesNumber = modalita !== 'specificStudy' && !descrizioneSerie && seriesNumber != null;
+    const attributoMatch =
+      modalita === 'specificStudy'
+        ? 'SeriesInstanceUID'
+        : usaSeriesNumber
+          ? 'SeriesNumber'
+          : 'SeriesDescription';
+    const constraint = modalita === 'specificStudy'
+      ? { contains: seriesInstanceUID }
+      : usaSeriesNumber
+        ? { equals: seriesNumber }
+        : { contains: descrizioneSerie };
     nolexHP.displaySetSelectors[displaySetKey].seriesMatchingRules = [
       {
-        attribute: `${modalita === 'specificStudy' ? 'SeriesInstanceUID' : 'SeriesDescription'}`,
-        constraint: {
-          contains: `${modalita === 'specificStudy' ? seriesInstanceUID : descrizioneSerie}`,
-        },
+        attribute: attributoMatch,
+        constraint,
       },
     ];
 
-    // nolexHP.stages[0].viewports[i].viewportOptions.viewportId = `nolexhp-${i}`;
+    nolexHP.stages[0].viewports[i].viewportOptions.viewportId = `nolexhp-${i}`;
 
     nolexHP.stages[0].viewports[i].viewportOptions.initialImageOptions = {
       index: numeroIstanza,
@@ -461,6 +501,7 @@ async function componiHP(modalita) {
   });
   return {
     cameraHP: cameraHP,
+    cameraByIndex: cameraByIndex,
     attualiHP: attualiHP,
     preferenzeRemote: preferenzeRemote,
   };
@@ -476,11 +517,12 @@ async function saveSpecificStudy() {
 
   const {
     cameraHP = {},
+    cameraByIndex = [],
     attualiHP = {},
     preferenzeRemote = {},
   } = (await componiHP('specificStudy')) || {};
 
-  attualiHP.studioSpecifico[studyInstanceUIDs] = {
+  const entry = {
     performanceHP: nolexHP,
     layoutGriglia: window.layout,
     layoutPersonalizzato: null,
@@ -488,9 +530,12 @@ async function saveSpecificStudy() {
     scalaOverlay: null,
     WL: null,
     camera: cameraHP,
+    cameraByIndex: cameraByIndex,
     serieSpecifiche: null,
     istanzeSpecifiche: istanzeSpecifiche,
   };
+  attualiHP.studioSpecifico[studyInstanceUIDs] = entry;
+  logHpSalvataggio('studioSpecifico', entry);
   preferenzeRemote.json.hp = attualiHP;
 
   const resScrittura = await scritturaPreferenzeAPI(aetitle, username, preferenzeRemote.json);
@@ -516,40 +561,33 @@ async function saveConfigExam() {
   }
   const {
     cameraHP = {},
+    cameraByIndex = [],
     attualiHP = {},
     preferenzeRemote = {},
   } = (await componiHP('descrizioneEsame')) || {};
 
   const index = attualiHP.nomeEsame.findIndex(element => element.nomeEsame === studyDescription);
+  const entry = {
+    nomeEsame: studyDescription,
+    performanceHP: nolexHP,
+    layoutGriglia: window.layout,
+    layoutPersonalizzato: null,
+    allineamento: null,
+    scalaOverlay: null,
+    WL: null,
+    camera: cameraHP,
+    cameraByIndex: cameraByIndex,
+    serieSpecifiche: null,
+    istanzeSpecifiche: istanzeSpecifiche,
+  };
   if (index !== -1) {
     // Sovrascrivi l'oggetto esistente
-    attualiHP.nomeEsame[index] = {
-      nomeEsame: studyDescription,
-      performanceHP: nolexHP,
-      layoutGriglia: window.layout,
-      layoutPersonalizzato: null,
-      allineamento: null,
-      scalaOverlay: null,
-      WL: null,
-      camera: cameraHP,
-      serieSpecifiche: null,
-      istanzeSpecifiche: istanzeSpecifiche,
-    };
+    attualiHP.nomeEsame[index] = entry;
   } else {
     // Aggiungi il nuovo oggetto all'array
-    attualiHP.nomeEsame.push({
-      nomeEsame: studyDescription,
-      performanceHP: nolexHP,
-      layoutGriglia: window.layout,
-      layoutPersonalizzato: null,
-      allineamento: null,
-      scalaOverlay: null,
-      WL: null,
-      camera: cameraHP,
-      serieSpecifiche: null,
-      istanzeSpecifiche: istanzeSpecifiche,
-    });
+    attualiHP.nomeEsame.push(entry);
   }
+  logHpSalvataggio('descrizioneEsame', entry);
 
   preferenzeRemote.json.hp = attualiHP;
 
@@ -576,40 +614,33 @@ async function saveConfigModality() {
   }
   const {
     cameraHP = {},
+    cameraByIndex = [],
     attualiHP = {},
     preferenzeRemote = {},
   } = (await componiHP('modality')) || {};
 
   const index = attualiHP.modality.findIndex(element => element.nomeModality === modality);
+  const entry = {
+    nomeModality: modality,
+    performanceHP: nolexHP,
+    layoutGriglia: window.layout,
+    layoutPersonalizzato: null,
+    allineamento: null,
+    scalaOverlay: null,
+    WL: null,
+    camera: cameraHP,
+    cameraByIndex: cameraByIndex,
+    serieSpecifiche: null,
+    istanzeSpecifiche: istanzeSpecifiche,
+  };
   if (index !== -1) {
     // Sovrascrivi l'oggetto esistente
-    attualiHP.modality[index] = {
-      nomeModality: modality,
-      performanceHP: nolexHP,
-      layoutGriglia: window.layout,
-      layoutPersonalizzato: null,
-      allineamento: null,
-      scalaOverlay: null,
-      WL: null,
-      camera: cameraHP,
-      serieSpecifiche: null,
-      istanzeSpecifiche: istanzeSpecifiche,
-    };
+    attualiHP.modality[index] = entry;
   } else {
     // Aggiungi il nuovo oggetto all'array
-    attualiHP.modality.push({
-      nomeModality: modality,
-      performanceHP: nolexHP,
-      layoutGriglia: window.layout,
-      layoutPersonalizzato: null,
-      allineamento: null,
-      scalaOverlay: null,
-      WL: null,
-      camera: cameraHP,
-      serieSpecifiche: null,
-      istanzeSpecifiche: istanzeSpecifiche,
-    });
+    attualiHP.modality.push(entry);
   }
+  logHpSalvataggio('modality', entry);
 
   preferenzeRemote.json.hp = attualiHP;
 

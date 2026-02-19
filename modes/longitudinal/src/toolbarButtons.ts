@@ -139,8 +139,12 @@ const toolbarButtons: Button[] = [
       },
       listeners: {
         [EVENTS.VIEWPORT_NEW_IMAGE_SET]: {
-          commandName: 'toggleImageSliceSync',
-          commandOptions: { toggledState: true },
+          commandName: 'toggleSynchronizer',
+          commandOptions: {
+            type: 'imageSlice',
+            syncId: 'IMAGE_SLICE_SYNC',
+            toggledState: true,
+          },
         },
       },
       evaluate: [
@@ -169,6 +173,41 @@ const toolbarButtons: Button[] = [
         {
           name: 'evaluate.viewport.supported',
           unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+  {
+    id: 'ReferenceCursors',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-referenceCursors',
+      label: 'Cursori di riferimento',
+      tooltip: 'Mostra cursori di riferimento',
+      commands: 'togglePassiveDisabledToolbar',
+      evaluate: [
+        'evaluate.cornerstoneTool.toggle.ifStrictlyDisabled',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video'],
+        },
+      ],
+    },
+  },
+
+  {
+    id: 'ScaleOverlay',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-scale-overlay',
+      label: 'Scala',
+      tooltip: 'Mostra scala',
+      commands: 'toggleEnabledDisabledToolbar',
+      evaluate: [
+        'evaluate.cornerstoneTool.toggle',
+        {
+          name: 'evaluate.viewport.supported',
+          unsupportedViewportTypes: ['video', 'volume3d'],
         },
       ],
     },
@@ -488,6 +527,17 @@ const toolbarButtons: Button[] = [
       label: 'Sposta',
       commands: setToolActiveToolbar,
       evaluate: 'evaluate.cornerstoneTool',
+    },
+  },
+  {
+    id: 'ZoomOneToOne',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'tool-reset',
+      label: '1:1',
+      tooltip: 'Zoom 1:1',
+      commands: 'zoomOneToOne',
+      evaluate: 'evaluate.action',
     },
   },
   {

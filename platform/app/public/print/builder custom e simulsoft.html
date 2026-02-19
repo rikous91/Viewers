@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>Composer Layout Preferiti - WYSIWYG PERFETTO</title>
+
+<style>
+  body {
+    margin:0; padding:0;
+    background:#0f172a;
+    color:#e5e7eb;
+    font-family:sans-serif;
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+  }
+
+  #sidebar {
+    width:300px;
+    background:#1e293b;
+    padding:10px;
+    overflow-y:auto;
+    border-right:1px solid #334155;
+  }
+  #sidebar img {
+    width:100%;
+    margin-bottom:12px;
+    cursor:grab;
+    border:1px solid #475569;
+  }
+
+  #canvas-container {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding:10px;
+  }
+
+  #layout-buttons {
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  #layout-buttons button {
+    padding:6px 12px;
+    background:#334155;
+    border:none;
+    color:white;
+    border-radius:4px;
+    cursor:pointer;
+  }
+
+  /* A4 reale - margini 1cm */
+  #a4 {
+    position:relative;
+    width: calc(21cm - 2cm);
+    height: calc(29.7cm - 2cm);
+    margin:auto;
+    background:white;
+    display:grid;
+    border:1px solid #94a3b8;
+  }
+
+  .slot {
+    border:1px dashed #94a3b8;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .slot img {
+    max-width:100%;
+    max-height:100%;
+    object-fit:contain;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="sidebar">
+  <h3>Preferiti</h3>
+  <div id="fav-list"></div>
+</div>
+
+<div id="canvas-container">
+
+  <div id="layout-buttons">
+    <button onclick="setLayout(1,1)">1×1</button>
+    <button onclick="setLayout(1,2)">1×2</button>
+    <button onclick="setLayout(2,1)">2×1</button>
+    <button onclick="setLayout(2,2)">2×2</button>
+    <button onclick="setLayout(3,3)">3×3</button>
+  </div>
+
+  <div id="a4"></div>
+
+  <button onclick="generaStampa()"
+          style="margin-top:10px;padding:8px 14px;background:#22c55e;border:none;border-radius:4px;cursor:pointer;">
+    Genera PDF / Stampa
+  </button>
+
+</div>
+
+<script src="./assets/stimulsoft.viewer.js"></script>
+<script src="./assets/stimulsoft.reports.js"></script>
+<script src="./assets/stimulsoft.reports.import.js"></script>
+
+<script>
+const preferiti = JSON.parse(localStorage.getItem("nolex-preferiti-layout") || "[]");
+const favList = document.getElementById("fav-list");
+
+preferiti.forEach(p => {
+  const img = document.createElement("img");
+  img.src = p.DataUrl;
+  img.draggable = true;
+  img.addEventListener("dragstart", e => {
+    e.dataTransfer.setData("text/plain", p.DataUrl);
+  });
+  favList.appendChild(img);
+});
+
+let rows = 2;
+let cols = 2;
+let cellMatrix = [];
+
+function setLayout(r, c) {
+  rows = r;
+  cols = c;
+
+  const a4 = document.getElementById("a4");
+  a4.innerHTML = "";
+
+  a4.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+  a4.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  cellMatrix = Array.from({length: rows}, () => Array(cols).fill(null));
+
+  for (let i=0;i<rows;i++){
+    for (let j=0;j<cols;j++){
+      const slot = document.createElement("div");
+      slot.className = "slot";
+      slot.dataset.row = i;
+      slot.dataset.col = j;
+
+      slot.addEventListener("dragover", e => e.preventDefault());
+      slot.addEventListener("drop", e => {
+        const url = e.dataTransfer.getData("text/plain");
+        slot.innerHTML = `<img src="${url}">`;
+        cellMatrix[i][j] = url;
+      });
+
+      a4.appendChild(slot);
+    }
+  }
+}
+
+setLayout(2,2);
+
+async function generaStampa() {
+  const report = new Stimulsoft.Report.StiReport();
+  await report.loadFile("./base_layout.mrt");
+
+  const page = report.pages.getByIndex(0);
+
+  const cellW = (21 - 2) / cols;
+  const cellH = (29.7 - 2) / rows;
+
+  for (let r=0;r<rows;r++){
+    for (let c=0;c<cols;c++){
+      const url = cellMatrix[r][c];
+      if (!url) continue;
+
+      const img = new Stimulsoft.Report.Components.StiImage();
+      img.left = c * cellW;
+      img.top  = r * cellH;
+      img.width  = cellW;
+      img.height = cellH;
+      img.imageURL = url;
+      img.imageAsBase64 = true;
+
+      page.components.add(img);
+    }
+  }
+
+  const viewer = new Stimulsoft.Viewer.StiViewer(null, "viewer", false);
+  viewer.report = report;
+  viewer.renderHtml("designer");
+}
+</script>
+
+</body>
+</html>

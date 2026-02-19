@@ -6,7 +6,8 @@ import { Icons } from '@ohif/ui-next';
 
 const StudyListTableRow = props => {
   const { tableData } = props;
-  const { row, expandedContent, onClickRow, isExpanded, dataCY, clickableCY } = tableData;
+  const { row, expandedContent, onClickRow, isExpanded, dataCY, clickableCY, isOpenInTab } =
+    tableData;
   return (
     <>
       <tr
@@ -40,6 +41,7 @@ const StudyListTableRow = props => {
                     },
                     { 'bg-secondary-dark': isExpanded }
                   )}
+                  style={isOpenInTab ? { color: '#e30613' } : undefined}
                   onClick={onClickRow}
                   data-cy={clickableCY}
                 >
@@ -110,6 +112,7 @@ StudyListTableRow.propTypes = {
     isExpanded: PropTypes.bool.isRequired,
     dataCY: PropTypes.string,
     clickableCY: PropTypes.string,
+    isOpenInTab: PropTypes.bool,
   }),
 };
 

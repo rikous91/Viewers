@@ -5,6 +5,7 @@ import { cn } from '../../lib/utils';
 import { Calendar } from '../Calendar';
 import * as Popover from '../Popover';
 
+
 export type DatePickerWithRangeProps = {
   id: string;
   /** YYYYMMDD (19921022) */
@@ -15,6 +16,30 @@ export type DatePickerWithRangeProps = {
   onChange: (value: { startDate: string; endDate: string }) => void;
 };
 
+function safeFormatYMD(value?: string) {
+  // Se non c'è valore → oggi
+  if (!value) {
+    const today = new Date();
+    return format(today, 'yyyy-MM-dd');
+  }
+
+  // Parsing della data in YYYYMMDD
+  const parsed = parse(value, 'yyyyMMdd', new Date());
+
+  // Se la data è invalida → oggi
+  if (!isValid(parsed)) {
+    const today = new Date();
+    return format(today, 'yyyy-MM-dd');
+  }
+
+  // OK
+  return format(parsed, 'yyyy-MM-dd');
+}
+
+function isQuickDateUpdate() {
+  return typeof window !== 'undefined' && window.__nolexQuickDateUpdate === true;
+}
+
 export function DatePickerWithRange({
   className,
   id,
@@ -23,19 +48,19 @@ export function DatePickerWithRange({
   onChange,
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & DatePickerWithRangeProps) {
-  const [start, setStart] = React.useState<string>(
-    startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
-  );
-  const [end, setEnd] = React.useState<string>(
-    endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : ''
-  );
+  const [start, setStart] = React.useState<string>(() => safeFormatYMD(startDate));
+  const [end, setEnd] = React.useState<string>(() => safeFormatYMD(endDate));
   const [openEnd, setOpenEnd] = React.useState(false);
 
   const handleStartSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       setStart(formattedDate);
-      setOpenEnd(true);
+      if (!isQuickDateUpdate()) {
+        setOpenEnd(true);
+      } else {
+        setOpenEnd(false);
+      }
       onChange({
         startDate: format(selectedDate, 'yyyyMMdd'),
         endDate: end.replace(/-/g, ''),
@@ -61,20 +86,35 @@ export function DatePickerWithRange({
     if (type === 'start') {
       setStart(value);
       if (isValid(date)) {
+        if (isQuickDateUpdate()) {
+          onChange({
+            startDate: format(date, 'yyyyMMdd'),
+            endDate: end.replace(/-/g, ''),
+          });
+          return;
+        }
         handleStartSelect(date);
       }
     } else {
       setEnd(value);
       if (isValid(date)) {
+        if (isQuickDateUpdate()) {
+          onChange({
+            startDate: start.replace(/-/g, ''),
+            endDate: format(date, 'yyyyMMdd'),
+          });
+          return;
+        }
         handleEndSelect(date);
       }
     }
   };
 
   React.useEffect(() => {
-    setStart(startDate ? format(parse(startDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : '');
-    setEnd(endDate ? format(parse(endDate, 'yyyyMMdd', new Date()), 'yyyy-MM-dd') : '');
+    setStart(safeFormatYMD(startDate));
+    setEnd(safeFormatYMD(endDate));
   }, [startDate, endDate]);
+
 
   return (
     <div className={cn('flex gap-2', className)}>
@@ -85,7 +125,7 @@ export function DatePickerWithRange({
             <input
               id={`${id}-start`}
               type="text"
-              placeholder="Start date"
+              placeholder="Data di inizio"
               autoComplete="off"
               value={start}
               onChange={e => handleInputChange(e, 'start')}
@@ -122,7 +162,7 @@ export function DatePickerWithRange({
             <input
               id={`${id}-end`}
               type="text"
-              placeholder="End date"
+              placeholder="Data di fine"
               autoComplete="off"
               value={end}
               onChange={e => handleInputChange(e, 'end')}

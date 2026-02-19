@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useRef } from 'react';
-import { useCine } from '@ohif/ui';
+import { useCine, InputRange } from '@ohif/ui';
 import { Enums, eventTarget, cache } from '@cornerstonejs/core';
 import { useAppConfig } from '@state';
 
@@ -32,7 +32,7 @@ function WrappedCinePlayer({
   };
 
   const newDisplaySetHandler = useCallback(() => {
-    if (!enabledVPElement || !isCineEnabled) {
+    if (!enabledVPElement) {
       return;
     }
 
@@ -72,7 +72,7 @@ function WrappedCinePlayer({
     }
     cineService.setCine({ id: viewportId, isPlaying, frameRate });
     setNewStackFrameRate(frameRate);
-  }, [displaySetService, viewportId, viewportGridService, cines, isCineEnabled, enabledVPElement]);
+  }, [displaySetService, viewportId, viewportGridService, cines, enabledVPElement]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -134,7 +134,9 @@ function WrappedCinePlayer({
   }, [cines, viewportId, cineService, enabledVPElement, cineHandler]);
 
   if (!isCineEnabled) {
-    return null;
+    return dynamicInfo ? (
+      <RenderDynamicVolumeSlider dynamicInfo={dynamicInfo} />
+    ) : null;
   }
 
   const cine = cines[viewportId];
@@ -149,6 +151,97 @@ function WrappedCinePlayer({
       dynamicInfo={dynamicInfo}
       customizationService={customizationService}
     />
+  );
+}
+
+function RenderDynamicVolumeSlider({ dynamicInfo: dynamicInfoProp }) {
+  const [dynamicInfo, setDynamicInfo] = useState(dynamicInfoProp);
+
+  useEffect(() => {
+    setDynamicInfo(dynamicInfoProp);
+  }, [dynamicInfoProp]);
+
+  useEffect(() => {
+    if (!dynamicInfo) {
+      return;
+    }
+
+    const handleDimensionGroupChange = evt => {
+      const { volumeId, dimensionGroupNumber, numDimensionGroups, splittingTag } = evt.detail;
+      setDynamicInfo({
+        volumeId,
+        dimensionGroupNumber,
+        numDimensionGroups,
+        label: splittingTag,
+      });
+    };
+
+    eventTarget.addEventListener(
+      Enums.Events.DYNAMIC_VOLUME_DIMENSION_GROUP_CHANGED,
+      handleDimensionGroupChange
+    );
+
+    return () => {
+      eventTarget.removeEventListener(
+        Enums.Events.DYNAMIC_VOLUME_DIMENSION_GROUP_CHANGED,
+        handleDimensionGroupChange
+      );
+    };
+  }, [dynamicInfo]);
+
+  useEffect(() => {
+    if (!dynamicInfo) {
+      return;
+    }
+
+    const { volumeId, dimensionGroupNumber } = dynamicInfo || {};
+    const volume = cache.getVolume(volumeId, true);
+    if (volume) {
+      volume.dimensionGroupNumber = dimensionGroupNumber;
+    }
+  }, []);
+
+  const updateDynamicInfo = useCallback(props => {
+    const { volumeId, dimensionGroupNumber } = props;
+    const volume = cache.getVolume(volumeId, true);
+    if (volume) {
+      volume.dimensionGroupNumber = dimensionGroupNumber;
+    }
+    setDynamicInfo(prev =>
+      prev ? { ...prev, dimensionGroupNumber } : prev
+    );
+  }, []);
+
+  if (!dynamicInfo) {
+    return null;
+  }
+
+  return (
+    <div className="absolute left-1/2 bottom-3 w-56 -translate-x-1/2">
+      <InputRange
+        value={dynamicInfo.dimensionGroupNumber}
+        onChange={dimensionGroupNumber =>
+          updateDynamicInfo({ ...dynamicInfo, dimensionGroupNumber })
+        }
+        minValue={1}
+        maxValue={dynamicInfo.numDimensionGroups}
+        step={1}
+        containerClassName="w-full"
+        labelClassName="text-xs text-white"
+        leftColor="#3a3f99"
+        rightColor="#3a3f99"
+        trackHeight="4px"
+        thumbColor="#348cfd"
+        thumbColorOuter="#000000"
+        showLabel={false}
+      />
+      <div className="mt-2 flex items-center justify-center gap-2 text-xs text-white">
+        <span>{`${dynamicInfo.dimensionGroupNumber}/${dynamicInfo.numDimensionGroups}`}</span>
+        {dynamicInfo.label ? (
+          <span className="text-aqua-pale">{dynamicInfo.label}</span>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

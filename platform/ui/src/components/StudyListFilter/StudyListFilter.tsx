@@ -79,7 +79,7 @@ const StudyListFilter = ({
                   variant="h6"
                   className="text-primary-light"
                 >
-                  {`${t('Studies')} `}
+                  {`Studi `}
                 </Typography>
               </div>
             </div>

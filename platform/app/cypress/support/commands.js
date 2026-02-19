@@ -243,7 +243,7 @@ Cypress.Commands.add('initRouteAliases', () => {
   initRouteAliases();
 });
 
-//Initialize aliases for Study List page elements
+//Initialize aliases for Lista studi page elements
 Cypress.Commands.add('initStudyListAliasesOnDesktop', () => {
   initStudyListAliasesOnDesktop();
 });

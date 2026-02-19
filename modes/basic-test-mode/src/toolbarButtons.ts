@@ -321,8 +321,12 @@ const toolbarButtons: Button[] = [
       },
       listeners: {
         [EVENTS.VIEWPORT_NEW_IMAGE_SET]: {
-          commandName: 'toggleImageSliceSync',
-          commandOptions: { toggledState: true },
+          commandName: 'toggleSynchronizer',
+          commandOptions: {
+            type: 'imageSlice',
+            syncId: 'IMAGE_SLICE_SYNC',
+            toggledState: true,
+          },
         },
       },
       evaluate: 'evaluate.cornerstone.synchronizer',

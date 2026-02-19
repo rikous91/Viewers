@@ -103,13 +103,31 @@ export function processSeriesResults(qidoSeries) {
  * @returns {Promise<results>} - Promise that resolves results
  */
 async function search(dicomWebClient, studyInstanceUid, seriesInstanceUid, queryParameters) {
-  let searchResult = await dicomWebClient.searchForStudies({
+  let _queryParameters = queryParameters || {};
+
+  // Se StudyInstanceUID non è presente e sono dentro un iframe vuol dire che sto chiedendo lo studio dalla worklist
+  if (!_queryParameters.StudyInstanceUID && window.self !== window.top) {
+    // Leggo direttamente da localStorage
+    const aetitle = localStorage.getItem("aetitle");
+
+    if (aetitle) {
+      _queryParameters.aetitle = aetitle;
+    }
+
+    _queryParameters.askWorklist = true;
+  }
+
+
+  const searchResult = await dicomWebClient.searchForStudies({
     studyInstanceUid: undefined,
-    queryParams: queryParameters,
+    queryParams: _queryParameters,
   });
+
+  console.log('qido nolex: ', _queryParameters);
 
   return searchResult;
 }
+
 
 /**
  *

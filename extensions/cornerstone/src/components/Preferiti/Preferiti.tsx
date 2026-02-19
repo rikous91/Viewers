@@ -1,5 +1,6 @@
 import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 import { SwitchButton } from '@ohif/ui';
+import { Enums, metaData, utilities as csUtils } from '@cornerstonejs/core';
 import { ColorbarProps } from '../../types/Colorbar';
 
 function captureScreenshot() {
@@ -12,6 +13,43 @@ function captureScreenshot() {
   });
 }
 
+async function captureImageFromImageId(imageId, viewport) {
+  if (!imageId || !csUtils.loadImageToCanvas) {
+    return null;
+  }
+
+  const canvas = document.createElement('canvas');
+  const imageData = viewport?.getImageData?.();
+  const dimensions = imageData?.dimensions;
+  if (Array.isArray(dimensions) && dimensions.length >= 2) {
+    canvas.width = dimensions[0];
+    canvas.height = dimensions[1];
+  } else {
+    canvas.width = 1024;
+    canvas.height = 1024;
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  try {
+    await csUtils.loadImageToCanvas({
+      canvas,
+      imageId,
+      useCPURendering: true,
+      requestType: Enums.RequestType.Thumbnail,
+    });
+  } catch (error) {
+    console.warn('Preferiti: failed to render image for capture', error);
+    return null;
+  }
+
+  return canvas.toDataURL('image/png');
+}
+
 export function Preferiti({
   viewportId,
   displaySets,
@@ -19,41 +57,147 @@ export function Preferiti({
   servicesManager,
   colorbarProperties,
 }: withAppTypes<ColorbarProps>): ReactElement {
-  const { colorbarService } = servicesManager.services;
-  const {
-    width: colorbarWidth,
-    colorbarTickPosition,
-    colorbarContainerPosition,
-    colormaps,
-    colorbarInitialColormap,
-  } = colorbarProperties;
+  void commandsManager;
+  void colorbarProperties;
+
+  const { cornerstoneViewportService } = servicesManager.services;
 
   // Recupera l'UID corrente dal primo elemento di displaySets
-  const { SeriesInstanceUID } = displaySets[0].instance;
+  const { SeriesInstanceUID } = displaySets[0].instance || {};
 
-  // Verifica se l'elemento corrente è già nei preferiti
-  let activeElementIndex = 0;
-  if (document.querySelector('.nolex-selected .mousetrap')) {
-    activeElementIndex = Number(document.querySelector('.nolex-selected .mousetrap').value);
-  }
-  const isAlreadyPreferito = window.preferiti?.some(
-    preferito =>
-      preferito.SeriesInstanceUID === SeriesInstanceUID &&
-      (displaySets[0].instances.length > 1
-        ? preferito.SOPInstanceUID === displaySets[0].instances[activeElementIndex].SOPInstanceUID
-        : preferito.SOPInstanceUID === displaySets[0].instances[0].SOPInstanceUID)
+  const getActiveElementIndex = useCallback(() => {
+    const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+    if (viewport && typeof viewport.getCurrentImageIdIndex === 'function') {
+      const index = viewport.getCurrentImageIdIndex();
+      if (Number.isFinite(index)) {
+        return index;
+      }
+    }
+
+    const input = document.querySelector('.nolex-selected .mousetrap') as HTMLInputElement | null;
+    const value = input ? Number(input.value) : 0;
+    return Number.isFinite(value) ? value : 0;
+  }, [cornerstoneViewportService, viewportId]);
+
+  const getInstanceAtIndex = useCallback(
+    index => {
+      const instances = displaySets?.[0]?.instances;
+      if (instances?.length) {
+        const safeIndex = Math.min(Math.max(index, 0), instances.length - 1);
+        return instances[safeIndex];
+      }
+      return displaySets?.[0]?.instance ?? displaySets?.[0];
+    },
+    [displaySets]
   );
 
-  // if (isAlreadyPreferito) {
-  //   alert('gia messo');
-  // }
+  const getSopUIDAtIndex = useCallback(
+    index => {
+      const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+      if (viewport && typeof viewport.getImageIds === 'function') {
+        const imageIds = viewport.getImageIds() || [];
+        const imageId = imageIds[index];
+        if (imageId) {
+          const sop = metaData.get('sopCommonModule', imageId)?.sopInstanceUID;
+          if (sop) {
+            return sop;
+          }
+        }
+      }
 
-  const [isPreferito, setIsPreferito] = useState(isAlreadyPreferito);
+      const instance = getInstanceAtIndex(index);
+      return instance?.SOPInstanceUID;
+    },
+    [cornerstoneViewportService, viewportId, getInstanceAtIndex]
+  );
+
+  const getImageIdAtIndex = useCallback(
+    index => {
+      const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+      if (viewport && typeof viewport.getImageIds === 'function') {
+        const imageIds = viewport.getImageIds() || [];
+        return imageIds[index];
+      }
+      return null;
+    },
+    [cornerstoneViewportService, viewportId]
+  );
+
+  const isPreferitoForIndex = useCallback(
+    index => {
+      if (!window.preferiti?.length) {
+        return false;
+      }
+      const sopUID = getSopUIDAtIndex(index);
+      if (!SeriesInstanceUID || !sopUID) {
+        return false;
+      }
+      return window.preferiti.some(
+        preferito =>
+          preferito.SeriesInstanceUID === SeriesInstanceUID &&
+          preferito.SOPInstanceUID === sopUID
+      );
+    },
+    [SeriesInstanceUID, getSopUIDAtIndex]
+  );
+
+  const [activeElementIndex, setActiveElementIndex] = useState(getActiveElementIndex);
+  const [isPreferito, setIsPreferito] = useState(() =>
+    isPreferitoForIndex(getActiveElementIndex())
+  );
+
+  useEffect(() => {
+    const viewportInfo = cornerstoneViewportService.getViewportInfo(viewportId);
+    const element = viewportInfo?.getElement?.();
+    if (!element) {
+      return;
+    }
+
+    const viewportType =
+      viewportInfo.getViewportType?.() ||
+      viewportInfo.getViewportData?.()?.viewportType ||
+      Enums.ViewportType.STACK;
+
+    const eventId =
+      (viewportType === Enums.ViewportType.STACK && Enums.Events.STACK_VIEWPORT_SCROLL) ||
+      (viewportType === Enums.ViewportType.ORTHOGRAPHIC && Enums.Events.VOLUME_NEW_IMAGE) ||
+      Enums.Events.IMAGE_RENDERED;
+
+    const updateIndex = event => {
+      const detail = event?.detail || {};
+      const { newImageIdIndex, imageIndex } = detail;
+      const nextIndex = Number.isFinite(newImageIdIndex)
+        ? newImageIdIndex
+        : Number.isFinite(imageIndex)
+          ? imageIndex
+          : getActiveElementIndex();
+      setActiveElementIndex(nextIndex);
+    };
+
+    element.addEventListener(eventId, updateIndex);
+    updateIndex();
+
+    return () => {
+      element.removeEventListener(eventId, updateIndex);
+    };
+  }, [cornerstoneViewportService, viewportId, getActiveElementIndex]);
+
+  useEffect(() => {
+    const currentIsPreferito = isPreferitoForIndex(activeElementIndex);
+    setIsPreferito(currentIsPreferito);
+  }, [activeElementIndex, isPreferitoForIndex]);
 
   const onSetPreferito = useCallback(
-    e => {
+    async e => {
       const { uiNotificationService } = servicesManager.services;
       const checked = e; //Mi indica se sto checkando o meno l'opzione per aggiunta/rimozione preferito      // Inizializza window.preferiti se non esiste
+      const instance = getInstanceAtIndex(activeElementIndex);
+      const sopUID = getSopUIDAtIndex(activeElementIndex);
+      const imageId = getImageIdAtIndex(activeElementIndex);
+
+      if (!sopUID) {
+        return;
+      }
 
       if (!window.preferiti) {
         window.preferiti = [];
@@ -64,11 +208,10 @@ export function Preferiti({
         window.preferiti = window.preferiti.filter(preferito => {
           return !(
             preferito.SeriesInstanceUID === SeriesInstanceUID &&
-            (preferito.SOPInstanceUID === displaySets[0].instances.length > 1
-              ? displaySets[0].instances[activeElementIndex].SOPInstanceUID
-              : displaySets[0].instances[0].SOPInstanceUID)
+            preferito.SOPInstanceUID === sopUID
           );
         });
+        setIsPreferito(false);
         //Se ho la clipbooard preferiti aperta, aggiorno i preferiti in tempo reale dopo la rimozione
         if (document.getElementById('area-lista-preferiti')) {
           document.getElementById('area-lista-preferiti').remove();
@@ -83,7 +226,7 @@ export function Preferiti({
             <div class="col">
             <img onclick="window.viewPreferitoPopup('${preferito.DataUrl}')" src=${preferito.DataUrl} />
             <p>Serie ${preferito.NumeroSerie} - ${preferito.DescrizioneSerie}</p>
-            <p>N° istanza: ${preferito.NumeroIstanza}</p>
+            <p>N¶ø istanza: ${preferito.NumeroIstanza}</p>
             <button class="rimuovi-preferito-btn" onclick="window.rimuoviPreferito('${preferito.SOPInstanceUID}')">Rimuovi</button>
             </div>
             `
@@ -95,6 +238,7 @@ export function Preferiti({
           message: `Preferito rimosso`,
           type: 'error',
         });
+        window.dispatchEvent(new Event('nolex-preferiti-updated'));
       }
 
       // Aggiungo l'elemento ai preferiti salvando screen dell'intera div con misurazioni e tutto
@@ -120,7 +264,7 @@ export function Preferiti({
       //       <div class="col">
       //       <img onclick="window.viewPreferitoPopup('${imgData}')" src=${imgData} />
       //       <p>Serie ${NumeroSerie} - ${DescrizioneSerie}</p>
-      //       <p>N° istanza: ${NumeroIstanza}</p>
+      //       <p>N¶ø istanza: ${NumeroIstanza}</p>
       //       <button class="rimuovi-preferito-btn" onclick="window.rimuoviPreferito('${SOPInstanceUID}')">Rimuovi</button>
       //       </div>
       //       `
@@ -129,24 +273,20 @@ export function Preferiti({
       //   });
       // }
 
-      //Cattura del canvas senza misurazioni e altro anziché di tutta la div
-      if (!isAlreadyPreferito && checked && document.getElementById('preferiti-btn')) {
-        const SOPInstanceUID =
-          displaySets[0].instances.length > 1
-            ? displaySets[0].instances[activeElementIndex].SOPInstanceUID
-            : displaySets[0].instances[0].SOPInstanceUID;
-        const NumeroSerie =
-          displaySets[0].instances.length > 1
-            ? displaySets[0].instances[activeElementIndex].SeriesNumber
-            : displaySets[0].instances[0].SOPInstanceUID;
+      //Cattura del canvas senza misurazioni e altro anzichÇ¸ di tutta la div
+      if (!isPreferito && checked && document.getElementById('preferiti-btn')) {
+        const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
+        const SOPInstanceUID = sopUID;
+        const NumeroSerie = instance?.SeriesNumber ?? displaySets?.[0]?.instance?.SeriesNumber;
         const DescrizioneSerie =
-          displaySets[0].instances.length > 1
-            ? displaySets[0].instances[activeElementIndex].SeriesDescription
-            : displaySets[0].instances[0].SOPInstanceUID;
+          instance?.SeriesDescription ?? displaySets?.[0]?.instance?.SeriesDescription;
         const NumeroIstanza = activeElementIndex + 1;
-        const imgData = document
-          .querySelector('.nolex-selected .cornerstone-canvas')
-          .toDataURL('image/png');
+        const imgData =
+          (await captureImageFromImageId(imageId, viewport)) ||
+          document.querySelector('.nolex-selected .cornerstone-canvas')?.toDataURL('image/png');
+        if (!imgData) {
+          return;
+        }
         window.preferiti.push({
           SeriesInstanceUID,
           SOPInstanceUID: SOPInstanceUID,
@@ -155,21 +295,23 @@ export function Preferiti({
           DescrizioneSerie: DescrizioneSerie,
           NumeroIstanza: NumeroIstanza,
         });
+        setIsPreferito(true);
+
         //Se ho la clipbooard preferiti aperta, inserisco il preferito in tempo reale
         if (document.getElementById('area-lista-preferiti')) {
           document.getElementById('area-lista-preferiti').insertAdjacentHTML(
             'afterbegin',
             `
-            <div class="col">
-            <img onclick="window.viewPreferitoPopup('${imgData}')" src=${imgData} />
-            <p>Serie ${NumeroSerie} - ${DescrizioneSerie}</p>
-            <p>N° istanza: ${NumeroIstanza}</p>
-            <button class="rimuovi-preferito-btn" onclick="window.rimuoviPreferito('${SOPInstanceUID}')">Rimuovi</button>
-            </div>
-            `
+        <div class="col">
+        <img onclick="window.viewPreferitoPopup('${imgData}')" src=${imgData} />
+        <p>Serie ${NumeroSerie} - ${DescrizioneSerie}</p>
+        <p>N¶ø istanza: ${NumeroIstanza}</p>
+        <button class="rimuovi-preferito-btn" onclick="window.rimuoviPreferito('${SOPInstanceUID}')">Rimuovi</button>
+        </div>
+      `
           );
         }
-        //Creo l'animazione all'icona a dx dei preferiti per far capire di poter cliccare sulla relativa icona per visualizzare i preferiti
+
         document.getElementById('preferiti-btn').classList.add('pulse');
 
         uiNotificationService.show({
@@ -177,51 +319,35 @@ export function Preferiti({
           message: `Aggiunto ai preferiti`,
           type: 'success',
         });
+        window.dispatchEvent(new Event('nolex-preferiti-updated'));
       }
 
-      document.querySelector('.nolex-selected .preferiti-btn').click(); //Nascondo così lo switch appena aperto
+      document.querySelector('.nolex-selected .preferiti-btn').click(); //Nascondo cosÇª lo switch appena aperto
     },
     [
-      isPreferito,
-      commandsManager,
-      viewportId,
       displaySets,
+      isPreferito,
+      SeriesInstanceUID,
+      activeElementIndex,
       servicesManager,
-      colorbarWidth,
-      colorbarTickPosition,
-      colorbarContainerPosition,
-      colormaps,
-      colorbarInitialColormap,
+      getInstanceAtIndex,
+      getSopUIDAtIndex,
+      getImageIdAtIndex,
+      cornerstoneViewportService,
+      viewportId,
     ]
   );
 
   useEffect(() => {
-    const updateColorbarState = () => {
-      setIsPreferito(colorbarService.hasColorbar(viewportId));
-    };
+    const timeoutId = setTimeout(() => {
+      const switchButton = document.querySelector('.switch-button-outer') as HTMLElement | null;
+      if (switchButton) {
+        switchButton.click();
+      }
+    }, 0);
 
-    const { unsubscribe } = colorbarService.subscribe(
-      colorbarService.EVENTS.STATE_CHANGED,
-      updateColorbarState
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [viewportId, colorbarService]);
-  //cambio icona
-  setTimeout(() => {
-    const iconaStella = document.querySelector('.nolex-selected .preferiti-btn img');
-    if (iconaStella.src.includes('preferiti-active')) {
-      iconaStella.src = '/nolexviewer/assets/images/preferiti.png';
-    } else {
-      iconaStella.src = '/nolexviewer/assets/images/preferiti-active.png';
-    }
-  }, 0);
-
-  setTimeout(() => {
-    document.querySelector('.switch-button-outer').click();
-  }, 0);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div
@@ -233,10 +359,10 @@ export function Preferiti({
         {!isAlreadyPreferito ? 'Aggiungi ai preferiti' : 'Rimuovi'}
       </button> */}
       <SwitchButton
-        label={!isAlreadyPreferito ? 'Aggiungi ai preferiti' : 'Rimuovi dai preferiti'}
-        checked={isAlreadyPreferito}
+        label={!isPreferito ? 'Aggiungi ai preferiti' : 'Rimuovi dai preferiti'}
+        checked={isPreferito}
         onChange={e => {
-          onSetPreferito(e);
+          void onSetPreferito(e);
         }}
       />
     </div>

@@ -2,12 +2,12 @@
   "AccessionNumber": "Eingangsnummer",
   "Accession": "Eingangsnummer",
   "Empty": "Leer",
-  "MRN": "MRN",
+  "ID Paziente": "ID Paziente",
   "Modality": "Modalität",
-  "Patient Name": "Patientenname",
+  "Nome paziente": "Patientenname",
   "Study date": "Studiendatum",
-  "Description": "Beschreibung",
+  "Descrizione": "Beschreibung",
   "Study list": "Studienliste",
-  "Instances": "Instanzen",
+  "Istanze": "Instanzen",
   "Number of studies": "Studien"
 }

@@ -15,7 +15,7 @@ const EmptyStudies = ({ className = '' }) => {
         className="text-primary-light"
         variant="h5"
       >
-        {t('No studies available')}
+        {t('Nessuno studio disponibile')}
       </Typography>
     </div>
   );

@@ -187,13 +187,13 @@
       rel="preload"
       as="script"
       type="text/javascript"
-      src="<%= PUBLIC_URL %>app-config.js"
+      src="<%= PUBLIC_URL %>app-config.js<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     ></script>
     <script
       rel="preload"
       as="script"
       type="module"
-      src="<%= PUBLIC_URL %>init-service-worker.js"
+      src="<%= PUBLIC_URL %>init-service-worker.js<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     ></script>
 
     <title>Nolex Web Viewer</title>
@@ -209,40 +209,46 @@
     <!-- EXTENSIONS -->
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/stampa/printBtn.css"
+      href="<%= PUBLIC_URL %>estensioni/stampa/printBtn.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/preferiti/preferiti.css"
+      href="<%= PUBLIC_URL %>estensioni/preferiti/preferiti.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/editor/editorBtn.css"
+      href="<%= PUBLIC_URL %>estensioni/editor/editorBtn.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/gestioneHP/gestioneHP.css"
+      href="<%= PUBLIC_URL %>estensioni/gestioneHP/gestioneHP.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/aperturaStorico/aperturaStorico.css"
+      href="<%= PUBLIC_URL %>estensioni/aperturaStorico/aperturaStorico.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/mostraChangelogAggiornamenti/mostraChangelogAggiornamenti.css"
+      href="<%= PUBLIC_URL %>estensioni/mostraChangelogAggiornamenti/mostraChangelogAggiornamenti.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
     <link
       rel="stylesheet"
-      href="<%= PUBLIC_URL %>estensioni/gestioneMonitor/gestioneMonitor.css"
+      href="<%= PUBLIC_URL %>estensioni/gestioneMonitor/gestioneMonitor.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
     />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <link
-      href="<%= PUBLIC_URL %>estensioni/editor/quill.css"
+      href="<%= PUBLIC_URL %>estensioni/editor/quill.css<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"
       rel="stylesheet"
     />
-    <script src="<%= PUBLIC_URL %>estensioni/editor/quill.js"></script>
+    <script src="<%= PUBLIC_URL %>estensioni/editor/quill.js<%= CACHE_BUSTER ? '?v=' + CACHE_BUSTER : '' %>"></script>
+
+    <% if (htmlWebpackPlugin && htmlWebpackPlugin.files && htmlWebpackPlugin.files.css) { %>
+      <% htmlWebpackPlugin.files.css.forEach(function(file) { %>
+        <link rel="stylesheet" href="<%= file %><%= CACHE_BUSTER ? (file.includes('?') ? '&' : '?') + 'v=' + CACHE_BUSTER : '' %>" />
+      <% }); %>
+    <% } %>
 
     <!-- <script>
       // If configuration file is a JS Object:
@@ -261,5 +267,10 @@
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <div id="react-portal"></div>
     <div id="root"></div>
+    <% if (htmlWebpackPlugin && htmlWebpackPlugin.files && htmlWebpackPlugin.files.js) { %>
+      <% htmlWebpackPlugin.files.js.forEach(function(file) { %>
+        <script src="<%= file %><%= CACHE_BUSTER ? (file.includes('?') ? '&' : '?') + 'v=' + CACHE_BUSTER : '' %>"></script>
+      <% }); %>
+    <% } %>
   </body>
 </html>

@@ -93,7 +93,7 @@ const DateRange = props => {
       onYearSelect(month, event.target.value);
     };
 
-    const handleOnBlur = () => {};
+    const handleOnBlur = () => { };
 
     return (
       <div className="flex justify-center">
@@ -129,8 +129,20 @@ const DateRange = props => {
   };
 
   // Moment
-  const parsedStartDate = startDate ? moment(startDate, 'YYYYMMDD') : null;
-  const parsedEndDate = endDate ? moment(endDate, 'YYYYMMDD') : null;
+  // const parsedStartDate = startDate ? moment(startDate, 'YYYYMMDD') : null;
+  // const parsedEndDate = endDate ? moment(endDate, 'YYYYMMDD') : null;
+
+  //Data odierna default
+
+  const parsedStartDate = startDate
+    ? moment(startDate, 'YYYYMMDD')
+    : moment(); // default = oggi
+
+  const parsedEndDate = startDate
+    ? moment(startDate, 'YYYYMMDD')
+    : moment(); // default = oggi
+
+
 
   return (
     <DateRangePicker

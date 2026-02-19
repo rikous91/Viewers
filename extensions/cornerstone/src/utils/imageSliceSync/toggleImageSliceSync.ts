@@ -6,7 +6,8 @@ export default function toggleImageSliceSync({
   servicesManager,
   viewports: providedViewports,
   syncId,
-}: withAppTypes) {
+  toggledState,
+}: withAppTypes & { toggledState?: boolean }) {
   const { syncGroupService, viewportGridService, displaySetService, cornerstoneViewportService } =
     servicesManager.services;
 
@@ -14,6 +15,11 @@ export default function toggleImageSliceSync({
 
   const viewports =
     providedViewports || getReconstructableStackViewports(viewportGridService, displaySetService);
+
+  if (toggledState === false) {
+    disableSync(syncId, servicesManager, viewports);
+    return;
+  }
 
   // Todo: right now we don't have a proper way to define specific
   // viewports to add to synchronizers, and right now it is global or not
@@ -28,12 +34,31 @@ export default function toggleImageSliceSync({
     return !!imageSync;
   });
 
+  if (toggledState === true) {
+    enableSync(syncId, servicesManager, viewports);
+    return;
+  }
+
   if (someViewportHasSync) {
-    return disableSync(syncId, servicesManager);
+    disableSync(syncId, servicesManager, viewports);
+    return;
   }
 
   // create synchronization group and add the viewports to it.
-  viewports.forEach(gridViewport => {
+  enableSync(syncId, servicesManager, viewports);
+}
+
+function enableSync(
+  syncName: string,
+  servicesManager: AppTypes.ServicesManager,
+  viewports?: ReturnType<typeof getReconstructableStackViewports>
+) {
+  const { syncGroupService, viewportGridService, displaySetService, cornerstoneViewportService } =
+    servicesManager.services;
+  const viewportsToSync =
+    viewports || getReconstructableStackViewports(viewportGridService, displaySetService);
+
+  viewportsToSync.forEach(gridViewport => {
     const { viewportId } = gridViewport.viewportOptions;
     const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
     if (!viewport) {
@@ -41,18 +66,32 @@ export default function toggleImageSliceSync({
     }
     syncGroupService.addViewportToSyncGroup(viewportId, viewport.getRenderingEngine().id, {
       type: 'imageSlice',
-      id: syncId,
+      id: syncName,
       source: true,
       target: true,
     });
   });
+
+  const synchronizer = syncGroupService.getSynchronizer(syncName);
+  if (synchronizer) {
+    synchronizer.setEnabled(true);
+  }
 }
 
-function disableSync(syncName, servicesManager: AppTypes.ServicesManager) {
+function disableSync(
+  syncName: string,
+  servicesManager: AppTypes.ServicesManager,
+  viewports?: ReturnType<typeof getReconstructableStackViewports>
+) {
   const { syncGroupService, viewportGridService, displaySetService, cornerstoneViewportService } =
     servicesManager.services;
-  const viewports = getReconstructableStackViewports(viewportGridService, displaySetService);
-  viewports.forEach(gridViewport => {
+  const synchronizer = syncGroupService.getSynchronizer(syncName);
+  if (synchronizer) {
+    synchronizer.setEnabled(false);
+  }
+  const viewportsToSync =
+    viewports || getReconstructableStackViewports(viewportGridService, displaySetService);
+  viewportsToSync.forEach(gridViewport => {
     const { viewportId } = gridViewport.viewportOptions;
     const viewport = cornerstoneViewportService.getCornerstoneViewport(viewportId);
     if (!viewport) {

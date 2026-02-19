@@ -21,6 +21,8 @@ function PanelStudyBrowser({
   requestDisplaySetCreationForStudy,
   dataSource,
 }) {
+  const thumbDebug =
+    typeof window !== 'undefined' && window?.localStorage?.getItem('ohifThumbDebug') === '1';
   const { servicesManager, commandsManager } = useSystem();
   const { hangingProtocolService, displaySetService, uiNotificationService, customizationService } =
     servicesManager.services;
@@ -158,6 +160,19 @@ function PanelStudyBrowser({
       const imageIds = dataSource.getImageIdsForDisplaySet(displaySet);
       const imageId = imageIds[Math.floor(imageIds.length / 2)];
 
+      if (thumbDebug) {
+        // eslint-disable-next-line no-console
+        console.warn('[thumb] initial', {
+          displaySetInstanceUID: dSet.displaySetInstanceUID,
+          modality: displaySet?.Modality,
+          sopClassUID: displaySet?.SOPClassUID,
+          imageIdsLength: imageIds?.length || 0,
+          imageId,
+          hasThumbnailSrc: Boolean(displaySet?.thumbnailSrc),
+          hasGetThumbnailSrc: Boolean(displaySet?.getThumbnailSrc),
+        });
+      }
+
       let { thumbnailSrc } = displaySet;
       if (!thumbnailSrc && displaySet.getThumbnailSrc) {
         thumbnailSrc = await displaySet.getThumbnailSrc();
@@ -221,6 +236,19 @@ function PanelStudyBrowser({
 
           const imageIds = dataSource.getImageIdsForDisplaySet(displaySet);
           const imageId = imageIds[Math.floor(imageIds.length / 2)];
+
+          if (thumbDebug) {
+            // eslint-disable-next-line no-console
+            console.warn('[thumb] added', {
+              displaySetInstanceUID: dSet.displaySetInstanceUID,
+              modality: displaySet?.Modality,
+              sopClassUID: displaySet?.SOPClassUID,
+              imageIdsLength: imageIds?.length || 0,
+              imageId,
+              hasThumbnailSrc: Boolean(displaySet?.thumbnailSrc),
+              hasGetThumbnailSrc: Boolean(displaySet?.getThumbnailSrc),
+            });
+          }
 
           // TODO: Is it okay that imageIds are not returned here for SR displaysets?
           if (!imageId) {

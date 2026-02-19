@@ -32,9 +32,22 @@ const thumbnailNoImageModalities = [
   'RTPLAN',
   'RTDOSE',
   'DOC',
-  'OT',
   'PMAP',
 ];
+
+const shouldHideThumbnail = ds => {
+  if (thumbnailNoImageModalities.includes(ds.Modality) || ds?.unsupported) {
+    return true;
+  }
+
+  if (ds?.Modality === 'OT') {
+    const frames = Number(ds?.numImageFrames ?? 0);
+    const imagesCount = ds?.images?.length ?? 0;
+    return frames === 0 && imagesCount === 0;
+  }
+
+  return false;
+};
 
 let erroreStudiRemoti = false;
 const mostraPrimoStudioStorico = true;
@@ -291,9 +304,7 @@ export default function PanelStudyBrowserTracking({
 
     let currentDisplaySets = displaySetService.activeDisplaySets;
     // filter non based on the list of modalities that are supported by cornerstone
-    currentDisplaySets = currentDisplaySets.filter(
-      ds => !thumbnailNoImageModalities.includes(ds.Modality)
-    );
+    currentDisplaySets = currentDisplaySets.filter(ds => !shouldHideThumbnail(ds));
 
     if (!currentDisplaySets.length) {
       return;
@@ -750,7 +761,7 @@ function _mapDisplaySets(
 }
 
 function _getComponentType(ds) {
-  if (thumbnailNoImageModalities.includes(ds.Modality) || ds?.unsupported) {
+  if (shouldHideThumbnail(ds)) {
     return 'thumbnailNoImage';
   }
 

@@ -5,6 +5,7 @@ import { Enums } from '@cornerstonejs/core';
 function ViewportImageSliceLoadingIndicator({ viewportData, element }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const viewportType = viewportData?.viewportType;
 
   const loadIndicatorRef = useRef(null);
   const imageIdToBeLoaded = useRef(null);
@@ -33,6 +34,9 @@ function ViewportImageSliceLoadingIndicator({ viewportData, element }) {
   };
 
   useEffect(() => {
+    if (viewportType && viewportType !== Enums.ViewportType.STACK) {
+      return;
+    }
     element.addEventListener(Enums.Events.STACK_VIEWPORT_SCROLL, setLoadingState);
     element.addEventListener(Enums.Events.IMAGE_LOAD_ERROR, setErrorState);
     element.addEventListener(Enums.Events.STACK_NEW_IMAGE, setFinishLoadingState);
@@ -44,7 +48,11 @@ function ViewportImageSliceLoadingIndicator({ viewportData, element }) {
 
       element.removeEventListener(Enums.Events.IMAGE_LOAD_ERROR, setErrorState);
     };
-  }, [element, viewportData]);
+  }, [element, viewportData, viewportType]);
+
+  if (viewportType && viewportType !== Enums.ViewportType.STACK) {
+    return null;
+  }
 
   if (error) {
     return (

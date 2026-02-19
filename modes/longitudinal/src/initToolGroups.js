@@ -95,6 +95,8 @@ function initDefaultToolGroup(extensionManager, toolGroupService, commandsManage
       {
         toolName: toolNames.AdvancedMagnify,
       },
+      { toolName: toolNames.ReferenceCursors },
+      { toolName: toolNames.ScaleOverlay },
     ],
   };
 
@@ -273,6 +275,8 @@ function initMPRToolGroup(extensionManager, toolGroupService, commandsManager) {
       {
         toolName: toolNames.AdvancedMagnify,
       },
+      { toolName: toolNames.ReferenceCursors },
+      { toolName: toolNames.ScaleOverlay },
       // { toolName: toolNames.ReferenceLines },
     ],
   };

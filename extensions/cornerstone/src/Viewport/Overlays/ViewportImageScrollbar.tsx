@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Enums, VolumeViewport3D, utilities as csUtils } from '@cornerstonejs/core';
+import { Enums, VolumeViewport, VolumeViewport3D, utilities as csUtils } from '@cornerstonejs/core';
 import { ImageScrollbar } from '@ohif/ui';
 
 function CornerstoneImageScrollbar({
@@ -45,6 +45,9 @@ function CornerstoneImageScrollbar({
     }
 
     try {
+      if (viewport instanceof VolumeViewport && !viewport.getActors?.()?.length) {
+        return;
+      }
       const imageIndex = viewport.getCurrentImageIdIndex();
       const numberOfSlices = viewport.getNumberOfSlices();
 
@@ -72,13 +75,20 @@ function CornerstoneImageScrollbar({
       if (!viewport || viewport instanceof VolumeViewport3D) {
         return;
       }
-      const { imageIndex, newImageIdIndex = imageIndex } = event.detail;
-      const numberOfSlices = viewport.getNumberOfSlices();
-      // find the index of imageId in the imageIds
-      setImageSliceData({
-        imageIndex: newImageIdIndex,
-        numberOfSlices,
-      });
+      try {
+        if (viewport instanceof VolumeViewport && !viewport.getActors?.()?.length) {
+          return;
+        }
+        const { imageIndex, newImageIdIndex = imageIndex } = event.detail;
+        const numberOfSlices = viewport.getNumberOfSlices();
+        // find the index of imageId in the imageIds
+        setImageSliceData({
+          imageIndex: newImageIdIndex,
+          numberOfSlices,
+        });
+      } catch (error) {
+        console.warn(error);
+      }
     };
 
     element.addEventListener(eventId, updateIndex);

@@ -1,0 +1,2427 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Layout Preferiti - GRID AUTO</title>
+
+    <!-- Stimulsoft JS PACK -->
+    <script src="./assets/stimulsoft.reports.pack.js"></script>
+    <script src="./assets/stimulsoft.reports.engine.pack.js"></script>
+    <script src="./assets/stimulsoft.reports.import.xlsx.pack.js"></script>
+    <script src="./assets/stimulsoft.reports.export.pack.js"></script>
+    <script src="./assets/stimulsoft.reports.chart.pack.js"></script>
+    <script src="./assets/stimulsoft.reports.maps.pack.js"></script>
+    <script src="./assets/stimulsoft.viewer.pack.js"></script>
+    <script src="./assets/stimulsoft.designer.pack.js"></script>
+
+    <style>
+      :root {
+        --print-black: #000000;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+      body {
+        display: flex;
+        font-family: sans-serif;
+      }
+
+      .stiDesignerWorkPanel,
+      #StiDesignerpropertiesPanel,
+      .stiDesignerToolbox {
+        display: none;
+      }
+
+      .stiDesignerClearAllStyles .stiDesignerToolButtonCell:nth-child(3),
+      .stiDesignerClearAllStyles .stiDesignerToolButtonCell:nth-child(4),
+      .stiDesignerClearAllStyles .stiDesignerToolButtonCell:nth-child(5),
+      .stiDesignerClearAllStyles .stiDesignerToolButtonCell:nth-child(6),
+      .stiDesignerClearAllStyles .stiDesignerToolButtonCell:nth-child(7) {
+        display: none !important;
+      }
+
+      .stiDesignerPaintPanel line {
+        display: none;
+      }
+
+      [title='New Page'] {
+        display: none;
+      }
+
+      #sidebar {
+        width: 240px;
+        background: var(--print-black);
+        color: #e5e7eb;
+        padding: 10px;
+        overflow-y: auto;
+        border-right: 1px solid #1e293b;
+      }
+      #sidebar img {
+        width: 100%;
+        margin-bottom: 10px;
+        cursor: pointer;
+        border: 1px solid #282828;
+      }
+
+      #main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #toolbar {
+        background: var(--print-black);
+        padding: 6px;
+        border-bottom: 1px solid #1f2937;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: #e5e7eb;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      /* ------ OHIF GRID ------ */
+      #megaGrid {
+        display: grid;
+        grid-template-columns: repeat(4, 24px);
+        grid-template-rows: repeat(4, 24px);
+        gap: 2px;
+        background: #1c1c1c;
+        padding: 4px;
+        border: 1px solid #333;
+        cursor: pointer;
+      }
+
+      .mega-cell {
+        width: 24px;
+        height: 24px;
+        background: #363636;
+        border: 1px solid var(--print-black);
+        transition:
+          background 0.15s,
+          box-shadow 0.15s;
+      }
+      .mega-cell.highlight {
+        background: #0b4cff;
+      }
+      .mega-cell.selected {
+        box-shadow: 0 0 0 2px #3b82f6 inset;
+      }
+
+      #designer-container {
+        flex: 1;
+        position: relative;
+        background: var(--print-black) !important;
+      }
+      #designer {
+        width: 100%;
+        height: 100%;
+        background: var(--print-black) !important;
+      }
+
+      #toolbar button {
+        background: #161616;
+        border: 1px solid #4b5563;
+        color: #e5e7eb;
+        padding: 4px 10px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      #toolbar button.selected {
+        background: #4b5563;
+        border-color: #fff;
+      }
+      #reset {
+        background: #b71c1c !important;
+      }
+
+      #reset:hover {
+        background: #dd1c1c !important;
+      }
+
+      #printBar {
+        right: 20px;
+        position: absolute;
+      }
+
+      #printBar button {
+        background: #fff;
+        color: black;
+        border: none;
+        padding: 10px 22px;
+        font-size: 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+
+      #printBar button:hover {
+        background: #d3d3d3;
+      }
+
+      .drag-no-scroll {
+        overflow: hidden !important;
+      }
+
+      #cell-picker {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10002;
+      }
+      #cell-picker .picker-card {
+        background: #0b0b0b;
+        border: 1px solid #2a2a2a;
+        padding: 16px;
+        border-radius: 10px;
+        color: #fff;
+        min-width: 280px;
+      }
+      #cell-picker .picker-title {
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+      #cell-picker .picker-grid {
+        display: grid;
+        gap: 8px;
+      }
+      #cell-picker .picker-cell {
+        background: #111;
+        border: 1px solid #333;
+        color: #e5e7eb;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+        border-radius: 6px;
+        user-select: none;
+      }
+      #cell-picker .picker-cell:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25) inset;
+      }
+      #cell-picker .picker-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        justify-content: flex-end;
+      }
+      #cell-picker .picker-actions button {
+        background: #1f2937;
+        border: 1px solid #374151;
+        color: #e5e7eb;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="cell-picker">
+      <div class="picker-card">
+        <div class="picker-title">Seleziona la cella</div>
+        <div
+          id="cell-picker-grid"
+          class="picker-grid"
+        ></div>
+        <div class="picker-actions">
+          <button id="cell-picker-cancel">Annulla</button>
+        </div>
+      </div>
+    </div>
+    <div id="sidebar">
+      <h3>Preferiti</h3>
+      <div id="fav-list"></div>
+    </div>
+
+    <div id="main">
+      <div id="toolbar">
+        <strong>Griglia:</strong>
+
+        <div id="megaGrid">
+          <!-- ROW 1 -->
+          <div
+            class="mega-cell"
+            data-layout="1x1"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="1x2"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="1x3"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="1x4"
+          ></div>
+
+          <!-- ROW 2 -->
+          <div
+            class="mega-cell"
+            data-layout="2x1"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="2x2"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="2x3"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="2x4"
+          ></div>
+
+          <!-- ROW 3 -->
+          <div
+            class="mega-cell"
+            data-layout="3x1"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="3x2"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="3x3"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="3x4"
+          ></div>
+
+          <!-- ROW 4 -->
+          <div
+            class="mega-cell"
+            data-layout="4x1"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="4x2"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="4x3"
+          ></div>
+          <div
+            class="mega-cell"
+            data-layout="4x4"
+          ></div>
+        </div>
+
+        <strong style="margin-left: 20px">Formato:</strong>
+        <button
+          id="A4P"
+          onclick="selectFormat('A4','portrait')"
+        >
+          A4 Portrait
+        </button>
+        <button
+          id="A4L"
+          onclick="selectFormat('A4','landscape')"
+        >
+          A4 Landscape
+        </button>
+        <button
+          id="A3P"
+          onclick="selectFormat('A3','portrait')"
+        >
+          A3 Portrait
+        </button>
+        <button
+          id="A3L"
+          onclick="selectFormat('A3','landscape')"
+        >
+          A3 Landscape
+        </button>
+        <strong style="margin-left: 20px">Extra:</strong>
+        <button
+          id="reset"
+          onclick="addGrid(currentGridType);"
+          ;
+        >
+          Reset
+        </button>
+        <div id="printBar">
+          <button onclick="printCurrent()">🖨️ Stampa</button>
+        </div>
+      </div>
+
+      <div id="designer-container">
+        <div id="designer"></div>
+      </div>
+    </div>
+
+    <script>
+      window.addEventListener('message', e => {
+        if (e.data?.type === 'refresh-preferiti') {
+          refreshPreferiti();
+        }
+      });
+
+      const PRINT_BLACK = '#000000';
+      const BLACK_PIXEL =
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC';
+      const STUDY_TITLE_HEIGHT_CM = 1.2;
+      const SHOW_STUDY_TITLE = false;
+      let designer, report, page;
+      let currentGridType = null;
+      let selectedGridCell = null;
+
+      async function printCurrent() {
+        if (!designer || !designer.report) {
+          console.error('Designer non pronto');
+          return;
+        }
+
+        let restoreAfterPrint = () => {};
+        let printCleanup = () => {};
+
+        try {
+          const rpt = designer.report;
+          restoreAfterPrint = await prepareImagesForPrint();
+          printCleanup = preparePrintComposite();
+
+          const afterPrint = () => {
+            printCleanup();
+            restoreAfterPrint();
+            window.removeEventListener('afterprint', afterPrint);
+          };
+          window.addEventListener('afterprint', afterPrint);
+
+          rpt.renderAsync(function () {
+            try {
+              rpt.print();
+            } catch (err2) {
+              console.error('Errore durante report.print():', err2);
+            }
+          });
+        } catch (err) {
+          console.error('Errore durante la stampa:', err);
+          printCleanup();
+          restoreAfterPrint();
+        }
+      }
+
+      function loadPreferiti() {
+        try {
+          return JSON.parse(localStorage.getItem('nolex-preferiti-layout') || '[]');
+        } catch {
+          return [];
+        }
+      }
+
+      /* --- DRAG & DROP CON OVERLAY --- */
+      function setupDragAndDrop() {
+        const favList = document.getElementById('fav-list');
+
+        // Crea un overlay per il drop
+        const dropOverlay = document.createElement('div');
+        dropOverlay.id = 'drop-overlay';
+        dropOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 24px;
+        pointer-events: none;
+    `;
+        dropOverlay.textContent = "Rilascia qui per aggiungere l'immagine";
+        document.body.appendChild(dropOverlay);
+
+        // Variabile per tenere traccia dell'immagine trascinata
+        let draggedImageUrl = null;
+
+        // Overlay attivo sopra il designer per catturare il drop
+        const dropCapture = document.createElement('div');
+        dropCapture.id = 'drop-capture';
+        dropCapture.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        display: none;
+        z-index: 10000;
+        background: rgba(0,0,0,0.0);
+        pointer-events: auto;
+    `;
+        document.body.appendChild(dropCapture);
+
+        const dropHighlight = document.createElement('div');
+        dropHighlight.id = 'drop-highlight';
+        dropHighlight.style.cssText = `
+        position: fixed;
+        border: 2px solid #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59,130,246,0.35) inset;
+        display: none;
+        z-index: 10001;
+        pointer-events: none;
+    `;
+        document.body.appendChild(dropHighlight);
+
+        // Rendi tutte le immagini nella sidebar trascinabili
+        favList.addEventListener('dragstart', function (e) {
+          if (e.target.tagName === 'IMG') {
+            draggedImageUrl = e.target.src;
+            e.dataTransfer.setData('text/plain', e.target.src);
+            e.dataTransfer.effectAllowed = 'copy';
+
+            // Mostra l'overlay
+            dropOverlay.style.display = 'flex';
+            const designerContainer = document.getElementById('designer-container');
+            if (designerContainer) {
+              const rect = designerContainer.getBoundingClientRect();
+              dropCapture.style.left = rect.left + 'px';
+              dropCapture.style.top = rect.top + 'px';
+              dropCapture.style.width = rect.width + 'px';
+              dropCapture.style.height = rect.height + 'px';
+              dropCapture.style.display = 'block';
+            }
+            document.body.classList.add('drag-no-scroll');
+            console.log('Inizio trascinamento:', draggedImageUrl);
+          }
+        });
+
+        favList.addEventListener('dragend', function () {
+          // Nascondi l'overlay
+          dropOverlay.style.display = 'none';
+          dropCapture.style.display = 'none';
+          dropHighlight.style.display = 'none';
+          document.body.classList.remove('drag-no-scroll');
+          draggedImageUrl = null;
+          console.log('Fine trascinamento');
+        });
+
+        const handleDrop = async e => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Nascondi l'overlay
+          dropOverlay.style.display = 'none';
+          dropCapture.style.display = 'none';
+          dropHighlight.style.display = 'none';
+          document.body.classList.remove('drag-no-scroll');
+
+          if (!draggedImageUrl) {
+            // Prova a recuperare dai dati del trasferimento
+            draggedImageUrl = e.dataTransfer.getData('text/plain');
+          }
+
+          if (!draggedImageUrl) {
+            console.log('Nessuna immagine trascinata');
+            return;
+          }
+
+          console.log('Drop ricevuto, immagine:', draggedImageUrl);
+
+          // Verifica se è stato fatto il drop sul designer
+          const designerRect = getDesignerPageRectGlobal();
+          if (!designerRect) {
+            console.warn('Designer rect non trovato');
+            draggedImageUrl = null;
+            return;
+          }
+
+          if (
+            e.clientX >= designerRect.left &&
+            e.clientX <= designerRect.right &&
+            e.clientY >= designerRect.top &&
+            e.clientY <= designerRect.bottom
+          ) {
+            const relativeX = e.clientX - designerRect.left;
+            const relativeY = e.clientY - designerRect.top;
+
+            const cmX = (relativeX / designerRect.width) * page.pageWidth;
+            const cmY = (relativeY / designerRect.height) * page.pageHeight;
+
+            const targetCell = findCellAtPosition(cmX, cmY);
+            if (targetCell) {
+              await addImageToCell(draggedImageUrl, targetCell.row, targetCell.col);
+              showMessage(
+                `Immagine posizionata nella cella [${targetCell.row},${targetCell.col}]`,
+                'success'
+              );
+            } else {
+              showMessage('Drop fuori griglia', 'warning');
+            }
+          } else {
+            console.log('Drop fuori dal designer');
+          }
+
+          draggedImageUrl = null;
+        };
+
+        const handleDragOver = e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+
+          const designerRect = getDesignerPageRectGlobal();
+          if (!designerRect) return;
+          const inDesigner =
+            e.clientX >= designerRect.left &&
+            e.clientX <= designerRect.right &&
+            e.clientY >= designerRect.top &&
+            e.clientY <= designerRect.bottom;
+          if (!inDesigner) {
+            dropHighlight.style.display = 'none';
+            return;
+          }
+
+          const relativeX = e.clientX - designerRect.left;
+          const relativeY = e.clientY - designerRect.top;
+          const cmX = (relativeX / designerRect.width) * page.pageWidth;
+          const cmY = (relativeY / designerRect.height) * page.pageHeight;
+          const targetCell = findCellAtPosition(cmX, cmY);
+          if (!targetCell) {
+            dropHighlight.style.display = 'none';
+            return;
+          }
+
+          const [rows, cols] = currentGridType.split('x').map(Number);
+          const titleText = SHOW_STUDY_TITLE
+            ? buildStudyTitleText(getPatientInfo(), getStudyInfo())
+            : '';
+          const gridTop = titleText ? STUDY_TITLE_HEIGHT_CM : 0;
+          const gridH = page.pageHeight - gridTop;
+          const cellW = page.pageWidth / cols;
+          const cellH = gridH / rows;
+
+          const cellLeftCm = targetCell.col * cellW;
+          const cellTopCm = gridTop + targetCell.row * cellH;
+          const cellLeftPx = designerRect.left + (cellLeftCm / page.pageWidth) * designerRect.width;
+          const cellTopPx = designerRect.top + (cellTopCm / page.pageHeight) * designerRect.height;
+          const cellWpx = (cellW / page.pageWidth) * designerRect.width;
+          const cellHpx = (cellH / page.pageHeight) * designerRect.height;
+
+          dropHighlight.style.left = `${cellLeftPx}px`;
+          dropHighlight.style.top = `${cellTopPx}px`;
+          dropHighlight.style.width = `${cellWpx}px`;
+          dropHighlight.style.height = `${cellHpx}px`;
+          dropHighlight.style.display = 'block';
+        };
+
+        // Gestisci dragover/drop su tutto il documento
+        document.addEventListener('dragover', handleDragOver);
+        document.addEventListener('drop', handleDrop);
+
+        // Gestisci dragover/drop sul container del designer (se l'iframe intercetta)
+        const designerContainer = document.getElementById('designer-container');
+        if (designerContainer) {
+          designerContainer.addEventListener('dragover', handleDragOver);
+          designerContainer.addEventListener('drop', handleDrop);
+        }
+
+        // Cattura drop sopra il designer
+        dropCapture.addEventListener('dragover', handleDragOver);
+        dropCapture.addEventListener('drop', handleDrop);
+
+        // Prova ad agganciare l'iframe interno del designer, se presente
+        const attachIframeHandlers = frame => {
+          try {
+            const doc = frame.contentDocument || frame.contentWindow?.document;
+            if (!doc) return;
+            doc.addEventListener('dragover', handleDragOver);
+            doc.addEventListener('drop', handleDrop);
+          } catch (err) {
+            console.warn('Impossibile agganciare drag&drop all’iframe del designer:', err);
+          }
+        };
+        const designerFrame = document.querySelector('#designer-container iframe');
+        if (designerFrame) {
+          if (designerFrame.contentDocument) {
+            attachIframeHandlers(designerFrame);
+          } else {
+            designerFrame.addEventListener('load', () => attachIframeHandlers(designerFrame));
+          }
+        }
+      }
+
+      function findCellAtPosition(cmX, cmY) {
+        if (!currentGridType) return null;
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+        const titleText = SHOW_STUDY_TITLE
+          ? buildStudyTitleText(getPatientInfo(), getStudyInfo())
+          : '';
+        const gridTop = titleText ? STUDY_TITLE_HEIGHT_CM : 0;
+        const gridH = page.pageHeight - gridTop;
+
+        if (cmY < gridTop || cmY > gridTop + gridH) {
+          return null;
+        }
+
+        const cellW = page.pageWidth / cols;
+        const cellH = gridH / rows;
+
+        const row = Math.floor((cmY - gridTop) / cellH);
+        const col = Math.floor(cmX / cellW);
+
+        if (row < 0 || row >= rows || col < 0 || col >= cols) {
+          return null;
+        }
+
+        return { row, col };
+      }
+
+      function getDesignerPageRectGlobal() {
+        const selectors = [
+          '.stiDesignerPage',
+          '.stiPage',
+          '.stiPageContainer',
+          '[id^="StiPage"]',
+          '[id^="StiDesignerPage"]',
+        ];
+
+        const frame = document.querySelector('#designer-container iframe');
+        if (frame) {
+          try {
+            const doc = frame.contentDocument || frame.contentWindow?.document;
+            if (doc) {
+              for (const sel of selectors) {
+                const el = doc.querySelector(sel);
+                if (el) {
+                  const r = el.getBoundingClientRect();
+                  if (r.width > 0 && r.height > 0) {
+                    const fr = frame.getBoundingClientRect();
+                    return {
+                      left: fr.left + r.left,
+                      top: fr.top + r.top,
+                      right: fr.left + r.right,
+                      bottom: fr.top + r.bottom,
+                      width: r.width,
+                      height: r.height,
+                    };
+                  }
+                }
+              }
+            }
+          } catch {}
+        }
+
+        for (const sel of selectors) {
+          const el = document.querySelector(sel);
+          if (el) {
+            const r = el.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) return r;
+          }
+        }
+
+        const designerContainer = document.getElementById('designer-container');
+        return designerContainer ? designerContainer.getBoundingClientRect() : null;
+      }
+
+      function setupCellSelectionHandlers() {
+        const handleClick = e => {
+          const rect = getDesignerPageRectGlobal();
+          if (!rect) return;
+          if (
+            e.clientX < rect.left ||
+            e.clientX > rect.right ||
+            e.clientY < rect.top ||
+            e.clientY > rect.bottom
+          ) {
+            return;
+          }
+
+          const cmX = ((e.clientX - rect.left) / rect.width) * page.pageWidth;
+          const cmY = ((e.clientY - rect.top) / rect.height) * page.pageHeight;
+          const targetCell = findCellAtPosition(cmX, cmY);
+          if (targetCell) {
+            selectGridCell(targetCell.row, targetCell.col);
+            showMessage(`Cella selezionata [${targetCell.row},${targetCell.col}]`, 'info');
+          }
+        };
+
+        const designerContainer = document.getElementById('designer-container');
+        if (designerContainer) {
+          designerContainer.addEventListener('click', handleClick);
+        }
+
+        const designerFrame = document.querySelector('#designer-container iframe');
+        if (designerFrame) {
+          if (designerFrame.contentDocument) {
+            designerFrame.contentDocument.addEventListener('click', handleClick, true);
+          } else {
+            designerFrame.addEventListener('load', () => {
+              try {
+                designerFrame.contentDocument.addEventListener('click', handleClick, true);
+              } catch {}
+            });
+          }
+        }
+      }
+      /* --- VERSIONE ALTERNATIVA: CLICK + SELEZIONE CELLA --- */
+      function setupImagePlacement() {
+        const favList = document.getElementById('fav-list');
+        let selectedImageUrl = null;
+
+        // Seleziona immagine dalla sidebar
+        favList.addEventListener('click', function (e) {
+          if (e.target.tagName === 'IMG') {
+            selectedImageUrl = e.target.src;
+
+            // Evidenzia l'immagine selezionata
+            document.querySelectorAll('#fav-list img').forEach(img => {
+              img.style.border = '2px solid transparent';
+            });
+            e.target.style.border = '2px solid #3b82f6';
+
+            // Mostra messaggio
+            showMessage("Clicca su una cella della griglia per posizionare l'immagine", 'info');
+            console.log('Immagine selezionata:', selectedImageUrl);
+          }
+        });
+
+        // Intercetta i click sul designer per posizionare l'immagine
+        // Dobbiamo intercettare gli eventi del designer di Stimulsoft
+        interceptDesignerClicks(selectedImageUrl);
+      }
+
+      /* --- INTERCETTA CLICK SUL DESIGNER --- */
+      function interceptDesignerClicks(imageUrlCallback) {
+        const designerContainer = document.getElementById('designer-container');
+
+        // Usa un MutationObserver per intercettare gli elementi del designer
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (mutation.addedNodes.length) {
+              // Cerca gli elementi che potrebbero essere celle della griglia
+              const designerElements = document.querySelectorAll(
+                '[id^="StiComponent"], .stiDesignerSelectedPage'
+              );
+
+              designerElements.forEach(element => {
+                if (!element.hasAttribute('data-click-listener')) {
+                  element.setAttribute('data-click-listener', 'true');
+
+                  element.addEventListener('click', async function (e) {
+                    e.stopPropagation();
+
+                    const selectedImageUrl = imageUrlCallback;
+
+                    // Ottieni le coordinate del click
+                    const rect = element.getBoundingClientRect();
+                    const designerRect = designerContainer.getBoundingClientRect();
+
+                    const relativeX = e.clientX - designerRect.left;
+                    const relativeY = e.clientY - designerRect.top;
+
+                    // Converti in coordinate della pagina (cm)
+                    const cmX = (relativeX / designerRect.width) * page.pageWidth;
+                    const cmY = (relativeY / designerRect.height) * page.pageHeight;
+
+                    console.log(`Click su designer: ${cmX.toFixed(2)}cm, ${cmY.toFixed(2)}cm`);
+
+                    // Trova la cella più vicina
+                    const targetCell = findCellAtPosition(cmX, cmY);
+
+                    if (targetCell) {
+                      selectGridCell(targetCell.row, targetCell.col);
+                      showMessage(
+                        `Cella selezionata [${targetCell.row},${targetCell.col}]`,
+                        'info'
+                      );
+                    }
+                  });
+                }
+              });
+            }
+          });
+        });
+
+        observer.observe(designerContainer, { childList: true, subtree: true });
+      }
+
+      async function addImageToCell(imageUrl, row, col) {
+        if (!currentGridType) {
+          console.error('Nessun layout selezionato');
+          return;
+        }
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+
+        // Verifica che la cella sia valida
+        if (row < 0 || row >= rows || col < 0 || col >= cols) {
+          console.error(`Cella [${row},${col}] non valida per layout ${rows}x${cols}`);
+          return;
+        }
+
+        const W = page.pageWidth;
+        const H = page.pageHeight;
+        const titleText = buildStudyTitleText(getPatientInfo(), getStudyInfo());
+        const gridTop = titleText ? STUDY_TITLE_HEIGHT_CM : 0;
+        const gridH = H - gridTop;
+        const isA4Portrait = Math.abs(W - 21) < 0.01 && Math.abs(H - 29.7) < 0.01;
+        const infoYOffset = isA4Portrait ? Math.round(((gridH * 96) / 2.54) * 0.01) : 0;
+        const cellW = W / cols;
+        const cellH = gridH / rows;
+
+        ensureCellBackground(row, col, cellW, cellH, gridTop);
+
+        // Carica l'immagine per ottenere dimensioni
+        const img = await new Promise(res => {
+          const image = new Image();
+          image.onload = () => res(image);
+          image.onerror = () => {
+            console.error("Errore nel caricamento dell'immagine:", imageUrl);
+            res(null);
+          };
+          image.src = imageUrl;
+        });
+
+        if (!img) {
+          console.error("Impossibile caricare l'immagine");
+          return;
+        }
+
+        // Componi immagine full-cell con sfondo nero
+        const PX = 96 / 2.54;
+        const cellWpx = Math.max(1, Math.round(cellW * PX));
+        const cellHpx = Math.max(1, Math.round(cellH * PX));
+        const composedUrl = composeImageOnBlack(
+          img,
+          cellWpx,
+          cellHpx,
+          cellWpx / img.width,
+          cellHpx / img.height
+        );
+
+        const left = col * cellW;
+        const top = gridTop + row * cellH;
+
+        // Rimuovi eventuali immagini esistenti nella stessa cella
+        removeImageFromCell(row, col);
+
+        const stiImg = new Stimulsoft.Report.Components.StiImage();
+        stiImg.left = left;
+        stiImg.top = top;
+        stiImg.width = cellW;
+        stiImg.height = cellH;
+        stiImg.imageURL = composedUrl;
+        stiImg.imageAsBase64 = true;
+        stiImg.backColor = PRINT_BLACK;
+        stiImg.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
+          createColor(0, 0, 0, 255, 'PrintBlack')
+        );
+        stiImg.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+        stiImg.stretch = true;
+        stiImg.aspectRatio = false;
+        stiImg.keepAspectRatio = false;
+        stiImg.locked = true;
+        stiImg.enabled = true;
+        stiImg.allowResize = false;
+        stiImg.allowMove = false;
+        stiImg.name = `Image_${row}_${col}_${Date.now()}`;
+        stiImg.tag = imageUrl;
+        stiImg._nolexComposeKey = `${cellW}x${cellH}`;
+
+        page.components.add(stiImg);
+
+        bringPatientInfoToFront();
+        designer.renderHtml('designer');
+        console.log(`Immagine aggiunta alla cella [${row},${col}]`);
+
+        return stiImg;
+      }
+
+      function selectGridCell(row, col) {
+        selectedGridCell = { row, col };
+      }
+
+      function removeImageFromCell(row, col) {
+        const prefix = `Image_${row}_${col}`;
+        const toRemove = [];
+
+        for (let i = 0; i < page.components.count; i++) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name && component.name.startsWith(prefix)) {
+            toRemove.push(i);
+            console.log(`Rimuovo immagine esistente: ${component.name}`);
+          }
+        }
+
+        // Rimuovi in ordine inverso per evitare problemi di indici
+        toRemove.reverse().forEach(i => {
+          page.components.removeAt(i);
+        });
+      }
+
+      /* --- CONTA IMMAGINI NELLA GRIGLIA --- */
+      function countImagesInGrid() {
+        if (!currentGridType) return 0;
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+        let count = 0;
+
+        for (let i = 0; i < page.components.count; i++) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name && component.name.startsWith('Image_')) {
+            const parts = component.name.split('_');
+            if (parts.length >= 3) {
+              const row = parseInt(parts[1]);
+              const col = parseInt(parts[2]);
+              if (!isNaN(row) && !isNaN(col) && row < rows && col < cols) {
+                count++;
+              }
+            }
+          }
+        }
+
+        console.log(`Immagini nella griglia: ${count}/${rows * cols}`);
+        return count;
+      }
+
+      /* --- GETTAYOUT INFO --- */
+      function getGridInfo() {
+        if (!currentGridType) {
+          return { rows: 0, cols: 0, totalCells: 0, emptyCells: 0 };
+        }
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+        const emptyCell = findEmptyCell();
+        const totalCells = rows * cols;
+        const emptyCells = emptyCell ? 1 : 0; // Semplificato
+
+        return {
+          rows,
+          cols,
+          totalCells,
+          emptyCells,
+          hasEmptyCells: emptyCell !== null,
+        };
+      }
+
+      /* --- VISUALIZZA INFO GRIGLIA --- */
+      function showGridInfo() {
+        const info = getGridInfo();
+        console.log(`Layout: ${info.rows}x${info.cols}`);
+        console.log(`Celle totali: ${info.totalCells}`);
+        console.log(`Celle vuote: ${info.hasEmptyCells ? 'Sì' : 'No'}`);
+        console.log(`Immagini presenti: ${countImagesInGrid()}`);
+
+        // Mostra anche a schermo
+        showMessage(
+          `Layout ${info.rows}x${info.cols} - ${countImagesInGrid()}/${info.totalCells} immagini`,
+          'info'
+        );
+      }
+
+      /* --- VERSIONE SEMPLICE: PULSANTE PER AGGIUNGERE ALLA PRIMA CELLA VUOTA --- */
+      function setupSimpleImageAddition() {
+        const favList = document.getElementById('fav-list');
+
+        favList.addEventListener('click', async function (e) {
+          if (e.target.tagName === 'IMG') {
+            const imageUrl = e.target.src;
+
+            if (!currentGridType) {
+              showMessage('Prima seleziona un layout dalla griglia', 'warning');
+              return;
+            }
+
+            // Trova la prima cella vuota
+            const emptyCell = findEmptyCell();
+
+            if (emptyCell) {
+              await addImageToCell(imageUrl, emptyCell.row, emptyCell.col);
+              showMessage(
+                `Immagine aggiunta alla cella [${emptyCell.row},${emptyCell.col}]`,
+                'success'
+              );
+            } else {
+              // Chiedi se sostituire un'immagine esistente
+              if (confirm('Tutte le celle sono piene. Vuoi sostituire la prima immagine?')) {
+                // Trova la prima immagine e sostituiscila
+                await replaceFirstImage(imageUrl);
+              }
+            }
+          }
+        });
+      }
+
+      /* --- SOSTITUISCI LA PRIMA IMMAGINE --- */
+      async function replaceFirstImage(imageUrl) {
+        if (!currentGridType) return;
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+        const W = page.pageWidth;
+        const H = page.pageHeight;
+        const cellW = W / cols;
+        const cellH = H / rows;
+
+        // Trova la prima immagine
+        let firstImage = null;
+        for (let i = 0; i < page.components.count; i++) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name && component.name.startsWith('Image_')) {
+            firstImage = component;
+            break;
+          }
+        }
+
+        if (firstImage) {
+          // Estrai riga e colonna dal nome
+          const nameParts = firstImage.name.split('_');
+          const row = parseInt(nameParts[1]);
+          const col = parseInt(nameParts[2]);
+
+          if (!isNaN(row) && !isNaN(col)) {
+            // Rimuovi l'immagine esistente
+            page.components.remove(firstImage);
+
+            // Aggiungi la nuova immagine
+            await addImageToCell(imageUrl, row, col);
+            console.log(`Immagine sostituita nella cella [${row},${col}]`);
+          }
+        }
+      }
+
+      /* --- FUNZIONE PER MOSTRARE MESSAGGI --- */
+      function showMessage(text, type = 'info') {
+        // Rimuovi messaggi precedenti
+        const existingMsg = document.getElementById('image-placement-message');
+        if (existingMsg) existingMsg.remove();
+
+        // Crea nuovo messaggio
+        const message = document.createElement('div');
+        message.id = 'image-placement-message';
+        message.textContent = text;
+        message.style.cssText = `
+        position: fixed;
+        top: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transition: opacity 0.3s;
+    `;
+
+        // Colore in base al tipo
+        if (type === 'success') {
+          message.style.backgroundColor = '#10b981';
+        } else if (type === 'warning') {
+          message.style.backgroundColor = '#f59e0b';
+        } else if (type === 'error') {
+          message.style.backgroundColor = '#ef4444';
+        } else {
+          message.style.backgroundColor = '#3b82f6';
+        }
+
+        document.body.appendChild(message);
+
+        // Rimuovi dopo 3 secondi
+        setTimeout(() => {
+          message.style.opacity = '0';
+          setTimeout(() => message.remove(), 300);
+        }, 3000);
+      }
+
+      /* --- MODIFICA refreshPreferiti PER AGGIUNGERE PULSANTI DI AZIONE --- */
+      function refreshPreferiti() {
+        console.log('⟳ Refresh preferiti da postMessage');
+
+        // 1) Ricarico dal localStorage
+        const newPref = JSON.parse(localStorage.getItem('nolex-preferiti-layout') || '[]');
+
+        // 2) Aggiorno la sidebar
+        const favList = document.getElementById('fav-list');
+        favList.innerHTML = ''; // svuoto
+
+        newPref.forEach((p, index) => {
+          if (!p?.DataUrl) return;
+
+          const container = document.createElement('div');
+          container.style.cssText = `
+            margin-bottom: 12px;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #1e293b;
+        `;
+
+          // Immagine
+          const img = document.createElement('img');
+          img.src = p.DataUrl;
+          img.style.cssText = `
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            background: ${PRINT_BLACK};
+            cursor: pointer;
+            display: block;
+        `;
+          img.draggable = true;
+          img.title = 'Clicca per selezionare, poi clicca sulla griglia';
+
+          // Barra inferiore con pulsanti
+          const buttonBar = document.createElement('div');
+          buttonBar.style.cssText = `
+            display: flex;
+            padding: 6px;
+            background: #1e293b;
+            gap: 4px;
+        `;
+
+          // Pulsante "Aggiungi alla prima cella vuota"
+          const addButton = document.createElement('button');
+          addButton.textContent = '+';
+          addButton.title = 'Aggiungi alla prima cella vuota';
+          addButton.style.cssText = `
+            flex: 1;
+            padding: 6px;
+            background: #101010;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        `;
+          addButton.addEventListener('click', async () => {
+            await handleAddToGrid(p.DataUrl);
+          });
+
+          // Pulsante "Drag"
+          const dragButton = document.createElement('button');
+          dragButton.textContent = '↔️';
+          dragButton.title = 'Trascina nella griglia';
+          dragButton.style.cssText = `
+            padding: 6px 10px;
+            background: #8b5cf6;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: move;
+            font-size: 14px;
+        `;
+          dragButton.draggable = true;
+          dragButton.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', p.DataUrl);
+            e.dataTransfer.effectAllowed = 'copy';
+
+            // Mostra overlay
+            const overlay = document.getElementById('drop-overlay');
+            if (overlay) overlay.style.display = 'flex';
+          });
+
+          buttonBar.appendChild(addButton);
+          // buttonBar.appendChild(dragButton);
+
+          container.appendChild(img);
+          container.appendChild(buttonBar);
+          favList.appendChild(container);
+        });
+
+        // 3) Aggiorna la griglia
+        if (currentGridType) {
+          console.log('↻ Rigenero griglia:', currentGridType);
+          addGrid(currentGridType);
+        }
+      }
+
+      /* --- GESTISCI AGGIUNTA ALLA GRIGLIA --- */
+      async function handleAddToGrid(imageUrl) {
+        if (!currentGridType) {
+          showMessage('Prima seleziona un layout dalla griglia', 'warning');
+          return;
+        }
+
+        const targetCell = await promptCellSelection();
+        if (!targetCell) {
+          showMessage('Selezione cella annullata', 'warning');
+          return;
+        }
+
+        await addImageToCell(imageUrl, targetCell.row, targetCell.col);
+        // showMessage(`Immagine aggiunta alla cella [${targetCell.row},${targetCell.col}]`, 'success');
+        showMessage(`Immagine aggiunta alla cella`, 'success');
+      }
+
+      function promptCellSelection() {
+        return new Promise(resolve => {
+          if (!currentGridType) {
+            resolve(null);
+            return;
+          }
+
+          const [rows, cols] = currentGridType.split('x').map(Number);
+          const picker = document.getElementById('cell-picker');
+          const grid = document.getElementById('cell-picker-grid');
+          const cancelBtn = document.getElementById('cell-picker-cancel');
+
+          if (!picker || !grid || !cancelBtn) {
+            resolve(null);
+            return;
+          }
+
+          grid.innerHTML = '';
+          grid.style.gridTemplateColumns = `repeat(${cols}, minmax(60px, 1fr))`;
+
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const cell = document.createElement('div');
+              cell.className = 'picker-cell';
+              cell.textContent = `${r + 1},${c + 1}`;
+              cell.addEventListener('click', () => {
+                picker.style.display = 'none';
+                resolve({ row: r, col: c });
+              });
+              grid.appendChild(cell);
+            }
+          }
+
+          const onCancel = () => {
+            picker.style.display = 'none';
+            cancelBtn.removeEventListener('click', onCancel);
+            resolve(null);
+          };
+          cancelBtn.addEventListener('click', onCancel);
+
+          picker.style.display = 'flex';
+        });
+      }
+      function clearGrid() {
+        if (!page) return;
+        const toRemove = [];
+        for (let i = 0; i < page.components.count; i++) {
+          toRemove.push(i);
+        }
+        toRemove.reverse().forEach(i => page.components.removeAt(i));
+        designer.renderHtml('designer');
+      }
+
+      /* ---------- OHIF GRID LOGIC ---------- */
+      function setupMegaGrid() {
+        const cells = document.querySelectorAll('#megaGrid .mega-cell');
+
+        cells.forEach((cell, index) => {
+          const r = Math.floor(index / 4);
+          const c = index % 4;
+
+          cell.addEventListener('mouseenter', () => {
+            cells.forEach((c2, idx2) => {
+              const r2 = Math.floor(idx2 / 4);
+              const c2col = idx2 % 4;
+              if (r2 <= r && c2col <= c) c2.classList.add('highlight');
+              else c2.classList.remove('highlight');
+            });
+          });
+
+          cell.addEventListener('mouseleave', () => {
+            cells.forEach(c2 => c2.classList.remove('highlight'));
+          });
+
+          cell.addEventListener('click', () => {
+            cells.forEach(c2 => c2.classList.remove('selected'));
+            cell.classList.add('selected');
+            selectGrid(cell.dataset.layout);
+          });
+        });
+      }
+
+      /* ------------ GRID APPLY ------------ */
+      async function selectGrid(type) {
+        currentGridType = type;
+        addGrid(type);
+      }
+
+      async function addGrid(type) {
+        clearGrid();
+
+        const preferiti = loadPreferiti();
+        const patient = getPatientInfo();
+
+        const [rows, cols] = type.split('x').map(Number);
+
+        const study = getStudyInfo();
+        const titleText = SHOW_STUDY_TITLE ? buildStudyTitleText(patient, study) : '';
+
+        const W = page.pageWidth;
+        const H = page.pageHeight;
+        const titleH = titleText ? STUDY_TITLE_HEIGHT_CM : 0;
+        const gridTop = titleH;
+        const gridH = H - titleH;
+        const isA4Portrait = Math.abs(W - 21) < 0.01 && Math.abs(H - 29.7) < 0.01;
+        const titleYOffset = isA4Portrait ? Math.round(((titleH * 96) / 2.54) * 0.25) : 0;
+        const infoYOffset = 0;
+
+        const cellW = W / cols;
+        const cellH = gridH / rows;
+
+        ensurePageBackground(W, H);
+        ensureGridBackground(W, H);
+        ensureGridFill(W, H);
+        ensureGridImageFill(W, gridTop, gridH);
+        addStudyTitle(titleText, W, titleH, titleYOffset);
+        ensureCellBackgrounds(rows, cols, cellW, cellH, gridTop);
+
+        // Inserisci le etichette del paziente in alto a sinistra per ogni cella
+        addPatientInfoLabels(rows, cols, cellW, cellH, patient, gridTop + infoYOffset);
+
+        if (!preferiti.length) {
+          drawGridBorders(rows, cols, cellW, cellH, gridTop);
+          designer.renderHtml('designer');
+          return;
+        }
+
+        /* --- BLACK BACKGROUND PANEL --- */
+        const bg = new Stimulsoft.Report.Components.StiPanel();
+        bg.left = 0;
+        bg.top = 0;
+        bg.width = W;
+        bg.height = H;
+        // bg.backColor = '#000';
+        bg.locked = true;
+        bg.enabled = false;
+        // page.backColor = '#000000';
+
+        // page.components.add(bg);
+
+        /* --- GRID PANELS --- */
+        // for (let r = 0; r < rows; r++) {
+        //   for (let c = 0; c < cols; c++) {
+        //     const p = new Stimulsoft.Report.Components.StiPanel();
+        //     p.left = c * cellW;
+        //     p.top = r * cellH;
+        //     p.width = cellW;
+        //     p.height = cellH;
+        //     p.border.size = 0.3;
+        //     p.locked = true;
+        //     p.enabled = true;
+        //      page.components.add(p);
+        //   }
+        // }
+
+        /* --- LOAD IMAGES --- */
+        const loadImage = src =>
+          new Promise(res => {
+            const im = new Image();
+            im.onload = () => res(im);
+            im.src = src;
+          });
+
+        let idx = 0;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (idx >= preferiti.length) break;
+
+            const data = preferiti[idx].DataUrl;
+            const img = await loadImage(data);
+
+            const PX = 96 / 2.54;
+            const cellWpx = Math.max(1, Math.round(cellW * PX));
+            const cellHpx = Math.max(1, Math.round(cellH * PX));
+            const composedUrl = composeImageOnBlack(
+              img,
+              cellWpx,
+              cellHpx,
+              cellWpx / img.width,
+              cellHpx / img.height
+            );
+
+            const left = c * cellW;
+            const top = gridTop + r * cellH;
+
+            const stiImg = new Stimulsoft.Report.Components.StiImage();
+            stiImg.left = left;
+            stiImg.top = top;
+            stiImg.width = cellW;
+            stiImg.height = cellH;
+            stiImg.imageURL = composedUrl;
+            stiImg.imageAsBase64 = true;
+            stiImg.backColor = PRINT_BLACK;
+            stiImg.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
+              createColor(0, 0, 0, 255, 'PrintBlack')
+            );
+            stiImg.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+            stiImg.stretch = true;
+            stiImg.aspectRatio = false;
+            stiImg.keepAspectRatio = false;
+            stiImg.locked = true;
+            stiImg.enabled = true;
+            stiImg.allowResize = false;
+            stiImg.allowMove = false;
+            stiImg.tag = data;
+            stiImg._nolexComposeKey = `${cellW}x${cellH}`;
+            stiImg.name = `Image_${r}_${c}_${Date.now()}`;
+
+            page.components.add(stiImg);
+
+            idx++;
+          }
+        }
+
+        // Ridisegna le linee griglia sopra gli elementi per stamparle
+        drawGridBorders(rows, cols, cellW, cellH, gridTop);
+        bringPatientInfoToFront();
+
+        designer.renderHtml('designer');
+      }
+
+      /* --- DRAW GRID BORDERS (using StiShape lines) --- */
+      function drawGridBorders(rows, cols, cellW, cellH, topOffset = 0) {
+        // colore del bordo (usa Stimulsoft color per compatibilitÁ)
+        const borderColor = createColor(200, 200, 200, 255, 'GridGray');
+
+        // spessore linea in cm (0.05 = 0.5mm)
+        const LINE_THICK = 0.05;
+
+        // Rimuove eventuali linee precedenti per evitare duplicati
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const comp = page.components.getByIndex(i);
+          if (
+            comp &&
+            comp.name &&
+            (comp.name.startsWith('GridLine_') || comp.name.startsWith('GridCellBorder_'))
+          ) {
+            page.components.removeAt(i);
+          }
+        }
+
+        // BORDO PER OGNI CELLA (rettangolo senza riempimento)
+        const transparentBrush = new Stimulsoft.Base.Drawing.StiSolidBrush(
+          createColor(0, 0, 0, 0, 'Transparent')
+        );
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const rect = new Stimulsoft.Report.Components.StiRectanglePrimitive();
+            rect.left = c * cellW;
+            rect.top = topOffset + r * cellH;
+            rect.width = cellW;
+            rect.height = cellH;
+
+            rect.border.side = Stimulsoft.Base.Drawing.StiBorderSides.All;
+            rect.border.size = LINE_THICK;
+            rect.border.color = borderColor;
+            rect.brush = transparentBrush;
+            rect.cornerRadius = 0;
+            rect.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+
+            rect.locked = true;
+            rect.enabled = true;
+            rect.exportable = true;
+            rect.visible = true;
+            rect.printable = true;
+            rect.canGrow = false;
+            rect.canShrink = false;
+            rect.name = `GridCellBorder_${r}_${c}`;
+
+            page.components.add(rect);
+          }
+        }
+      }
+
+      function createColor(r, g, b, a = 255, name = 'CustomColor') {
+        const col = new Stimulsoft.System.Drawing.Color();
+        col.r = r;
+        col.g = g;
+        col.b = b;
+        col.a = a;
+        col.name = name;
+        return col;
+      }
+
+      function ensurePageBackground(width, height) {
+        if (!page) return;
+
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === 'PageBackground') {
+            page.components.removeAt(i);
+          }
+        }
+
+        page.backColor = PRINT_BLACK;
+
+        const bg = new Stimulsoft.Report.Components.StiImage();
+        bg.left = 0;
+        bg.top = 0;
+        bg.width = width;
+        bg.height = height;
+        bg.imageURL = createSolidBlackDataUrl(width, height);
+        bg.imageAsBase64 = true;
+        bg.stretch = true;
+        bg.aspectRatio = false;
+        bg.keepAspectRatio = false;
+        bg.locked = true;
+        bg.enabled = true;
+        bg.exportable = true;
+        bg.visible = true;
+        bg.printable = true;
+        bg.allowResize = false;
+        bg.allowMove = false;
+        bg.name = 'PageBackground';
+
+        page.components.insert(0, bg);
+      }
+
+      function ensureGridBackground(width, height) {
+        if (!page) return;
+
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === 'GridBackground') {
+            page.components.removeAt(i);
+          }
+        }
+
+        const bg = new Stimulsoft.Report.Components.StiImage();
+        bg.left = 0;
+        bg.top = 0;
+        bg.width = width;
+        bg.height = height;
+        bg.imageURL = createSolidBlackDataUrl(width, height);
+        bg.imageAsBase64 = true;
+        bg.stretch = true;
+        bg.aspectRatio = false;
+        bg.keepAspectRatio = false;
+        bg.locked = true;
+        bg.enabled = true;
+        bg.exportable = true;
+        bg.visible = true;
+        bg.printable = true;
+        bg.allowResize = false;
+        bg.allowMove = false;
+        bg.name = 'GridBackground';
+
+        const insertIndex = page.components.count > 0 ? 1 : 0;
+        page.components.insert(insertIndex, bg);
+      }
+
+      function ensureGridFill(width, height) {
+        if (!page) return;
+
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === 'GridFill') {
+            page.components.removeAt(i);
+          }
+        }
+
+        const bg = new Stimulsoft.Report.Components.StiImage();
+        bg.left = 0;
+        bg.top = 0;
+        bg.width = width;
+        bg.height = height;
+        bg.imageURL = createSolidBlackDataUrl(width, height);
+        bg.imageAsBase64 = true;
+        bg.stretch = true;
+        bg.aspectRatio = false;
+        bg.keepAspectRatio = false;
+        bg.locked = true;
+        bg.enabled = true;
+        bg.exportable = true;
+        bg.visible = true;
+        bg.printable = true;
+        bg.allowResize = false;
+        bg.allowMove = false;
+        bg.name = 'GridFill';
+
+        page.components.insert(0, bg);
+      }
+
+      function ensureGridImageFill(width, topOffset, height) {
+        if (!page) return;
+
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === 'GridImageFill') {
+            page.components.removeAt(i);
+          }
+        }
+
+        if (!height || height <= 0) return;
+
+        const bg = new Stimulsoft.Report.Components.StiImage();
+        bg.left = 0;
+        bg.top = topOffset;
+        bg.width = width;
+        bg.height = height;
+        bg.imageURL = createSolidBlackDataUrl(width, height);
+        bg.imageAsBase64 = true;
+        bg.stretch = true;
+        bg.aspectRatio = false;
+        bg.keepAspectRatio = false;
+        bg.locked = true;
+        bg.enabled = true;
+        bg.exportable = true;
+        bg.visible = true;
+        bg.printable = true;
+        bg.allowResize = false;
+        bg.allowMove = false;
+        bg.name = 'GridImageFill';
+
+        page.components.insert(0, bg);
+      }
+
+      function ensureCellBackground(row, col, cellW, cellH, topOffset = 0) {
+        if (!page) return;
+
+        const name = `CellBg_${row}_${col}`;
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === name) {
+            page.components.removeAt(i);
+          }
+        }
+
+        const bg = new Stimulsoft.Report.Components.StiImage();
+        bg.left = col * cellW;
+        bg.top = topOffset + row * cellH;
+        bg.width = cellW;
+        bg.height = cellH;
+        bg.imageURL = createSolidBlackDataUrl(cellW, cellH);
+        bg.imageAsBase64 = true;
+        bg.stretch = true;
+        bg.aspectRatio = false;
+        bg.keepAspectRatio = false;
+        bg.locked = true;
+        bg.enabled = true;
+        bg.exportable = true;
+        bg.visible = true;
+        bg.printable = true;
+        bg.allowResize = false;
+        bg.allowMove = false;
+        bg.name = name;
+
+        page.components.add(bg);
+      }
+
+      function ensureCellBackgrounds(rows, cols, cellW, cellH, topOffset = 0) {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            ensureCellBackground(r, c, cellW, cellH, topOffset);
+          }
+        }
+      }
+
+      async function prepareImagesForPrint() {
+        if (!page || !currentGridType) {
+          return () => {};
+        }
+
+        await recompositeImageComponents();
+        return () => {};
+      }
+
+      function preparePrintComposite() {
+        return () => {};
+      }
+
+      async function recompositeImageComponents() {
+        if (!page) return;
+        const PX = 96 / 2.54;
+        const tasks = [];
+
+        for (let i = 0; i < page.components.count; i++) {
+          const panel = page.components.getByIndex(i);
+          if (!panel || !panel.name) {
+            continue;
+          }
+          if (!panel.name.startsWith('Image_')) {
+            continue;
+          }
+
+          const sourceUrl = typeof panel.tag === 'string' && panel.tag ? panel.tag : null;
+          if (!sourceUrl) {
+            continue;
+          }
+
+          const child = panel;
+
+          const wpx = Math.max(1, Math.round(panel.width * PX));
+          const hpx = Math.max(1, Math.round(panel.height * PX));
+          const composeKey = `${wpx}x${hpx}`;
+          if (child._nolexComposeKey === composeKey) {
+            continue;
+          }
+
+          tasks.push(
+            new Promise(res => {
+              const im = new Image();
+              im.onload = () => {
+                const composedUrl = composeImageOnBlack(
+                  im,
+                  wpx,
+                  hpx,
+                  wpx / im.width,
+                  hpx / im.height
+                );
+                child.imageURL = composedUrl;
+                child.imageAsBase64 = true;
+                child.stretch = true;
+                child.aspectRatio = false;
+                child.keepAspectRatio = false;
+                child.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+                child.backColor = PRINT_BLACK;
+                child.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
+                  createColor(0, 0, 0, 255, 'PrintBlack')
+                );
+                child._nolexComposeKey = composeKey;
+                res();
+              };
+              im.onerror = () => res();
+              im.src = sourceUrl;
+            })
+          );
+        }
+
+        if (tasks.length) {
+          await Promise.all(tasks);
+          designer.renderHtml('designer');
+        }
+      }
+
+      function setupImageRecomposeListeners() {
+        const container = document.getElementById('designer-container');
+        if (!container) return;
+
+        let timer = null;
+        const schedule = () => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => {
+            recompositeImageComponents();
+          }, 120);
+        };
+
+        container.addEventListener('mouseup', schedule);
+        container.addEventListener('touchend', schedule);
+        container.addEventListener('mouseleave', schedule);
+      }
+
+      /* ---------- FORMAT ---------- */
+      function selectFormat(fmt, orient) {
+        document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('selected'));
+        document
+          .getElementById(fmt + (orient === 'portrait' ? 'P' : 'L'))
+          .classList.add('selected');
+
+        let w, h;
+        if (fmt === 'A4') {
+          w = 21;
+          h = 29.7;
+        }
+        if (fmt === 'A3') {
+          w = 29.7;
+          h = 42;
+        }
+        if (orient === 'landscape') [w, h] = [h, w];
+
+        page.pageWidth = w;
+        page.pageHeight = h;
+        page.backColor = PRINT_BLACK;
+
+        designer.renderHtml('designer');
+        if (currentGridType) addGrid(currentGridType);
+      }
+
+      function getPatientInfo() {
+        try {
+          return JSON.parse(localStorage.getItem('nolex-patient-info') || '{}');
+        } catch {
+          return {};
+        }
+      }
+
+      function getStudyInfo() {
+        try {
+          return JSON.parse(localStorage.getItem('nolex-study-info') || '{}');
+        } catch {
+          return {};
+        }
+      }
+
+      function buildStudyTitleText(patient, study) {
+        const patientName = patient.PatientName ? patient.PatientName.replace(/,/g, ' ') : '';
+        const dob = formatPatientDate(patient.PatientDOB || '');
+        const modality = study.Modality || '';
+        const studyDesc = study.StudyDescription || '';
+        const studyDate = formatPatientDate(study.StudyDate || '');
+
+        const parts = [];
+        if (patientName) parts.push(patientName);
+        if (dob) parts.push(dob);
+
+        let studyPart = '';
+        if (modality) studyPart += modality;
+        if (studyDesc) {
+          studyPart += `${studyPart ? ' ' : ''}(${studyDesc})`;
+        }
+        if (studyDate) {
+          studyPart += `${studyPart ? ' del ' : ''}${studyDate}`;
+        }
+
+        if (studyPart) parts.push(studyPart);
+        return parts.join(' ').trim();
+      }
+
+      function createSolidBlackDataUrl(widthCm, heightCm) {
+        const PX = 96 / 2.54;
+        const canvasW = Math.round(widthCm * PX);
+        const canvasH = Math.round(heightCm * PX);
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = PRINT_BLACK;
+        ctx.fillRect(0, 0, canvasW, canvasH);
+        return canvas.toDataURL('image/png');
+      }
+
+      function composeImageOnBlack(img, targetWpx, targetHpx, scaleW, scaleH) {
+        const scale = Math.min(scaleW, scaleH);
+        const drawW = img.width * scale;
+        const drawH = img.height * scale;
+        const drawX = Math.round((targetWpx - drawW) / 2);
+        const drawY = Math.round((targetHpx - drawH) / 2);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWpx;
+        canvas.height = targetHpx;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = PRINT_BLACK;
+        ctx.fillRect(0, 0, targetWpx, targetHpx);
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        return canvas.toDataURL('image/png');
+      }
+
+      function formatPatientDate(value) {
+        if (!value || typeof value !== 'string') return '';
+        const trimmed = value.trim();
+        if (!trimmed) return '';
+
+        // YYYY-MM-DD or YYYY/MM/DD
+        const isoMatch = trimmed.match(/^(\d{4})[-/](\d{2})[-/](\d{2})$/);
+        if (isoMatch) {
+          return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+        }
+
+        // YYYYMMDD
+        const compactMatch = trimmed.match(/^(\d{4})(\d{2})(\d{2})$/);
+        if (compactMatch) {
+          return `${compactMatch[3]}/${compactMatch[2]}/${compactMatch[1]}`;
+        }
+
+        // DD-MM-YYYY to DD/MM/YYYY
+        const dmMatch = trimmed.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (dmMatch) {
+          return `${dmMatch[1]}/${dmMatch[2]}/${dmMatch[3]}`;
+        }
+
+        // DD-Mon-YYYY (e.g. 24-May-1961)
+        const dmonMatch = trimmed.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
+        if (dmonMatch) {
+          const monthMap = {
+            Jan: '01',
+            Feb: '02',
+            Mar: '03',
+            Apr: '04',
+            May: '05',
+            Jun: '06',
+            Jul: '07',
+            Aug: '08',
+            Sep: '09',
+            Oct: '10',
+            Nov: '11',
+            Dec: '12',
+          };
+          const mon = dmonMatch[2][0].toUpperCase() + dmonMatch[2].slice(1, 3).toLowerCase();
+          const mm = monthMap[mon] || dmonMatch[2];
+          return `${dmonMatch[1]}/${mm}/${dmonMatch[3]}`;
+        }
+
+        return trimmed;
+      }
+
+      function createPatientHeaderDataUrl(widthCm, heightCm, patient) {
+        const PX = 96 / 2.54;
+        const canvasW = Math.round(widthCm * PX);
+        const canvasH = Math.round(heightCm * PX);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        const ctx = canvas.getContext('2d');
+
+        // Black background
+        ctx.fillStyle = PRINT_BLACK;
+        ctx.fillRect(0, 0, canvasW, canvasH);
+
+        // White text
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'top';
+
+        const fontSize = Math.max(8, Math.round(canvasH * 0.24) - 8);
+        const fontNormal = `${fontSize}px sans-serif`;
+        const fontBold = `bold ${fontSize}px sans-serif`;
+
+        const study = getStudyInfo();
+        const patientName = patient.PatientName ? patient.PatientName.replace(/,/g, ' ') : '';
+        const patientId = patient.PatientID || '';
+        const sex = patient.PatientSex || '';
+        const dob = formatPatientDate(patient.PatientDOB || '');
+        const sexDob = `${sex}${sex && dob ? ' ' : ''}${dob}`.trim();
+        const accession = study.AccessionNumber || '';
+
+        const lines = [{ text: patientName, bold: true }];
+        if (sexDob) {
+          lines.push({ text: sexDob, bold: false });
+        }
+        if (patientId) {
+          lines.push({ text: `ID: ${patientId}`, bold: true });
+        }
+        if (accession) {
+          lines.push({ text: `Acc: ${accession}`, bold: false });
+        }
+
+        const lineGap = canvasH / (lines.length - 0.1);
+        const startY = Math.round(canvasH * 0.14);
+        lines.forEach((line, index) => {
+          ctx.font = line.bold ? fontBold : fontNormal;
+          ctx.fillText(line.text, 20, startY + index * lineGap);
+        });
+
+        return canvas.toDataURL('image/png');
+      }
+
+      function createStudyTitleDataUrl(widthCm, heightCm, text, textTopOffset = 0) {
+        const PX = 96 / 2.54;
+        const canvasW = Math.round(widthCm * PX);
+        const canvasH = Math.round(heightCm * PX);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = PRINT_BLACK;
+        ctx.fillRect(0, 0, canvasW, canvasH);
+
+        if (text) {
+          const paddingX = 20;
+          const maxWidth = canvasW - paddingX * 2;
+          const fontSize = Math.max(9, Math.round(canvasH * 0.5) - 4);
+          const lineHeight = Math.round(fontSize * 1.15);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${fontSize}px sans-serif`;
+          ctx.textBaseline = 'top';
+
+          const words = text.split(/\s+/).filter(Boolean);
+          const lines = [];
+          let current = '';
+          words.forEach(word => {
+            const next = current ? `${current} ${word}` : word;
+            if (ctx.measureText(next).width <= maxWidth) {
+              current = next;
+              return;
+            }
+            if (current) {
+              lines.push(current);
+              current = word;
+            } else {
+              lines.push(word);
+              current = '';
+            }
+          });
+          if (current) lines.push(current);
+
+          const maxLines = 2;
+          if (lines.length > maxLines) {
+            lines.length = maxLines;
+            const last = lines[maxLines - 1];
+            let trimmed = last;
+            while (trimmed.length > 0 && ctx.measureText(`${trimmed}…`).width > maxWidth) {
+              trimmed = trimmed.slice(0, -1);
+            }
+            lines[maxLines - 1] = trimmed ? `${trimmed}…` : '…';
+          }
+
+          const totalHeight = lines.length * lineHeight;
+          let y = Math.max(0, Math.round((canvasH - totalHeight) / 2) + textTopOffset);
+          lines.forEach(line => {
+            ctx.fillText(line, paddingX, y);
+            y += lineHeight;
+          });
+        }
+
+        return canvas.toDataURL('image/png');
+      }
+
+      function addStudyTitle(text, widthCm, heightCm, textTopOffset = 0) {
+        if (!page) return;
+
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === 'StudyTitle') {
+            page.components.removeAt(i);
+          }
+        }
+
+        if (!text || !heightCm) {
+          return;
+        }
+
+        const dataUrl = createStudyTitleDataUrl(widthCm, heightCm, text, textTopOffset);
+        const img = new Stimulsoft.Report.Components.StiImage();
+        img.imageURL = dataUrl;
+        img.imageAsBase64 = true;
+        img.left = 0;
+        img.top = 0;
+        img.width = widthCm;
+        img.height = heightCm;
+        img.stretch = true;
+        img.aspectRatio = false;
+        img.keepAspectRatio = false;
+        img.locked = true;
+        img.enabled = true;
+        img.allowResize = false;
+        img.allowMove = false;
+        img.printable = true;
+        img.name = 'StudyTitle';
+
+        page.components.add(img);
+      }
+
+      async function addPatientHeader() {
+        const patient = getPatientInfo();
+        if (!patient || !patient.PatientID) return;
+
+        // Header globale non usato quando disegniamo info per cella
+        const existingHeader = getPatientHeaderComponent();
+        if (existingHeader) {
+          page.components.remove(existingHeader);
+        }
+
+        // Dimensioni dell'header in CM
+        const headerH = 2; // 2 cm altezza
+        const headerW = page.pageWidth; // tutta la larghezza della pagina
+
+        // Converti cm in pixel (96 dpi circa, sufficiente)
+        const PX = 96 / 2.54;
+        const canvasW = Math.round(headerW * PX);
+        const canvasH = Math.round(headerH * PX);
+
+        // CREA CANVAS
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        const ctx = canvas.getContext('2d');
+
+        // SFONDO NERO
+        ctx.fillStyle = PRINT_BLACK;
+        ctx.fillRect(0, 0, canvasW, canvasH);
+
+        // TESTO BIANCO
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'top';
+
+        const fontSize = Math.max(8, Math.round(canvasH * 0.24) - 8);
+        const fontNormal = `${fontSize}px sans-serif`;
+        const fontBold = `bold ${fontSize}px sans-serif`;
+
+        const study = getStudyInfo();
+        const patientName = patient.PatientName ? patient.PatientName.replace(/,/g, ' ') : '';
+        const patientId = patient.PatientID || '';
+        const sex = patient.PatientSex || '';
+        const dob = formatPatientDate(patient.PatientDOB || '');
+        const sexDob = `${sex}${sex && dob ? ' ' : ''}${dob}`.trim();
+        const accession = study.AccessionNumber || '';
+
+        const lines = [{ text: patientName, bold: true }];
+        if (sexDob) {
+          lines.push({ text: sexDob, bold: false });
+        }
+        if (patientId) {
+          lines.push({ text: `ID: ${patientId}`, bold: true });
+        }
+        if (accession) {
+          lines.push({ text: `Acc: ${accession}`, bold: false });
+        }
+
+        const lineGap = canvasH / (lines.length - 0.1);
+        const startY = Math.round(canvasH * 0.14);
+        lines.forEach((line, index) => {
+          ctx.font = line.bold ? fontBold : fontNormal;
+          ctx.fillText(line.text, 20, startY + index * lineGap);
+        });
+
+        // OTTIENI BASE64
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // CREA IMMAGINE STIMULSOFT
+        const stiImg = new Stimulsoft.Report.Components.StiImage();
+        stiImg.imageURL = dataUrl;
+        stiImg.imageAsBase64 = true;
+
+        stiImg.left = 0;
+        stiImg.top = 0;
+        stiImg.width = headerW;
+        stiImg.height = headerH;
+
+        stiImg.stretch = true;
+        stiImg.aspectRatio = false;
+        stiImg.keepAspectRatio = false; // IMPORTANTE: permette di deformare l'immagine
+
+        // PROPRIETA CRITICHE (uguali alle altre immagini)
+        stiImg.locked = true; // non modificabile dall'utente
+        stiImg.enabled = true; // DEVE ESSERE TRUE!
+        stiImg.allowResize = false;
+        stiImg.allowMove = false;
+        stiImg.printable = true; // DEVE ESSERE TRUE per la stampa!
+        stiImg.name = 'PatientHeaderImage';
+
+        // Non aggiungiamo header globale per evitare duplicati con le etichette per cella
+      }
+      function getPatientHeaderComponent() {
+        if (!page) return null;
+
+        for (let i = 0; i < page.components.count; i++) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name === 'PatientHeaderImage') {
+            return component;
+          }
+        }
+
+        return null;
+      }
+
+      function addPatientInfoLabels(rows, cols, cellW, cellH, patient, topOffset = 0) {
+        if (!patient || !patient.PatientID) return;
+
+        // Rimuovi eventuali etichette precedenti
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name && component.name.startsWith('PatientInfo_')) {
+            page.components.removeAt(i);
+          }
+        }
+
+        // Altezza header dentro la cella
+        const headerH = Math.min(1.9, cellH * 0.34);
+        const dataUrl = createPatientHeaderDataUrl(cellW, headerH, patient);
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const img = new Stimulsoft.Report.Components.StiImage();
+            img.imageURL = dataUrl;
+            img.imageAsBase64 = true;
+            img.left = c * cellW;
+            img.top = topOffset + r * cellH;
+            img.width = cellW;
+            img.height = headerH;
+            img.stretch = true;
+            img.aspectRatio = false;
+            img.keepAspectRatio = false;
+            img.locked = true;
+            img.enabled = true;
+            img.allowResize = false;
+            img.allowMove = false;
+            img.printable = true;
+            img.name = `PatientInfo_${r}_${c}`;
+
+            page.components.add(img);
+          }
+        }
+      }
+
+      function bringPatientInfoToFront() {
+        if (!page) return;
+
+        const infoComponents = [];
+        for (let i = page.components.count - 1; i >= 0; i--) {
+          const component = page.components.getByIndex(i);
+          if (component && component.name && component.name.startsWith('PatientInfo_')) {
+            infoComponents.push(component);
+            page.components.removeAt(i);
+          }
+        }
+
+        infoComponents.reverse().forEach(component => {
+          page.components.add(component);
+        });
+      }
+
+      /* --- TROVA CELLA VUOTA --- */
+      function findEmptyCell() {
+        if (!currentGridType) {
+          console.log('Nessun layout selezionato');
+          return null;
+        }
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+        console.log(`Cerco celle vuote in layout ${rows}x${cols}`);
+
+        // Crea una mappa per tenere traccia delle celle occupate
+        const occupiedCells = new Set();
+
+        // Scansiona tutti i componenti della pagina
+        for (let i = 0; i < page.components.count; i++) {
+          const component = page.components.getByIndex(i);
+
+          if (component && component.name && component.name.startsWith('Image_')) {
+            const parts = component.name.split('_');
+            if (parts.length >= 3) {
+              const row = parseInt(parts[1]);
+              const col = parseInt(parts[2]);
+
+              if (!isNaN(row) && !isNaN(col) && row < rows && col < cols) {
+                occupiedCells.add(`${row}_${col}`);
+                console.log(`Cella occupata: [${row},${col}] - ${component.name}`);
+              }
+            }
+          }
+        }
+
+        // Cerca la prima cella vuota (in ordine di riga, poi colonna)
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (!occupiedCells.has(`${r}_${c}`)) {
+              console.log(`Trovata cella vuota: [${r},${c}]`);
+              return { row: r, col: c };
+            }
+          }
+        }
+
+        console.log('Nessuna cella vuota trovata');
+        return null; // Tutte le celle sono occupate
+      }
+
+      /* ---------- INIT ---------- */
+      function init() {
+        const favList = document.getElementById('fav-list');
+        loadPreferiti().forEach(p => {
+          if (!p?.DataUrl) return;
+          const img = document.createElement('img');
+          img.src = p.DataUrl;
+          favList.appendChild(img);
+        });
+
+        setupDragAndDrop();
+
+        // Setup semplice con pulsanti (più affidabile)
+        setupSimpleImageAddition();
+
+        // LICENSE (OK)
+        Stimulsoft.Base.StiLicense.key =
+          '6vJhGtLLLz2GNviWmUTrhSqnOItdDwjBylQzQcAOiHkAElGs1l3p0z5KNRHBrm/qZsBJMG6tM9MkCeiW10GWRSnEon' +
+          'pF6bUIbvcLxIk12HbTnaIoLyyHURTJ0bqUAuzSQEPXgN+K2L8GiA8ytBBZ34mlFuUAjgJreBAErHIKAowamfJjFzj5' +
+          'E1winDx5bvLTeO7WKBEJ/ta4E805fm1i68kKovWsxv5Ofb4+J3l/oKmVX11REa9utWahLmpeH4ouOvN8hscblwPDW4' +
+          'ZjnJpbWGWXgzKxdCMjWoWbkJgernRR3lHKmgMaX/XK+WShy8ecOUjBu9U9rXj8eNS7yOmA5rNbj7/yVshV9RmexrZt' +
+          'c38gir53bet84r/uNDs7+AsU/ZgOMI32dJHeEkzldHUK+5YS6jXTZBj9RYgZP6t5YbywfE5ipW+XAYG0fI39TPmDRu' +
+          'FS6Vr+s35onvPSVhOSnA5J18l8GxDUf2FhDEJmurFyAC2Der7wdzfINjzNjnutZCr5f4gb5HCh53BoSXPo4wDO0P69' +
+          'HZgutc6sAuibJoaVqxVPU8BHGr7B3/yT2VD3';
+
+        /* --- DESIGNER OPTIONS --- */
+        const options = new Stimulsoft.Designer.StiDesignerOptions();
+        options.appearance.showPanels = false;
+        options.appearance.showToolbox = false;
+        options.appearance.showPropertiesGrid = false;
+        options.appearance.showDictionary = false;
+
+        options.toolbar.showFileMenu = false;
+        options.toolbar.showInsertTab = false;
+        options.toolbar.showDataTab = false;
+        options.toolbar.showComponentsTab = false;
+        options.toolbar.showPropertiesTab = false;
+        options.toolbar.showPageTab = false;
+
+        options.toolbar.showHomeTab = true;
+        options.toolbar.showPreviewTab = true;
+
+        designer = new Stimulsoft.Designer.StiDesigner(options, 'StiDesigner', false);
+
+        report = new Stimulsoft.Report.StiReport();
+        designer.report = report;
+
+        page = report.pages.getByIndex(0);
+        page.unit = 'Centimeter';
+        // page.backColor = '#000';
+        page.pageWidth = 21;
+        page.pageHeight = 29.7;
+        page.margins.left = 0;
+        page.margins.right = 0;
+        page.margins.top = 0;
+        page.margins.bottom = 0;
+
+        page.unlimitedHeight = false;
+        page.unlimitedWidth = false;
+        page.margin = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+
+        setupDragAndDrop();
+
+        // Sfondo nero che viene stampato
+
+        const blackImg = new Stimulsoft.Report.Components.StiImage();
+        blackImg.dock = Stimulsoft.Report.Components.StiDockStyle.Fill;
+        // blackImg.imageURL =
+        //   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
+        blackImg.imageAsBase64 = true;
+        blackImg.stretch = true;
+        blackImg.aspectRatio = false;
+        blackImg.locked = true;
+        blackImg.enabled = false;
+
+        // page.components.insert(0, blackImg);
+
+        const brush = page._brush;
+        brush.color.r = 0;
+        brush.color.g = 0;
+        brush.color.b = 0;
+        brush.color.a = 255;
+        brush.color.name = 'Black';
+        designer.renderHtml('designer');
+
+        /* --- HIDE SIDEBAR + TABS --- */
+        setTimeout(() => {
+          const left = document.querySelector('.stiDesignerLeftPanel, .stiDesignerSidePanel');
+          if (left) left.style.display = 'none';
+
+          const tabs = document.querySelectorAll('.stiDesignerTab');
+          tabs.forEach(t => {
+            const name = t.innerText.trim().toLowerCase();
+            if (name !== 'home' && name !== 'preview') t.style.display = 'none';
+          });
+        }, 400);
+
+        setupMegaGrid();
+        setupCellSelectionHandlers();
+        setupImageRecomposeListeners();
+
+        /* DEFAULT: A4 + 1x1 */
+        selectFormat('A4', 'portrait');
+
+        const first = document.querySelector('#megaGrid .mega-cell');
+        if (first) first.classList.add('selected');
+
+        selectGrid('1x1');
+      }
+
+      window.onload = init;
+    </script>
+  </body>
+</html>

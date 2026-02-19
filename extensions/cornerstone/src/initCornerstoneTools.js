@@ -37,15 +37,21 @@ import {
   LivewireContourTool,
   OrientationMarkerTool,
   WindowLevelRegionTool,
+  removeTool,
 } from '@cornerstonejs/tools';
 import * as polySeg from '@cornerstonejs/polymorphic-segmentation';
 
 import CalibrationLineTool from './tools/CalibrationLineTool';
+import ScaleOverlayToolSafe from './tools/ScaleOverlayTool';
+import ReferenceCursorsTool from './tools/ReferenceCursorsTool';
 import ImageOverlayViewerTool from './tools/ImageOverlayViewerTool';
+import SafeStackScrollTool from './tools/SafeStackScrollTool';
 
 export default function initCornerstoneTools(configuration = {}) {
   CrosshairsTool.isAnnotation = false;
   ReferenceLinesTool.isAnnotation = false;
+  ScaleOverlayToolSafe.isAnnotation = false;
+  ReferenceCursorsTool.isAnnotation = false;
   AdvancedMagnifyTool.isAnnotation = false;
   PlanarFreehandContourSegmentationTool.isAnnotation = false;
 
@@ -62,7 +68,8 @@ export default function initCornerstoneTools(configuration = {}) {
   addTool(PanTool);
   addTool(SegmentBidirectionalTool);
   addTool(WindowLevelTool);
-  addTool(StackScrollTool);
+  removeTool(StackScrollTool);
+  addTool(SafeStackScrollTool);
   addTool(VolumeRotateTool);
   addTool(ZoomTool);
   addTool(ProbeTool);
@@ -85,6 +92,8 @@ export default function initCornerstoneTools(configuration = {}) {
   addTool(BrushTool);
   addTool(PaintFillTool);
   addTool(ReferenceLinesTool);
+  addTool(ScaleOverlayToolSafe);
+  addTool(ReferenceCursorsTool);
   addTool(CalibrationLineTool);
   addTool(TrackballRotateTool);
   addTool(ImageOverlayViewerTool);
@@ -135,6 +144,8 @@ const toolNames = {
   Brush: BrushTool.toolName,
   PaintFill: PaintFillTool.toolName,
   ReferenceLines: ReferenceLinesTool.toolName,
+  ScaleOverlay: ScaleOverlayToolSafe.toolName,
+  ReferenceCursors: ReferenceCursorsTool.toolName,
   CalibrationLine: CalibrationLineTool.toolName,
   TrackballRotateTool: TrackballRotateTool.toolName,
   CircleScissors: CircleScissorsTool.toolName,

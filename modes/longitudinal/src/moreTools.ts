@@ -56,31 +56,6 @@ const moreTools = [
         //   commands: 'flipViewportHorizontal',
         //   evaluate: ['evaluate.viewportProperties.toggle', 'evaluate.not3D'],
         // }),
-        createButton({
-          id: 'ImageSliceSync',
-          icon: 'link',
-          label: 'Collega serie',
-          tooltip: 'Collega serie',
-          commands: {
-            commandName: 'toggleSynchronizer',
-            commandOptions: {
-              type: 'imageSlice',
-            },
-          },
-          listeners: {
-            [EVENTS.VIEWPORT_NEW_IMAGE_SET]: {
-              commandName: 'toggleImageSliceSync',
-              commandOptions: { toggledState: true },
-            },
-          },
-          evaluate: [
-            'evaluate.cornerstone.synchronizer',
-            {
-              name: 'evaluate.viewport.supported',
-              unsupportedViewportTypes: ['video', 'volume3d'],
-            },
-          ],
-        }),
         // createButton({
         //   id: 'ReferenceLines',
         //   icon: 'tool-referenceLines',

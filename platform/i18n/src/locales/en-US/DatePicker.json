@@ -1,9 +1,9 @@
 {
-  "Clear dates": "Clear dates",
-  "Close": "$t(Common:Close)",
-  "End Date": "End Date",
-  "Last 7 days": "Last 7 days",
-  "Last 30 days": "Last 30 days",
-  "Start Date": "Start Date",
-  "Today": "Today"
+  "Clear dates": "Cancella date",
+  "Close": "Chiudi",
+  "End Date": "Data di fine",
+  "Last 7 days": "Ultimi 7 giorni",
+  "Last 30 days": "Ultimi 30 giorni",
+  "Start Date": "Data di inizio",
+  "Today": "Oggi"
 }

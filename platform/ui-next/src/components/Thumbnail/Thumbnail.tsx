@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { useDrag } from 'react-dnd';
@@ -34,6 +34,32 @@ const Thumbnail = ({
   onClickUntrack = () => { },
   ThumbnailMenuItems = () => { },
 }: withAppTypes): React.ReactNode => {
+  const debug =
+    typeof window !== 'undefined' && window?.localStorage?.getItem('ohifThumbDebug') === '1';
+  const didLogRef = useRef(false);
+
+  useEffect(() => {
+    if (!debug || didLogRef.current) {
+      return;
+    }
+    const shouldLog = modality === 'OT' || !imageSrc;
+    if (!shouldLog) {
+      return;
+    }
+    didLogRef.current = true;
+    // eslint-disable-next-line no-console
+    console.warn('[thumb-ui]', {
+      displaySetInstanceUID,
+      modality,
+      hasImageSrc: Boolean(imageSrc),
+      imageSrcPrefix: imageSrc ? imageSrc.slice(0, 32) : null,
+      seriesNumber,
+      numInstances,
+      viewPreset,
+      thumbnailType,
+    });
+  }, [debug, modality, imageSrc, displaySetInstanceUID, seriesNumber, numInstances, viewPreset, thumbnailType]);
+
   // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
   // this will still allow for "drag", even if there is no drop target for the
   // specified item.
@@ -76,7 +102,11 @@ const Thumbnail = ({
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="bg-background h-[114px] w-[128px] rounded"></div>
+              <div className="bg-background h-[114px] w-[128px] rounded flex items-center justify-center">
+                {thumbnailType !== 'thumbnailNoImage' && (
+                  <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-primary/60 border-t-transparent" />
+                )}
+              </div>
             )}
 
             {/* bottom left */}
@@ -207,7 +237,11 @@ const Thumbnail = ({
                   crossOrigin="anonymous"
                 />
               ) : (
-                <div className="bg-background h-[114px] w-[128px] rounded"></div>
+                <div className="bg-background h-[114px] w-[128px] rounded flex items-center justify-center">
+                  {thumbnailType !== 'thumbnailNoImage' && (
+                    <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-primary/60 border-t-transparent" />
+                  )}
+                </div>
               )}
             </div>
           </div>

@@ -65,7 +65,22 @@ window.config = {
   extensions: [],
   modes: [],
   customizationService: {},
+  viewportOverlayTags: {
+    cornerTopLeft: [
+      { tag: '0008,0020', format: 'date' }, // StudyDate
+      { tag: '0020,0011', prefix: 'S: ' }, // SeriesNumber
+      { tag: '0008,103E' }, // SeriesDescription
+    ],
+    cornerTopRight: [
+      { tag: '0010,0010', format: 'pn', suffixTag: '0010,0040' }, // PatientName (+ PatientSex)
+      { tag: '0010,0020', prefix: 'ID: ' }, // PatientID
+      { tag: '0008,0050' }, // AccessionNumber
+    ],
+    cornerBottomLeft: [],
+    cornerBottomRight: [],
+  },
   showStudyList: false,
+  enablePrintBuilder: false,
   // some windows systems have issues with more than 3 web workers
   maxNumberOfWebWorkers: 3,
   // below flag is for performance reasons, but it might not work for all servers
@@ -78,7 +93,10 @@ window.config = {
   groupEnabledModesFirst: true,
   allowMultiSelectExport: true,
   useExperimentalUI: true,
+  autoImageSliceSync: true,
   useCPURendering: useCPURendering ? true : false,
+  nolexExtensionBrowserUrl: 'https://chrome.google.com/webstore/detail/REPLACE_ME',
+  mostraavvisoEstensioneNolexBrowserNonInstallata: false,
   maxNumRequests: {
     interaction: 100,
     thumbnail: 75,

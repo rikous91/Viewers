@@ -1040,6 +1040,58 @@ export const ToolFlipHorizontal = (props: IconProps) => (
   </svg>
 );
 
+
+export const ToolFlipVertical = (props: IconProps) => (
+  <svg
+    width="28px"
+    height="28px"
+    viewBox="0 0 28 28"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g
+      id="tool-flip-vertical"
+      stroke="none"
+      strokeWidth="1"
+      fill="none"
+      fillRule="evenodd"
+    >
+      <rect
+        id="Rectangle"
+        x="0"
+        y="0"
+        width="28"
+        height="28"
+      ></rect>
+      <g
+        id="flip-vertical"
+        transform="translate(4, 4)"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      >
+        <rect
+          id="Box"
+          x="2"
+          y="2"
+          width="16"
+          height="16"
+          rx="2"
+        ></rect>
+        <line
+          x1="2"
+          y1="10"
+          x2="18"
+          y2="10"
+          id="Axis"
+        ></line>
+      </g>
+    </g>
+  </svg>
+);
+
 export const ToolFreehandPolygon = (props: IconProps) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -2251,6 +2303,85 @@ export const ToolRectangle = (props: IconProps) => (
   </svg>
 );
 
+
+export const ToolScaleOverlay = (props: IconProps) => (
+  <svg
+    width="28px"
+    height="28px"
+    viewBox="0 0 28 28"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g
+      id="tool-scale-overlay"
+      stroke="none"
+      strokeWidth="1"
+      fill="none"
+      fillRule="evenodd"
+    >
+      <rect
+        id="Rectangle"
+        x="0"
+        y="0"
+        width="28"
+        height="28"
+      ></rect>
+      <g
+        id="Scale"
+        transform="translate(4, 16)"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      >
+        <line
+          x1="0"
+          y1="0"
+          x2="20"
+          y2="0"
+          id="Base"
+        ></line>
+        <line
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="-6"
+          id="TickLeft"
+        ></line>
+        <line
+          x1="20"
+          y1="0"
+          x2="20"
+          y2="-6"
+          id="TickRight"
+        ></line>
+        <line
+          x1="5"
+          y1="0"
+          x2="5"
+          y2="-3"
+          id="Tick1"
+        ></line>
+        <line
+          x1="10"
+          y1="0"
+          x2="10"
+          y2="-4"
+          id="Tick2"
+        ></line>
+        <line
+          x1="15"
+          y1="0"
+          x2="15"
+          y2="-3"
+          id="Tick3"
+        ></line>
+      </g>
+    </g>
+  </svg>
+);
+
 export const ToolReferenceLines = (props: IconProps) => (
   <svg
     width="28px"
@@ -2313,6 +2444,86 @@ export const ToolReferenceLines = (props: IconProps) => (
         strokeLinecap="round"
         transform="translate(14.25, 20.4264) scale(1, -1) translate(-14.25, -20.4264)"
       ></path>
+    </g>
+  </svg>
+);
+
+
+export const ToolReferenceCursors = (props: IconProps) => (
+  <svg
+    width="28px"
+    height="28px"
+    viewBox="0 0 28 28"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g
+      id="tool-reference-cursors"
+      stroke="none"
+      strokeWidth="1"
+      fill="none"
+      fillRule="evenodd"
+    >
+      <rect
+        id="Rectangle"
+        x="0"
+        y="0"
+        width="28"
+        height="28"
+      ></rect>
+      <circle
+        id="CursorRing"
+        cx="14"
+        cy="14"
+        r="5.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      ></circle>
+      <g
+        id="CursorPointer"
+        fill="currentColor"
+      >
+        <polygon
+          id="Pointer"
+          points="18,18 23.5,20.5 20.5,23.5"
+        ></polygon>
+      </g>
+      <g
+        id="Crosshair"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      >
+        <line
+          x1="14"
+          y1="4.5"
+          x2="14"
+          y2="8"
+          id="Line"
+        ></line>
+        <line
+          x1="14"
+          y1="20"
+          x2="14"
+          y2="23.5"
+          id="Line"
+        ></line>
+        <line
+          x1="4.5"
+          y1="14"
+          x2="8"
+          y2="14"
+          id="Line"
+        ></line>
+        <line
+          x1="20"
+          y1="14"
+          x2="23.5"
+          y2="14"
+          id="Line"
+        ></line>
+      </g>
     </g>
   </svg>
 );
@@ -2385,6 +2596,51 @@ export const ToolReset = (props: IconProps) => (
         strokeLinecap="round"
         strokeLinejoin="round"
       ></path>
+    </g>
+  </svg>
+);
+
+
+export const ToolRotateLeft = (props: IconProps) => (
+  <svg
+    width="28px"
+    height="28px"
+    viewBox="0 0 28 28"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <g
+      id="tool-rotate-left"
+      stroke="none"
+      strokeWidth="1"
+      fill="none"
+      fillRule="evenodd"
+    >
+      <rect
+        id="Rectangle"
+        x="0"
+        y="0"
+        width="28"
+        height="28"
+      ></rect>
+      <g
+        id="rotate-left"
+        transform="translate(4, 4)"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      >
+        <path
+          d="M6,4 A8,8 0 1,1 4,14"
+          id="Path"
+        ></path>
+        <polyline
+          id="Path"
+          points="6 4 6 0 2 0"
+        ></polyline>
+      </g>
     </g>
   </svg>
 );

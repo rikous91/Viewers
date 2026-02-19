@@ -132,6 +132,7 @@ function WorkList({
   // ~ Rows & Studies
   const [expandedRows, setExpandedRows] = useState([]);
   const [studiesWithSeriesData, setStudiesWithSeriesData] = useState([]);
+  const [openTabsVersion, setOpenTabsVersion] = useState(0);
   const numOfStudies = studiesTotal;
   const querying = useMemo(() => {
     return isLoadingData || expandedRows.length > 0;
@@ -175,6 +176,19 @@ function WorkList({
       document.body.classList.remove('bg-black');
     };
   }, []);
+
+  useEffect(() => {
+    const handleOpenTabsChange = event => {
+      if (event.data?.type === 'nolex-open-tabs-change') {
+        setOpenTabsVersion(version => version + 1);
+      }
+    };
+    window.addEventListener('message', handleOpenTabsChange);
+    return () => {
+      window.removeEventListener('message', handleOpenTabsChange);
+    };
+  }, []);
+
 
   // Sync URL query parameters with filters
   useEffect(() => {
@@ -248,15 +262,35 @@ function WorkList({
     return !isEqual(filterValues, defaultFilterValues);
   };
 
+
+
+
+
   const rollingPageNumberMod = Math.floor(101 / resultsPerPage);
-  const rollingPageNumber = (pageNumber - 1) % rollingPageNumberMod;
-  const offset = resultsPerPage * rollingPageNumber;
-  const offsetAndTake = offset + resultsPerPage;
-  const tableDataSource = sortedStudies.map((study, key) => {
-    const rowKey = key + 1;
-    const isExpanded = expandedRows.some(k => k === rowKey);
-    const {
-      studyInstanceUid,
+    const rollingPageNumber = (pageNumber - 1) % rollingPageNumberMod;
+    const offset = resultsPerPage * rollingPageNumber;
+    const offsetAndTake = offset + resultsPerPage;
+    const isStudyOpenInTab = studyInstanceUid => {
+      void openTabsVersion;
+      if (typeof window === 'undefined') {
+        return false;
+      }
+      try {
+        const topWindow = window.parent ?? window;
+        const checker = (topWindow as any).nolexIsStudyOpenInTab;
+        if (typeof checker === 'function') {
+          return Boolean(checker(studyInstanceUid));
+        }
+      } catch (_) {
+        return false;
+      }
+      return false;
+    };
+    const tableDataSource = sortedStudies.map((study, key) => {
+      const rowKey = key + 1;
+      const isExpanded = expandedRows.some(k => k === rowKey);
+      const {
+        studyInstanceUid,
       accession,
       modalities,
       instances,
@@ -265,17 +299,85 @@ function WorkList({
       patientName,
       date,
       time,
-    } = study;
-    const studyDate =
-      date &&
-      moment(date, ['YYYYMMDD', 'YYYY.MM.DD'], true).isValid() &&
-      moment(date, ['YYYYMMDD', 'YYYY.MM.DD']).format(t('Common:localDateFormat', 'MMM-DD-YYYY'));
+      } = study;
+      const isOpenInTab = isStudyOpenInTab(studyInstanceUid);
+      const studyDate =
+        date &&
+        moment(date, ['YYYYMMDD', 'YYYY.MM.DD'], true).isValid() &&
+        moment(date, ['YYYYMMDD', 'YYYY.MM.DD']).format(t('Common:localDateFormat', 'MMM-DD-YYYY'));
     const studyTime =
       time &&
       moment(time, ['HH', 'HHmm', 'HHmmss', 'HHmmss.SSS']).isValid() &&
       moment(time, ['HH', 'HHmm', 'HHmmss', 'HHmmss.SSS']).format(
         t('Common:localTimeFormat', 'hh:mm A')
       );
+
+    const openStudyInNewTab = (study, modalities, studyInstanceUid) => {
+      const modes = appConfig.groupEnabledModesFirst
+        ? appConfig.loadedModes.sort((a, b) => {
+          const isValidA = a.isValidMode({ modalities: modalities.replaceAll('/', '\\'), study }).valid;
+          const isValidB = b.isValidMode({ modalities: modalities.replaceAll('/', '\\'), study }).valid;
+          return isValidB - isValidA;
+        })
+        : appConfig.loadedModes;
+
+      const firstValidMode = modes.find(mode =>
+        mode.isValidMode({
+          modalities: modalities.replaceAll('/', '\\'),
+          study,
+        }).valid
+      );
+
+      if (!firstValidMode) {
+        console.warn('Nessun mode valido');
+        return;
+      }
+
+      const query = new URLSearchParams();
+      if (filterValues.configUrl) {
+        query.append('configUrl', filterValues.configUrl);
+      }
+      query.append('StudyInstanceUIDs', studyInstanceUid);
+      preserveQueryParameters(query);
+      const origin = window.location.origin
+      let url = `${origin}${publicUrl}${firstValidMode.routeName}${dataPath || ''}?${query.toString()}`;
+
+      const urlOriginalePerWorklist = localStorage.getItem("urlOriginalePerWorklist") || "";
+
+      // Estrae solo la query string dopo il "?"
+      const queryStringOriginale = urlOriginalePerWorklist.split("?")[1] || "";
+
+      // Crea i parametri dalla URL salvata in localStorage
+      const locParams = new URLSearchParams(queryStringOriginale);
+
+      // Aggiunge aetitle e User al tuo URL finale
+      ["aetitle", "User"].forEach(param => {
+        let val = locParams.get(param);
+        if (!val) return;
+
+        // SOLO per aetitle aggiungi il suffisso
+        if (param === "aetitle") {
+          val = `${val}_frmwl`;
+        }
+
+        url += `&${param}=${encodeURIComponent(val)}`;
+      });
+
+
+      console.log('url: ', url)
+      // const url = 'http://localhost:3000/nolexviewer/viewer?Token=1iJ7SuNLy0hXsbZh6RfgHotZAtBYxXTNZsl05AVzcx0nK0UQ2YgE5dsvAqZMP522swwBMpirAKi8dTATJ4&User=admin&StudyDescription=RX+MAMMOGRAFIA+BILATERALE&Modality=MG&prefetch=1&aetitle=NOLEX&StudyInstanceUIDs=1.2.826.0.1.3680043.2.612.998.1.120250219.10000147538021.8370'
+
+      // chiamata al parent, non all’iframe
+      if (window.parent && typeof window.parent.openStudyInInternalTab === 'function') {
+        window.parent.openStudyInInternalTab(url, {
+          title: `${patientName} — ${accession}`,
+          tooltip: `Paziente: ${patientName}\nDescrizione: ${description}\nAccession: ${accession}\nModality: ${modalities}`,
+        });
+      } else {
+        console.warn("openStudyInInternalTab non disponibile nel parent");
+      }
+
+    };
 
     const makeCopyTooltipCell = textValue => {
       if (!textValue) {
@@ -299,6 +401,7 @@ function WorkList({
     return {
       dataCY: `studyRow-${studyInstanceUid}`,
       clickableCY: studyInstanceUid,
+      isOpenInTab,
       row: [
         {
           key: 'patientName',
@@ -459,8 +562,13 @@ function WorkList({
           </div>
         </StudyListExpandedRow>
       ),
-      onClickRow: () =>
-        setExpandedRows(s => (isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey])),
+      // onClickRow: () => {
+      //   console.log('espansa')
+      //   setExpandedRows(s => (isExpanded ? s.filter(n => rowKey !== n) : [...s, rowKey]))
+      // },
+      onClickRow: () => openStudyInNewTab(study, modalities, studyInstanceUid),
+
+
       isExpanded,
     };
   });
@@ -477,7 +585,7 @@ function WorkList({
       onClick: () =>
         show({
           content: AboutModal as React.ComponentType,
-          title: t('AboutModal:About OHIF Viewer'),
+          title: t('AboutModal:Info Nolex Viewer'),
           containerClassName: 'max-w-md ',
         }),
     },
@@ -613,8 +721,8 @@ const defaultFilterValues = {
   patientName: '',
   mrn: '',
   studyDate: {
-    startDate: null,
-    endDate: null,
+    startDate: moment().format('YYYY-MM-DD'),
+    endDate: moment().format('YYYY-MM-DD'),
   },
   description: '',
   modalities: [],
@@ -622,7 +730,7 @@ const defaultFilterValues = {
   sortBy: '',
   sortDirection: 'none',
   pageNumber: 1,
-  resultsPerPage: 25,
+  resultsPerPage: 50,
   datasources: '',
 };
 

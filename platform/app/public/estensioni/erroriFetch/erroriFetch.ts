@@ -1,14 +1,17 @@
 declare global {
   interface Window {
-    erroriFetch: (error: string) => void;
+    erroriFetch: (error: unknown) => void;
   }
 }
 
 window.erroriFetch = error => {
+  const message = typeof error === 'string' ? error : error?.message;
+  if (!message) {
+    return;
+  }
   if (
-    error.message &&
-    error.message.includes("Couldn't retrieve") &&
-    error.message.includes('frames/')
+    message.includes("Couldn't retrieve") &&
+    message.includes('frames/')
   ) {
     document.body.insertAdjacentHTML(
       'beforeend',

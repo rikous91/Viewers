@@ -5,6 +5,7 @@ export default {
   cinePlayer: CinePlayer,
   // autoCineModalities: ['OT', 'US'],
   autoCineModalities: ['null'],
+  autoCineDynamicVolume: false,
   'panelMeasurement.disableEditing': false,
   onBeforeSRAddMeasurement: ({ measurement, StudyInstanceUID, SeriesInstanceUID }) => {
     return measurement;

@@ -86,11 +86,15 @@ module.exports = (env, argv) => {
     fs.writeFileSync(path.join(__dirname, '../../../version.txt'), version_number, 'utf8');
   }
 
+  const cacheBuster = isProdBuild ? version_number : formattedDateTime;
+
   const mergedConfig = merge(baseConfig, {
     entry: {
       app: ENTRY_TARGET,
       printBtn: path.join(__dirname, '../public/estensioni/stampa/printBtn.js'),
       preferitiBtn: path.join(__dirname, '../public/estensioni/preferiti/preferiti.js'),
+      tabs: path.join(__dirname, '../public/estensioni/tabsAndExplorer/explorer.js'),
+      explorer: path.join(__dirname, '../public/estensioni/tabsAndExplorer/tabs.js'),
       editorBtn: path.join(__dirname, '../public/estensioni/editor/editorBtn.js'),
       caricamentoHP: path.join(__dirname, '../public/estensioni/gestioneHP/caricamentoHP.js'),
       mostraChangelogAggiornamenti: path.join(__dirname, '../public/estensioni/mostraChangelogAggiornamenti/mostraChangelogAggiornamenti.js'),
@@ -150,6 +154,20 @@ module.exports = (env, argv) => {
           {
             from: `${PUBLIC_DIR}/${APP_CONFIG}`,
             to: `${DIST_DIR}/app-config.js`,
+            transform(content) {
+              const desiredValue = isProdBuild ? 'false' : 'true';
+              const contentString = content.toString();
+              const updated = contentString.replace(
+                /window\.isSuite\s*=\s*(true|false)\s*;/,
+                `window.isSuite = ${desiredValue};`
+              );
+              return updated;
+            },
+          },
+          {
+            from: path.join(__dirname, '../build-tools/web.config'),
+            to: path.join(DIST_DIR, 'web.config'),
+            noErrorOnMissing: true,
           },
           // Copy Dicom Microscopy Viewer build files
           {
@@ -165,8 +183,10 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: `${PUBLIC_DIR}/html-templates/${HTML_TEMPLATE}`,
         filename: 'index.html',
+        inject: false,
         templateParameters: {
           PUBLIC_URL: PUBLIC_URL,
+          CACHE_BUSTER: cacheBuster,
         },
       }),
       // Generate a service worker for fast local loads

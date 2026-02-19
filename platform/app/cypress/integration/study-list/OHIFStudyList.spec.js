@@ -1,6 +1,6 @@
 //We are keeping the hardcoded results values for the study list tests
 //this is intended to be running in a controlled docker environment with test data.
-describe('OHIF Study List', function () {
+describe('OHIF Lista studi', function () {
   context('Desktop resolution', function () {
     beforeEach(function () {
       Cypress.on('uncaught:exception', () => false);
@@ -29,7 +29,7 @@ describe('OHIF Study List', function () {
       });
     });
 
-    it('searches Patient Name with exact string', function () {
+    it('searches Nome paziente with exact string', function () {
       cy.get('@PatientName').type('Juno');
       //Wait result list to be displayed
       cy.waitStudyList();
@@ -39,7 +39,7 @@ describe('OHIF Study List', function () {
       });
     });
 
-    it('maintains Patient Name filter upon return from viewer', function () {
+    it('maintains Nome paziente filter upon return from viewer', function () {
       cy.get('@PatientName').type('Juno');
       //Wait result list to be displayed
       cy.waitStudyList();

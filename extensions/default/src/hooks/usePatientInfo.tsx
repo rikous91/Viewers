@@ -52,6 +52,12 @@ function usePatientInfo(servicesManager: AppTypes.ServicesManager) {
       PatientSex: instance.PatientSex || null,
       PatientDOB: formatDate(instance.PatientBirthDate) || null,
     });
+    window.nolexStudyInfo = {
+      AccessionNumber: instance.AccessionNumber || null,
+      Modality: instance.Modality || null,
+      StudyDescription: instance.StudyDescription || null,
+      StudyDate: formatDate(instance.StudyDate) || null,
+    };
     checkMixedPatients(instance.PatientID || null);
   };
 

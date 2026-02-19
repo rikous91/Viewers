@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Gestione Multi Monitor Nolex</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        text-align: center;
+        font-family: "Poppins", sans-serif;
+        line-height: 1.8rem;
+        padding: 20px;
+        width: 450px;
+      }
+      button {
+        margin: 5px;
+        padding: 10px;
+        cursor: pointer;
+      }
+
+      #intestazione {
+        background: #2e2e2e;
+        color: #fff;
+        position: absolute;
+        top: 0px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap;
+        flex-direction: row;
+      }
+
+      #intestazione h1 {
+        font-size: 1.1rem;
+        position: relative;
+        left: -34px;
+      }
+
+      #intestazione img {
+        width: 130px;
+        left: -50px;
+        position: relative;
+      }
+
+      #descrizione {
+        line-height: 1rem;
+        margin-top: 35px;
+        font-size: 0.9rem;
+      }
+
+      #info-versione {
+        position: fixed;
+        bottom: -15px;
+        left: 0;
+        width: 100%;
+        background: #474747;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="intestazione">
+      <img src="./icons/logo_nolex.png" alt="Logo Nolex" />
+      <h1>Gestione Multi Monitor Nolex</h1>
+    </div>
+    <!-- <button id="salva">Salva Finestra</button>
+    <button id="ripristina">Ripristina Finestra</button>
+    <script src="popup.js"></script> -->
+    <p id="descrizione">
+      Gestisci la visualizzazione su piu' monitor del visualizzatore Nolex in
+      modo semplice ed efficace. Salva la posizione e le dimensioni della
+      finestra per un ripristino automatico ad ogni caricamento. <br />
+      <br />
+      <b>La gestione e' accessibile direttamente dal visualizzatore</b>
+    </p>
+
+    <video src="tut-multi-monitor.mp4" autoplay muted loop width="350">
+      Il tuo browser non supporta il tag video.
+    </video>
+
+    <p id="info-versione">Versione 1.0</p>
+  </body>
+</html>

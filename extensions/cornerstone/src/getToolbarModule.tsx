@@ -139,36 +139,37 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
     {
       name: 'evaluate.cornerstone.synchronizer',
       evaluate: ({ viewportId, button }) => {
-        let synchronizers = syncGroupService.getSynchronizersForViewport(viewportId);
-
-        if (!synchronizers?.length) {
-          return {
-            className: utils.getToggledClassName(false),
-          };
-        }
-
-        const isArray = Array.isArray(button.commands);
+        const buttonCommands = button.commands ?? button.props?.commands;
+        const isArray = Array.isArray(buttonCommands);
 
         const synchronizerType = isArray
-          ? button.commands?.[0].commandOptions.type
-          : button.commands?.commandOptions.type;
+          ? buttonCommands?.[0]?.commandOptions?.type
+          : buttonCommands?.commandOptions?.type;
 
-        synchronizers = syncGroupService.getSynchronizersOfType(synchronizerType);
+        const synchronizersByType = syncGroupService.getSynchronizersOfType(synchronizerType);
 
-        if (!synchronizers?.length) {
+        if (!synchronizersByType?.length) {
           return {
+            isActive: false,
             className: utils.getToggledClassName(false),
           };
         }
 
-        // Todo: we need a better way to find the synchronizers based on their
-        // type, but for now we just check the first one and see if it is
-        // enabled
-        const synchronizer = synchronizers[0];
+        const synchronizersForViewport = syncGroupService.getSynchronizersForViewport(viewportId);
+        const synchronizersForViewportByType = synchronizersForViewport?.filter(sync =>
+          synchronizersByType.includes(sync)
+        );
 
-        const isEnabled = synchronizer?._enabled;
+        const hasEnabledSync = (syncList = []) =>
+          syncList.some(sync => sync?._enabled !== false);
+
+        const isEnabled =
+          synchronizersForViewportByType?.length > 0
+            ? hasEnabledSync(synchronizersForViewportByType)
+            : hasEnabledSync(synchronizersByType);
 
         return {
+          isActive: isEnabled,
           className: utils.getToggledClassName(isEnabled),
         };
       },

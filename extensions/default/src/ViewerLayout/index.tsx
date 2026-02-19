@@ -11,6 +11,99 @@ import { ErrorBoundary } from '@ohif/ui-next';
 import useResizablePanels from './ResizablePanelsHook';
 
 const resizableHandleClassName = 'mt-[1px] bg-black';
+const VIEWER_HEADER_HEIGHT_PX = 48;
+const NOLEX_EXTENSION_BANNER_HEIGHT_PX = 28;
+const NOLEX_EXTENSION_CHECK_TIMEOUT_MS = 1500;
+
+function NolexExtensionBrowser({ appConfig, onVisibilityChange }) {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof onVisibilityChange === 'function') {
+      onVisibilityChange(visible);
+    }
+  }, [visible, onVisibilityChange]);
+
+  useEffect(() => {
+    let extensionDetected = false;
+    const handleMessage = event => {
+      if (event.source !== window) {
+        return;
+      }
+
+      if (event.data?.type === 'fromExtension' && event.data?.data?.versione) {
+        extensionDetected = true;
+        setVisible(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.postMessage({ type: 'fromPage', data: 'Info versione' }, '*');
+
+    const timeoutId = setTimeout(() => {
+      if (!extensionDetected) {
+        setVisible(true);
+      }
+    }, NOLEX_EXTENSION_CHECK_TIMEOUT_MS);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleHideBanner = event => {
+      if (event.source !== window) {
+        return;
+      }
+      if (event.data?.type === 'nolex-hide-extension-banner') {
+        setVisible(false);
+      }
+    };
+    window.addEventListener('message', handleHideBanner);
+    return () => {
+      window.removeEventListener('message', handleHideBanner);
+    };
+  }, []);
+
+  const onClose = () => {
+    setVisible(false);
+  };
+
+  if (!visible) {
+    return null;
+  }
+
+  const installUrl = appConfig?.nolexExtensionBrowserUrl;
+
+  return (
+    <div className="nolex-extension-browser-container flex h-7 items-center justify-between gap-2 bg-amber-400 px-3 text-xs font-semibold text-black">
+      <div className="flex items-center gap-2">
+        <span>Estensione Nolex Browser non installata. Installa l'estensione per abilitare multi-schermo, schermo intero e la migliore esperienza possibile.
+        </span>
+        {installUrl ? (
+          <a
+            className="underline underline-offset-2 hover:opacity-90"
+            href={installUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Installa qui
+          </a>
+        ) : null}
+      </div>
+      <button
+        className="rounded px-2 py-0.5 hover:bg-black/10"
+        onClick={onClose}
+        aria-label="Chiudi avviso estensione Nolex Browser"
+        type="button"
+      >
+        X
+      </button>
+    </div>
+  );
+}
 
 function ViewerLayout({
   // From Extension Module Params
@@ -40,6 +133,8 @@ function ViewerLayout({
   const [hasLeftPanels, setHasLeftPanels] = useState(hasPanels('left'));
   const [leftPanelClosedState, setLeftPanelClosed] = useState(leftPanelClosed);
   const [rightPanelClosedState, setRightPanelClosed] = useState(rightPanelClosed);
+  const [showExtensionBanner, setShowExtensionBanner] = useState(false);
+  const isTopWindow = window.self === window.top;
 
   const [
     leftPanelProps,
@@ -134,8 +229,17 @@ function ViewerLayout({
 
   const viewportComponents = viewports.map(getViewportComponentData);
 
+  const viewerHeightOffset = VIEWER_HEADER_HEIGHT_PX +
+    (isTopWindow && showExtensionBanner ? NOLEX_EXTENSION_BANNER_HEIGHT_PX : 0);
+
   return (
     <div>
+      {isTopWindow && appConfig?.mostraavvisoEstensioneNolexBrowserNonInstallata !== false ? (
+        <NolexExtensionBrowser
+          appConfig={appConfig}
+          onVisibilityChange={setShowExtensionBanner}
+        />
+      ) : null}
       <ViewerHeader
         hotkeysManager={hotkeysManager}
         extensionManager={extensionManager}
@@ -144,7 +248,7 @@ function ViewerLayout({
       />
       <div
         className="nolex-main-area relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden bg-black"
-        style={{ height: 'calc(100vh - 48px' }}
+        style={{ height: `calc(100vh - ${viewerHeightOffset}px)` }}
       >
         <React.Fragment>
           {showLoadingIndicator && <LoadingIndicatorProgress className="h-full w-full bg-black" />}

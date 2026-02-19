@@ -1,0 +1,8 @@
+   Stimulsoft.Base.StiLicense.key =
+          '6vJhGtLLLz2GNviWmUTrhSqnOItdDwjBylQzQcAOiHkAElGs1l3p0z5KNRHBrm/qZsBJMG6tM9MkCeiW10GWRSnEon' +
+          'pF6bUIbvcLxIk12HbTnaIoLyyHURTJ0bqUAuzSQEPXgN+K2L8GiA8ytBBZ34mlFuUAjgJreBAErHIKAowamfJjFzj5' +
+          'E1winDx5bvLTeO7WKBEJ/ta4E805fm1i68kKovWsxv5Ofb4+J3l/oKmVX11REa9utWahLmpeH4ouOvN8hscblwPDW4' +
+          'ZjnJpbWGWXgzKxdCMjWoWbkJgernRR3lHKmgMaX/XK+WShy8ecOUjBu9U9rXj8eNS7yOmA5rNbj7/yVshV9RmexrZt' +
+          'c38gir53bet84r/uNDs7+AsU/ZgOMI32dJHeEkzldHUK+5YS6jXTZBj9RYgZP6t5YbywfE5ipW+XAYG0fI39TPmDRu' +
+          'FS6Vr+s35onvPSVhOSnA5J18l8GxDUf2FhDEJmurFyAC2Der7wdzfINjzNjnutZCr5f4gb5HCh53BoSXPo4wDO0P69' +
+          'HZgutc6sAuibJoaVqxVPU8BHGr7B3/yT2VD3';
