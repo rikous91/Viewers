@@ -13,6 +13,8 @@ coverage/
 .yarn/
 .nx/
 addOns/yarn.lock
+platform/app/build-tools/*.7z
+platform/app/build-tools/*.zip
 
 # YALC (for Erik)
 .yalc
