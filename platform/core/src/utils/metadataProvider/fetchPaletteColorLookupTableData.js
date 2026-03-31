@@ -35,7 +35,7 @@ function _getPaletteColor(paletteColorLookupTableData, lutDescriptor) {
     if (bits === 16) {
       let j = 0;
       for (let i = 0; i < numLutEntries; i++) {
-        lut[i] = (arraybuffer[j++] + arraybuffer[j++]) << 8;
+        lut[i] = arraybuffer[j++] + (arraybuffer[j++] << 8);
       }
     } else {
       for (let i = 0; i < numLutEntries; i++) {

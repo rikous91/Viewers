@@ -211,6 +211,7 @@ function CustomizableViewportOverlay({
     servicesManager.services;
   const [voi, setVOI] = useState({ windowCenter: null, windowWidth: null });
   const [scale, setScale] = useState(1);
+  const [, setCustomizationVersion] = useState(0);
   const { imageIndex } = imageSliceData;
 
   // Historical usage defined the overlays as separate items due to lack of
@@ -225,6 +226,29 @@ function CustomizableViewportOverlay({
   const bottomRightCustomization = customizationService.getCustomization(
     'viewportOverlay.bottomRight'
   );
+
+  useEffect(() => {
+    if (!customizationService?.EVENTS) {
+      return;
+    }
+    const { MODE_CUSTOMIZATION_MODIFIED, GLOBAL_CUSTOMIZATION_MODIFIED, DEFAULT_CUSTOMIZATION_MODIFIED } =
+      customizationService.EVENTS;
+    const bump = () => setCustomizationVersion(v => v + 1);
+    const subscriptions = [];
+    if (MODE_CUSTOMIZATION_MODIFIED) {
+      subscriptions.push(customizationService.subscribe(MODE_CUSTOMIZATION_MODIFIED, bump));
+    }
+    if (GLOBAL_CUSTOMIZATION_MODIFIED) {
+      subscriptions.push(customizationService.subscribe(GLOBAL_CUSTOMIZATION_MODIFIED, bump));
+    }
+    if (DEFAULT_CUSTOMIZATION_MODIFIED) {
+      subscriptions.push(customizationService.subscribe(DEFAULT_CUSTOMIZATION_MODIFIED, bump));
+    }
+
+    return () => {
+      subscriptions.forEach(sub => sub?.unsubscribe?.());
+    };
+  }, [customizationService]);
 
   const instanceNumber = useMemo(
     () =>

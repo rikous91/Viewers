@@ -29,10 +29,11 @@ const Thumbnail = ({
   isTracked = false,
   canReject = false,
   dragData = {},
-  onReject = () => { },
+  onReject = () => {},
   thumbnailType = 'thumbnail',
-  onClickUntrack = () => { },
-  ThumbnailMenuItems = () => { },
+  onClickUntrack = () => {},
+  ThumbnailMenuItems = () => {},
+  isBottomDocked = false,
 }: withAppTypes): React.ReactNode => {
   const debug =
     typeof window !== 'undefined' && window?.localStorage?.getItem('ohifThumbDebug') === '1';
@@ -58,12 +59,21 @@ const Thumbnail = ({
       viewPreset,
       thumbnailType,
     });
-  }, [debug, modality, imageSrc, displaySetInstanceUID, seriesNumber, numInstances, viewPreset, thumbnailType]);
+  }, [
+    debug,
+    modality,
+    imageSrc,
+    displaySetInstanceUID,
+    seriesNumber,
+    numInstances,
+    viewPreset,
+    thumbnailType,
+  ]);
 
   // TODO: We should wrap our thumbnail to create a "DraggableThumbnail", as
   // this will still allow for "drag", even if there is no drop target for the
   // specified item.
-  const [collectedProps, drag, dragPreview] = useDrag({
+  const [, drag] = useDrag({
     type: 'displayset',
     item: { ...dragData },
     canDrag: function (monitor) {
@@ -85,29 +95,53 @@ const Thumbnail = ({
   };
 
   const renderThumbnailPreset = () => {
+    const noImageModalities = ['PR', 'SR', 'SEG', 'SM', 'RTSTRUCT', 'RTPLAN', 'RTDOSE'];
+    const modalityUpper = modality?.toUpperCase?.() || '';
+    const isNoImageSeries =
+      thumbnailType === 'thumbnailNoImage' || noImageModalities.includes(modalityUpper);
+    const showSpinner = !isNoImageSeries && !imageSrc;
+    const presetContainerClass = isBottomDocked
+      ? 'flex h-[96px] w-[86px] shrink-0 flex-col items-start justify-start gap-0 p-[2px]'
+      : 'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]';
+    const presetImageSizeClass = isBottomDocked ? 'h-[58px] w-[82px]' : 'h-[114px] w-[128px]';
+    const presetImageWrapperClass = isBottomDocked ? 'h-[58px] w-[82px] shrink-0' : presetImageSizeClass;
+    const presetRelativeClass = isBottomDocked ? 'relative h-[58px] w-[82px] overflow-hidden' : 'relative';
+    const presetTextClass = isBottomDocked
+      ? 'flex h-[34px] w-[82px] flex-col justify-start overflow-hidden pt-[1px]'
+      : 'flex min-h-[52px] w-[128px] flex-col';
+    const presetDescriptionClass = isBottomDocked
+      ? 'max-w-[82px] overflow-hidden truncate whitespace-nowrap text-[12px] leading-[13px] text-white'
+      : 'text-[12px] text-white';
+    const presetSeriesRowClass = isBottomDocked
+      ? 'flex h-[12px] items-center gap-[4px] overflow-hidden whitespace-nowrap'
+      : 'flex h-[12px] items-center gap-[7px] overflow-hidden';
     return (
-      <div
-        className={classnames(
-          'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]',
-          isActive && 'bg-popover'
-        )}
-      >
-        <div className="h-[114px] w-[128px]">
-          <div className="relative">
+      <div className={classnames(presetContainerClass, isActive && 'bg-popover')}>
+        <div className={presetImageWrapperClass}>
+          <div className={presetRelativeClass}>
             {imageSrc ? (
               <img
                 src={imageSrc}
                 alt={imageAltText}
-                className="h-[114px] w-[128px] rounded"
+                className={classnames(
+                  `${presetImageSizeClass} rounded`,
+                  isNoImageSeries && 'opacity-60'
+                )}
                 crossOrigin="anonymous"
               />
             ) : (
-              <div className="bg-background h-[114px] w-[128px] rounded flex items-center justify-center">
-                {thumbnailType !== 'thumbnailNoImage' && (
-                  <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-primary/60 border-t-transparent" />
+              <div
+                className={classnames(
+                  'bg-background flex items-center justify-center rounded',
+                  presetImageSizeClass
+                )}
+              >
+                {showSpinner && thumbnailType !== 'thumbnailNoImage' && (
+                  <div className="border-primary/60 h-[18px] w-[18px] animate-spin rounded-full border-2 border-t-transparent" />
                 )}
               </div>
             )}
+            {isNoImageSeries && null}
 
             {/* bottom left */}
             <div className="absolute bottom-0 left-0 flex h-[14px] items-center gap-[4px] rounded-tr pt-[10px] pb-[8px] pr-[6px] pl-[3px]">
@@ -165,11 +199,23 @@ const Thumbnail = ({
             </div>
           </div>
         </div>
-        <div className="flex h-[52px] w-[128px] flex-col">
-          <div className="text-[12px] text-white">{description}</div>
-          <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-            <div className="text-muted-foreground pl-1 text-[11px]"> S:{seriesNumber}</div>
-            <div className="text-muted-foreground text-[11px]">
+        <div className={presetTextClass}>
+          <div className={presetDescriptionClass}>{description}</div>
+          <div className={presetSeriesRowClass}>
+            <div
+              className={classnames(
+                'text-muted-foreground text-[11px] leading-[12px]',
+                isBottomDocked ? 'pl-0' : 'pl-1'
+              )}
+            >
+              S:{seriesNumber}
+            </div>
+            <div
+              className={classnames(
+                'text-muted-foreground text-[11px] leading-[12px]',
+                isBottomDocked && 'shrink-0'
+              )}
+            >
               <div className="flex items-center gap-[4px]">
                 {countIcon ? (
                   React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
@@ -180,12 +226,31 @@ const Thumbnail = ({
               </div>
             </div>
           </div>
+          {isNoImageSeries && !isBottomDocked && (
+            <div className="mt-[2px]">
+              <span
+                className="inline-flex w-[128px] items-center justify-center whitespace-nowrap rounded-full px-2 py-[1px] text-[9px] uppercase tracking-wide"
+                style={{
+                  backgroundColor: 'var(--warning-bg)',
+                  color: 'var(--warning-text)',
+                  border: '1px solid var(--warning-border)',
+                }}
+              >
+                Serie senza immagini
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
   const renderListPreset = () => {
+    const noImageModalities = ['PR', 'SR', 'SEG', 'SM', 'RTSTRUCT', 'RTPLAN', 'RTDOSE'];
+    const modalityUpper = modality?.toUpperCase?.() || '';
+    const isNoImageSeries =
+      thumbnailType === 'thumbnailNoImage' || noImageModalities.includes(modalityUpper);
+    const showSpinner = !isNoImageSeries && !imageSrc;
     return (
       <div className="flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[8px] pb-[4px]">
         <div className="relative flex h-full items-center gap-[8px]">
@@ -198,12 +263,12 @@ const Thumbnail = ({
           ></div>
           <div className="flex h-full flex-col">
             <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px] series-foreground-text">
+              <div className="text-muted-foreground series-foreground-text text-[12px]">
                 {' '}
                 <span>S:</span>
                 {seriesNumber}
               </div>
-              <div className="text-muted-foreground text-[12px]  instances-foreground-text">
+              <div className="text-muted-foreground instances-foreground-text text-[12px]">
                 <div className="flex items-center gap-[4px]">
                   {' '}
                   {countIcon ? (
@@ -214,11 +279,24 @@ const Thumbnail = ({
                   <div>{numInstances}</div>
                 </div>
               </div>
-
               <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-[13px] text-white">
                 {description}
               </div>
             </div>
+            {isNoImageSeries && !isBottomDocked && (
+              <div className="mt-[2px]">
+                <span
+                  className="inline-flex w-[128px] items-center justify-center whitespace-nowrap rounded-full px-2 py-[1px] text-[9px] uppercase tracking-wide"
+                  style={{
+                    backgroundColor: 'var(--warning-bg)',
+                    color: 'var(--warning-text)',
+                    border: '1px solid var(--warning-border)',
+                  }}
+                >
+                  Serie senza immagini
+                </span>
+              </div>
+            )}
 
             {/* <div className="flex items-center gap-[7px]">
               <div className="text-[13px] text-white">{modality}</div>
@@ -233,16 +311,20 @@ const Thumbnail = ({
                 <img
                   src={imageSrc}
                   alt={imageAltText}
-                  className="h-[114px] w-[128px] rounded"
+                  className={classnames(
+                    'h-[114px] w-[128px] rounded',
+                    isNoImageSeries && 'opacity-60'
+                  )}
                   crossOrigin="anonymous"
                 />
               ) : (
-                <div className="bg-background h-[114px] w-[128px] rounded flex items-center justify-center">
-                  {thumbnailType !== 'thumbnailNoImage' && (
-                    <div className="h-[18px] w-[18px] animate-spin rounded-full border-2 border-primary/60 border-t-transparent" />
+                <div className="bg-background flex h-[114px] w-[128px] items-center justify-center rounded">
+                  {showSpinner && thumbnailType !== 'thumbnailNoImage' && (
+                    <div className="border-primary/60 h-[18px] w-[18px] animate-spin rounded-full border-2 border-t-transparent" />
                   )}
                 </div>
               )}
+              {isNoImageSeries && null}
             </div>
           </div>
         </div>
@@ -289,99 +371,13 @@ const Thumbnail = ({
     );
   };
 
-  const _oldrenderListPreset = () => {
-    return (
-      <div
-        className={classnames(
-          'flex h-full w-full items-center justify-between pr-[8px] pl-[8px] pt-[4px] pb-[4px]',
-          isActive && 'bg-popover'
-        )}
-      >
-        <div className="relative flex h-[32px] w-full items-center gap-[8px] overflow-hidden">
-          <div
-            className={classnames(
-              'h-[32px] w-[4px] min-w-[4px] rounded-[2px]',
-              isActive || isHydratedForDerivedDisplaySet ? 'bg-highlight' : 'bg-primary/65',
-              loadingProgress && loadingProgress < 1 && 'bg-primary/25'
-            )}
-          ></div>
-          <div className="flex h-full w-[calc(100%-12px)] flex-col">
-            <div className="flex items-center gap-[7px]">
-              <div className="text-[13px] font-semibold text-white">{modality}</div>
-              <Tooltip>
-                <TooltipContent>{description}</TooltipContent>
-                <TooltipTrigger className="w-full overflow-hidden">
-                  <div className="max-w-[160px] overflow-hidden overflow-ellipsis whitespace-nowrap text-left text-[13px] font-normal text-white">
-                    {description}
-                  </div>
-                </TooltipTrigger>
-              </Tooltip>
-            </div>
-
-            <div className="flex h-[12px] items-center gap-[7px] overflow-hidden">
-              <div className="text-muted-foreground text-[12px]"> S:{seriesNumber}</div>
-              <div className="text-muted-foreground text-[12px]">
-                <div className="flex items-center gap-[4px]">
-                  {' '}
-                  {countIcon ? (
-                    React.createElement(Icons[countIcon] || Icons.MissingIcon, { className: 'w-3' })
-                  ) : (
-                    <Icons.InfoSeries className="w-3" />
-                  )}
-                  <div>{numInstances}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex h-full items-center gap-[4px]">
-          <DisplaySetMessageListTooltip
-            messages={messages}
-            id={`display-set-tooltip-${displaySetInstanceUID}`}
-          />
-          {isTracked && (
-            <Tooltip>
-              <TooltipTrigger>
-                <div className="group">
-                  <Icons.StatusTracking className="text-primary-light h-[20px] w-[15px] group-hover:hidden" />
-                  <Icons.Cancel
-                    className="text-primary-light hidden h-[15px] w-[15px] group-hover:block"
-                    onClick={onClickUntrack}
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <div className="flex flex-1 flex-row">
-                  <div className="flex-2 flex items-center justify-center pr-4">
-                    <Icons.InfoLink className="text-primary-active" />
-                  </div>
-                  <div className="flex flex-1 flex-col">
-                    <span>
-                      <span className="text-white">
-                        {isTracked ? 'Series is tracked' : 'Series is untracked'}
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          )}
-          <ThumbnailMenuItems
-            displaySetInstanceUID={displaySetInstanceUID}
-            canReject={canReject}
-            onReject={onReject}
-          />
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div
       className={classnames(
         className,
         `bg-muted hover:bg-primary/30 group flex cursor-pointer select-none flex-col outline-none ${isActive && 'series-is-active'} ${countIcon && countIcon === 'icon-mpr' ? 'mpr-thumbnail' : 'no-mpr-thumbnail'}`,
-        viewPreset === 'thumbnails' && 'h-[170px] w-[135px]',
+        viewPreset === 'thumbnails' &&
+          (isBottomDocked ? 'h-full w-[86px] shrink-0' : 'h-[170px] w-[135px]'),
         viewPreset === 'list' && 'w-[275px]'
       )}
       id={`thumbnail-${displaySetInstanceUID}`}
@@ -438,6 +434,7 @@ Thumbnail.propTypes = {
   onClickUntrack: PropTypes.func,
   countIcon: PropTypes.string,
   thumbnailType: PropTypes.oneOf(['thumbnail', 'thumbnailTracked', 'thumbnailNoImage']),
+  isBottomDocked: PropTypes.bool,
 };
 
 export { Thumbnail };

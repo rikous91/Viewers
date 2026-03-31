@@ -153,6 +153,50 @@ const tryStartCaricamentoHP = () => {
   return false;
 };
 
+const applyViewportOverlayFromPreferences = preferenze => {
+  const overlayTags = preferenze?.viewportOverlayTags;
+  if (!overlayTags) {
+    return;
+  }
+
+  if (!window.config) {
+    window.config = {};
+  }
+  if (!window.nolexDefaultViewportOverlayTags) {
+    try {
+      window.nolexDefaultViewportOverlayTags = window.config.viewportOverlayTags
+        ? JSON.parse(JSON.stringify(window.config.viewportOverlayTags))
+        : null;
+    } catch (err) {
+      window.nolexDefaultViewportOverlayTags = window.config.viewportOverlayTags || null;
+    }
+  }
+  window.config.viewportOverlayTags = overlayTags;
+  window.nolexViewportOverlayPending = overlayTags;
+
+  const customizationService = window.servicesManager?.services?.customizationService;
+  const buildCustomizations = window.nolexBuildViewportOverlayCustomizations;
+  const applyNow = () => {
+    if (!customizationService || typeof buildCustomizations !== 'function') {
+      return false;
+    }
+    try {
+      const customizations = buildCustomizations(overlayTags);
+      const scope = customizationService.Scope?.Global || customizationService.Scope?.Mode;
+      customizationService.setCustomizations(customizations, scope);
+      window.nolexViewportOverlayPending = null;
+      return true;
+    } catch (err) {
+      console.warn('Overlay viewport: impossibile applicare le preferenze', err);
+      return false;
+    }
+  };
+
+  if (!applyNow() && typeof window.nolexApplyViewportOverlayIfReady === 'function') {
+    window.nolexApplyViewportOverlayIfReady();
+  }
+};
+
 const intervalCaricamentoHP = setInterval(() => {
   if (tryStartCaricamentoHP()) {
     clearInterval(intervalCaricamentoHP);
@@ -190,19 +234,21 @@ const caricamentoHP = async () => {
       .map(item => normalizza(item))
       .filter(Boolean);
 
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
   const applicaFallbackDaMetadata = () => {
     if (nomeEsameStudioHP && modalityStudioHP) {
-      return;
+      return true;
     }
     const displaySetService = window.servicesManager?.services?.displaySetService;
     if (!displaySetService || !studyInstanceUID) {
-      return;
+      return false;
     }
     const displaySets = displaySetService.getDisplaySetsBy(
       ds => ds?.StudyInstanceUID === studyInstanceUID
     );
     if (!displaySets?.length) {
-      return;
+      return false;
     }
     const displaySetWithInstance = displaySets.find(ds => ds.instances?.length) || displaySets[0];
     const referenceInstance =
@@ -231,6 +277,26 @@ const caricamentoHP = async () => {
         window.nolexModality = modalityStudioHP;
       }
     }
+
+    return !!(nomeEsameStudioHP || modalityStudioHP);
+  };
+
+  const ensureStudyInfoFromMetadata = async () => {
+    if (nomeEsameStudioHP && modalityStudioHP) {
+      return;
+    }
+
+    const start = Date.now();
+    const timeoutMs = 5000;
+    const stepMs = 250;
+
+    while (Date.now() - start <= timeoutMs) {
+      applicaFallbackDaMetadata();
+      if (nomeEsameStudioHP && modalityStudioHP) {
+        return;
+      }
+      await wait(stepMs);
+    }
   };
 
   if (!studyInstanceUID || !aetitle) {
@@ -238,7 +304,7 @@ const caricamentoHP = async () => {
     return;
   }
 
-  applicaFallbackDaMetadata();
+  await ensureStudyInfoFromMetadata();
   const nomeEsameNormalizzato = normalizza(nomeEsameStudioHP);
   console.log('[HP] Studio', {
     studyInstanceUID,
@@ -263,18 +329,19 @@ const caricamentoHP = async () => {
     }
     //A questo punto li setto in localStorage
     localStorage.setItem(`preferenzeUtente-${aetitle}`, JSON.stringify(preferenzeRemote.json));
+    applyViewportOverlayFromPreferences(preferenzeRemote.json);
   }
-  let preferenzeUtenteStudioSpecifico = JSON.parse(
+  const preferenzeUtenteCache = JSON.parse(
     localStorage.getItem(`preferenzeUtente-${aetitle}`)
-  )?.hp.studioSpecifico;
-  let preferenzeUtenteDescrizioneEsame = JSON.parse(
-    localStorage.getItem(`preferenzeUtente-${aetitle}`)
-  )?.hp.nomeEsame;
+  );
+  applyViewportOverlayFromPreferences(preferenzeUtenteCache);
+
+  let preferenzeUtenteStudioSpecifico = preferenzeUtenteCache?.hp.studioSpecifico;
+  let preferenzeUtenteDescrizioneEsame = preferenzeUtenteCache?.hp.nomeEsame;
   if (!preferenzeUtenteDescrizioneEsame) {
     console.warn('HP - Nessuna preferenza utente per descrizione esame trovata');
   }
-  let preferenzeUtenteModality = JSON.parse(localStorage.getItem(`preferenzeUtente-${aetitle}`))?.hp
-    .modality;
+  let preferenzeUtenteModality = preferenzeUtenteCache?.hp.modality;
   //Prima do priorità allo studio specifico ovvero se gli hanging protocol hanno quello studyInstanceUID
   if (preferenzeUtenteStudioSpecifico && preferenzeUtenteStudioSpecifico[studyInstanceUID]) {
     cameraSettings = preferenzeUtenteStudioSpecifico[studyInstanceUID].camera;

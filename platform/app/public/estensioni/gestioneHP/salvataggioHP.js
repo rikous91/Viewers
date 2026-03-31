@@ -286,6 +286,7 @@ let nolexHP = {
 };
 
 let istanzeSpecifiche = [];
+let serieLabels = [];
 
 const aetitle = window.nolexAETitle;
 const username = window.nolexUsername;
@@ -296,6 +297,123 @@ let modality = window.nolexModality;
 const syncStudyInfo = () => {
   studyDescription = window.nolexStudyDescription || studyDescription || '';
   modality = window.nolexModality || modality || '';
+};
+
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+const tryResolveStudyInfoFromMetadata = () => {
+  const displaySetService = window.servicesManager?.services?.displaySetService;
+  if (!displaySetService) {
+    return false;
+  }
+
+  let displaySets = [];
+  if (studyInstanceUIDs && displaySetService.getDisplaySetsBy) {
+    displaySets =
+      displaySetService.getDisplaySetsBy(ds => ds?.StudyInstanceUID === studyInstanceUIDs) || [];
+  }
+
+  if (!displaySets.length) {
+    displaySets =
+      displaySetService.getActiveDisplaySets?.() || displaySetService.activeDisplaySets || [];
+  }
+
+  if (!displaySets.length) {
+    return false;
+  }
+
+  const displaySetWithInstance = displaySets.find(ds => ds?.instances?.length) || displaySets[0];
+  const referenceInstance =
+    displaySetWithInstance?.instance || displaySetWithInstance?.instances?.[0] || {};
+
+  let changed = false;
+
+  if (!studyDescription) {
+    const studyDescriptionFromMetadata =
+      referenceInstance?.StudyDescription || displaySetWithInstance?.StudyDescription;
+    if (studyDescriptionFromMetadata) {
+      studyDescription = studyDescriptionFromMetadata;
+      window.nolexStudyDescription = studyDescriptionFromMetadata;
+      changed = true;
+    }
+  }
+
+  if (!modality) {
+    const modalities = new Set();
+    displaySets.forEach(ds => {
+      if (ds?.Modality) {
+        modalities.add(ds.Modality);
+      } else if (ds?.instances?.[0]?.Modality) {
+        modalities.add(ds.instances[0].Modality);
+      }
+    });
+    if (modalities.size) {
+      modality = Array.from(modalities).join('\\');
+      window.nolexModality = modality;
+      changed = true;
+    }
+  }
+
+  return changed;
+};
+
+const ensureStudyInfoFromMetadata = async () => {
+  syncStudyInfo();
+  if (studyDescription && modality) {
+    return;
+  }
+
+  const start = Date.now();
+  const timeoutMs = 5000;
+  const stepMs = 250;
+
+  while (Date.now() - start <= timeoutMs) {
+    syncStudyInfo();
+    tryResolveStudyInfoFromMetadata();
+    syncStudyInfo();
+    if (studyDescription && modality) {
+      return;
+    }
+    await wait(stepMs);
+  }
+};
+
+const normalizza = value => (value || '').toString().trim().toUpperCase();
+const normalizzaModality = value =>
+  (value || '')
+    .toString()
+    .split('\\')
+    .map(item => normalizza(item))
+    .filter(Boolean);
+
+const ensureHpStructure = hp => {
+  const safeHp = hp && typeof hp === 'object' ? hp : {};
+
+  if (
+    !safeHp.studioSpecifico ||
+    typeof safeHp.studioSpecifico !== 'object' ||
+    Array.isArray(safeHp.studioSpecifico)
+  ) {
+    safeHp.studioSpecifico = {};
+  }
+  safeHp.nomeEsame = Array.isArray(safeHp.nomeEsame)
+    ? safeHp.nomeEsame.filter(item => item && typeof item === 'object')
+    : [];
+  safeHp.modality = Array.isArray(safeHp.modality)
+    ? safeHp.modality.filter(item => item && typeof item === 'object')
+    : [];
+
+  return safeHp;
+};
+
+const ensurePreferenzePayload = preferenzePayload => {
+  const safePayload =
+    preferenzePayload && typeof preferenzePayload === 'object' ? preferenzePayload : {};
+  if (!safePayload.json || typeof safePayload.json !== 'object') {
+    safePayload.json = {};
+  }
+  safePayload.json.hp = ensureHpStructure(safePayload.json.hp);
+  return safePayload;
 };
 
 const logHpSalvataggio = (tipo, entry) => {
@@ -309,45 +427,264 @@ const logHpSalvataggio = (tipo, entry) => {
     entry,
   });
 };
+
+const getAppliedHpConfig = preferenzeJson => {
+  syncStudyInfo();
+  const hp = preferenzeJson?.hp;
+  if (!hp) {
+    return null;
+  }
+  if (hp.studioSpecifico?.[studyInstanceUIDs]) {
+    return { tipo: 'studioSpecifico', entry: hp.studioSpecifico[studyInstanceUIDs] };
+  }
+  const nomeEsameNormalizzato = normalizza(studyDescription);
+  const matchEsame = (hp.nomeEsame || []).find(
+    item => normalizza(item?.nomeEsame) === nomeEsameNormalizzato
+  );
+  if (matchEsame) {
+    return { tipo: 'descrizioneEsame', entry: matchEsame };
+  }
+  const modalityCandidates = normalizzaModality(modality);
+  const matchModality = (hp.modality || []).find(item => {
+    const savedCandidates = normalizzaModality(item?.nomeModality);
+    return savedCandidates.some(value => modalityCandidates.includes(value));
+  });
+  if (matchModality) {
+    return { tipo: 'modality', entry: matchModality };
+  }
+  return null;
+};
+
+const parseLayout = (entry = {}) => {
+  const layout = entry.layoutGriglia || entry.performanceHP?.stages?.[0]?.viewportStructure?.properties;
+  if (typeof layout === 'string' && layout.includes('x')) {
+    const [columns, rows] = layout.split('x').map(value => Number(value));
+    if (Number.isFinite(rows) && Number.isFinite(columns) && rows > 0 && columns > 0) {
+      return { rows, columns };
+    }
+  }
+  if (layout && typeof layout === 'object') {
+    const rows = Number(layout.rows || 1);
+    const columns = Number(layout.columns || 1);
+    if (rows > 0 && columns > 0) {
+      return { rows, columns };
+    }
+  }
+  return { rows: 1, columns: 1 };
+};
+
+const buildGridIconHtml = ({ rows, columns }) => {
+  const total = rows * columns;
+  const cells = new Array(total).fill(0).map((_, index) => {
+    return `<span style="width:8px;height:8px;border:1px solid #8a8a8a;border-radius:2px;display:block"></span>`;
+  });
+  return `
+    <div style="display:grid;grid-template-columns:repeat(${columns},8px);grid-template-rows:repeat(${rows},8px);gap:2px;padding:4px;border:1px solid #333;border-radius:4px;">
+      ${cells.join('')}
+    </div>
+  `;
+};
+
+const resolveSeriesLabel = (rule, fallbackIndex) => {
+  if (!rule) {
+    return { label: 'Serie non definita' };
+  }
+  const attribute = rule.attribute;
+  const constraint = rule.constraint || {};
+  let value = constraint.contains ?? constraint.equals ?? constraint.startsWith ?? '';
+  if (Array.isArray(value)) {
+    value = value[0];
+  }
+
+  if (attribute === 'SeriesInstanceUID' && value) {
+    const displaySetService = window.servicesManager?.services?.displaySetService;
+    const displaySets = displaySetService?.getDisplaySetsBy?.(
+      ds =>
+        ds?.SeriesInstanceUID === value ||
+        ds?.seriesInstanceUID === value ||
+        ds?.instances?.[0]?.SeriesInstanceUID === value
+    );
+    const displaySet = displaySets?.[0];
+    const seriesDescription =
+      displaySet?.SeriesDescription || displaySet?.instances?.[0]?.SeriesDescription;
+    const seriesNumber = displaySet?.SeriesNumber || displaySet?.instances?.[0]?.SeriesNumber;
+    if (seriesDescription || seriesNumber !== undefined) {
+      const numberText =
+        seriesNumber !== undefined && seriesNumber !== null ? `Serie ${seriesNumber}` : 'Serie';
+      const descrText = seriesDescription ? ` ${seriesDescription}` : '';
+      return { label: `${numberText}${descrText}`.trim() };
+    }
+  }
+
+  if (attribute === 'SeriesDescription') {
+    if (value) {
+      return { label: `Serie ${value}` };
+    }
+    if (typeof fallbackIndex === 'number') {
+      const displaySetService = window.servicesManager?.services?.displaySetService;
+      const studyId = window.nolexStudyInstanceUIDs;
+      const displaySets = displaySetService?.getDisplaySetsBy?.(ds => ds?.StudyInstanceUID === studyId);
+      if (displaySets?.length) {
+        const sorted = [...displaySets].sort((a, b) => (a.SeriesNumber || 0) - (b.SeriesNumber || 0));
+        const ds = sorted[fallbackIndex];
+        const dsDesc = ds?.SeriesDescription || ds?.instances?.[0]?.SeriesDescription;
+        const dsNum = ds?.SeriesNumber || ds?.instances?.[0]?.SeriesNumber;
+        if (dsDesc || dsNum !== undefined) {
+          const numberText = dsNum !== undefined && dsNum !== null ? `Serie ${dsNum}` : 'Serie';
+          const descrText = dsDesc ? ` ${dsDesc}` : '';
+          return { label: `${numberText}${descrText}`.trim() };
+        }
+      }
+    }
+    return { label: 'Serie senza descrizione' };
+  }
+  if (attribute === 'SeriesNumber') {
+    if (value !== '' && value !== undefined && value !== null) {
+      const displaySetService = window.servicesManager?.services?.displaySetService;
+      const studyId = window.nolexStudyInstanceUIDs;
+      const displaySets = displaySetService?.getDisplaySetsBy?.(ds => ds?.StudyInstanceUID === studyId);
+      const match = displaySets?.find(ds => String(ds.SeriesNumber) === String(value));
+      const desc = match?.SeriesDescription || match?.instances?.[0]?.SeriesDescription;
+      if (desc) {
+        return { label: `Serie ${value} ${desc}` };
+      }
+      return { label: `Serie ${value}` };
+    }
+    return { label: 'Serie' };
+  }
+
+  if (value) {
+    return { label: `${attribute || 'Serie'} ${value}`.trim() };
+  }
+  return { label: attribute || 'Serie' };
+};
+
+const buildSavedConfigHtml = (tipo, entry) => {
+  if (!entry) {
+    return `<div style="color:#bbb;">Nessuna configurazione salvata applicabile.</div>`;
+  }
+
+  const { rows, columns } = parseLayout(entry);
+  const totalCells = rows * columns;
+  const performanceHP = entry.performanceHP || {};
+  const viewports = performanceHP?.stages?.[0]?.viewports || [];
+  const displaySetSelectors = performanceHP?.displaySetSelectors || {};
+  const istanzeSpecifiche = entry.istanzeSpecifiche || [];
+  const serieLabels = entry.serieLabels || [];
+
+  const typeLabel =
+    tipo === 'studioSpecifico'
+      ? 'Attivi per: Studio specifico'
+      : tipo === 'descrizioneEsame'
+        ? 'Attivi per: Descrizione esame'
+        : tipo === 'modality'
+          ? 'Attivi per: Modality'
+          : 'Configurazione';
+
+  const typeValue =
+    tipo === 'studioSpecifico'
+      ? studyInstanceUIDs
+      : tipo === 'descrizioneEsame'
+        ? studyDescription || ''
+        : tipo === 'modality'
+          ? modality || ''
+          : '';
+
+  const header = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      ${buildGridIconHtml({ rows, columns })}
+      <div>
+        <div style="font-weight:600;color:#e5e5e5;">${typeLabel}${typeValue ? `: ${typeValue}` : ''}</div>
+        <div style="color:#b3b3b3;">Griglia: ${columns}x${rows}</div>
+      </div>
+    </div>
+  `;
+
+  const cells = [];
+  for (let i = 0; i < totalCells; i++) {
+    const viewport = viewports[i];
+    const displaySetId = viewport?.displaySets?.[0]?.id || `DisplaySet${i}`;
+    const rule = displaySetSelectors?.[displaySetId]?.seriesMatchingRules?.[0];
+    const savedLabel = serieLabels[i];
+    const { label: ruleLabel } = resolveSeriesLabel(rule, i);
+    const label = savedLabel || ruleLabel;
+    const istanza = istanzeSpecifiche[i];
+    const row = Math.floor(i / columns) + 1;
+    const col = (i % columns) + 1;
+    const istanzaText = istanza ? ` - Istanza ${istanza}` : '';
+    cells.push(`
+      <div style="padding:4px 0;color:#ddd;">
+        <span style="display:inline-block;min-width:48px;color:#9aa0a6;">${row},${col}</span>
+        ${label}${istanzaText}
+      </div>
+    `);
+  }
+
+  return `
+    ${header}
+    <div style="border-top:1px solid #2a2a2a;padding-top:6px;">
+      ${cells.join('')}
+    </div>
+  `;
+};
+
+const renderSavedConfig = preferenzeJson => {
+  const container = document.getElementById('hp-saved-config-body');
+  if (!container) {
+    return;
+  }
+  const match = getAppliedHpConfig(preferenzeJson);
+  if (!match) {
+    container.innerHTML = buildSavedConfigHtml(null, null);
+    return;
+  }
+  container.innerHTML = buildSavedConfigHtml(match.tipo, match.entry);
+};
 async function salvataggioHP() {
-  creaDIV();
+  await ensureStudyInfoFromMetadata();
+  await creaDIV();
 }
 
 function hpAttualmenteSalvati() {
   syncStudyInfo();
   const configAttiva = [];
-  if (!localStorage.getItem(`preferenzeUtente-${aetitle}`)) {
+  const key = `preferenzeUtente-${aetitle}`;
+  const cachedRaw = localStorage.getItem(key);
+  if (!cachedRaw) {
     return configAttiva;
   }
-  const preferenzeUtenteStudioSpecifico = JSON.parse(
-    localStorage.getItem(`preferenzeUtente-${aetitle}`)
-  ).hp.studioSpecifico;
-  const preferenzeUtenteEsame = JSON.parse(localStorage.getItem(`preferenzeUtente-${aetitle}`)).hp
-    .nomeEsame;
-  const preferenzeUtenteModality = JSON.parse(localStorage.getItem(`preferenzeUtente-${aetitle}`))
-    .hp.modality;
+  let cachedPreferences;
+  try {
+    cachedPreferences = JSON.parse(cachedRaw);
+  } catch (err) {
+    console.warn('Preferenze utente HP non valide in cache locale', err);
+    return configAttiva;
+  }
+
+  const hp = ensureHpStructure(cachedPreferences?.hp);
+  const preferenzeUtenteStudioSpecifico = hp.studioSpecifico;
+  const preferenzeUtenteEsame = hp.nomeEsame;
+  const preferenzeUtenteModality = hp.modality;
   if (preferenzeUtenteStudioSpecifico[studyInstanceUIDs]) {
     configAttiva.push('studioSpecifico');
   }
 
   for (let i = 0; i < preferenzeUtenteEsame.length; i++) {
-    if (preferenzeUtenteEsame[i].nomeEsame === studyDescription) {
+    if (preferenzeUtenteEsame[i]?.nomeEsame === studyDescription) {
       configAttiva.push('descrizioneEsame');
     }
   }
 
   for (let i = 0; i < preferenzeUtenteModality.length; i++) {
-    if (modality !== '' && preferenzeUtenteModality[i].nomeModality === modality) {
+    if (modality !== '' && preferenzeUtenteModality[i]?.nomeModality === modality) {
       configAttiva.push('modality');
     }
   }
   return configAttiva;
 }
 
-let preferenzeRemote;
-
 async function creaDIV() {
-  syncStudyInfo();
+  await ensureStudyInfoFromMetadata();
   //Toggle
   if (document.getElementById('menu-hp')) {
     document.getElementById('menu-hp').remove();
@@ -364,6 +701,13 @@ async function creaDIV() {
   <p>Modality: <span>${modality}</span></p>
   <p>Esame: <span>${studyDescription}</span></p>
   <p style=${configAttiva.length > 0 ? 'color:#e9e9e9;display:block' : 'display:none'}>🟢 Hanging protocol applicati per questo studio </p>
+  </div>
+
+  <div style="margin-top:12px;border-top:1px solid #2a2a2a;padding-top:10px;">
+    <button id="toggle-hp-saved-config" style="background:#1f1f1f;border:1px solid #333;color:#e5e5e5;padding:6px 10px;border-radius:4px;cursor:pointer;">
+      Vedi configurazione salvata
+    </button>
+    <div id="hp-saved-config-body" style="display:none;margin-top:10px;"></div>
   </div>
 
   <div style="display:flex;margin-top: 10px;">
@@ -409,6 +753,8 @@ async function creaDIV() {
   const deleteConfigExamBtn = document.getElementById('delete-hp-config-exam');
   const deleteConfigModalityBtn = document.getElementById('delete-hp-config-modality');
   const closeHPDivBtn = document.getElementById('close-hp');
+  const toggleSavedConfigBtn = document.getElementById('toggle-hp-saved-config');
+  const savedConfigBody = document.getElementById('hp-saved-config-body');
 
   saveSpecificStudyBtn.addEventListener('click', saveSpecificStudy);
   saveConfigExamBtn.addEventListener('click', saveConfigExam);
@@ -420,9 +766,30 @@ async function creaDIV() {
   closeHPDivBtn.addEventListener('click', () => {
     document.getElementById('menu-hp').remove();
   });
-  preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
-  if (!preferenzeRemote || !preferenzeRemote.json) {
-    return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
+
+  if (toggleSavedConfigBtn && savedConfigBody) {
+    toggleSavedConfigBtn.addEventListener('click', () => {
+      const isHidden = savedConfigBody.style.display === 'none' || !savedConfigBody.style.display;
+      savedConfigBody.style.display = isHidden ? 'block' : 'none';
+      toggleSavedConfigBtn.textContent = isHidden
+        ? 'Nascondi configurazione salvata'
+        : 'Vedi configurazione salvata';
+    });
+  }
+
+  const preferenzeRemoteRaw = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
+  if (!preferenzeRemoteRaw) {
+    console.warn('Non ? stato possibile recuperare le preferenze utente per gli HP');
+    let cached = {};
+    try {
+      cached = JSON.parse(localStorage.getItem(`preferenzeUtente-${aetitle}`) || '{}');
+    } catch (err) {
+      console.warn('Preferenze utente HP in cache locale non valide', err);
+    }
+    renderSavedConfig(cached);
+  } else {
+    const preferenzeRemote = ensurePreferenzePayload(preferenzeRemoteRaw);
+    renderSavedConfig(preferenzeRemote.json);
   }
   uiNotificationService = window.servicesManager.services.uiNotificationService;
 }
@@ -430,11 +797,14 @@ async function creaDIV() {
 async function componiHP(modalita) {
   //modalita='specificStudy', 'descrizioneEsame', 'modality'
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
-  if (!preferenzeRemote) {
+  const preferenzeRemoteRaw = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
+  if (!preferenzeRemoteRaw) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
+  const preferenzeRemote = ensurePreferenzePayload(preferenzeRemoteRaw);
   const attualiHP = preferenzeRemote.json.hp;
+  serieLabels = [];
+  istanzeSpecifiche = [];
   nolexHP.stages[0].viewportStructure.properties.rows = Number(window.layout.split('x')[1]);
   nolexHP.stages[0].viewportStructure.properties.columns = Number(window.layout.split('x')[0]);
   const { cornerstoneViewportService, viewportGridService } = window.servicesManager.services;
@@ -446,6 +816,16 @@ async function componiHP(modalita) {
   viewports.forEach(_viewport => {
     const { viewportId } = _viewport;
     const viewport = renderingEngine.getViewport(viewportId);
+    if (!viewport || !viewport.element) {
+      const displaySetKey = `DisplaySet${i}`;
+      if (nolexHP?.displaySetSelectors?.[displaySetKey]) {
+        nolexHP.displaySetSelectors[displaySetKey].seriesMatchingRules = [{}];
+      }
+      istanzeSpecifiche.push(null);
+      serieLabels.push('Serie');
+      i += 1;
+      return;
+    }
     const { element } = viewport;
     const cameraViewport = viewport.getCamera();
     const viewPresentation = viewport.getViewPresentation
@@ -460,17 +840,71 @@ async function componiHP(modalita) {
     };
     cameraHP[hpViewportId] = cameraData;
     cameraByIndex.push(cameraData);
-    const descrizioneSerie =
+    const descrizioneSerieFromUi =
       element.parentElement.querySelector('[title="Series description"]')?.textContent?.trim() ||
       '';
+    const displaySetService = window.servicesManager?.services?.displaySetService;
+    const displaySetUIDs =
+      viewportGridService.getDisplaySetsUIDsForViewport?.(viewportId) || [];
+    const primaryDisplaySet = displaySetUIDs.length
+      ? displaySetService?.getDisplaySetByUID?.(displaySetUIDs[0])
+      : null;
+    const displaySetSeriesInstanceUID =
+      primaryDisplaySet?.SeriesInstanceUID ||
+      primaryDisplaySet?.seriesInstanceUID ||
+      primaryDisplaySet?.instances?.[0]?.SeriesInstanceUID ||
+      null;
+    const displaySetSeriesNumber =
+      primaryDisplaySet?.SeriesNumber ?? primaryDisplaySet?.instances?.[0]?.SeriesNumber ?? null;
+    const displaySetSeriesDescription =
+      primaryDisplaySet?.SeriesDescription ||
+      primaryDisplaySet?.seriesDescription ||
+      primaryDisplaySet?.instances?.[0]?.SeriesDescription ||
+      '';
     //Estraggo SeriesInstanceUID
-    const imageId = viewport.csImage?.imageId || '';
-    const match = imageId.match(/series\/([^\/]+)/);
-    const seriesInstanceUID = match ? match[1] : null;
-    const seriesNumber = imageId ? metaData.get('instance', imageId)?.SeriesNumber : null;
+    const imageId =
+      viewport.csImage?.imageId ||
+      (typeof viewport.getCurrentImageId === 'function' ? viewport.getCurrentImageId() : '') ||
+      '';
+    const match = imageId ? imageId.match(/series\/([^\/]+)/) : null;
+    const instanceMeta = imageId ? metaData.get('instance', imageId) : null;
+    const seriesInstanceUID = match ? match[1] : displaySetSeriesInstanceUID;
+    const seriesNumber = instanceMeta?.SeriesNumber ?? displaySetSeriesNumber;
+    const descrizioneSerieFromMeta = instanceMeta?.SeriesDescription || '';
+    let descrizioneSerie =
+      descrizioneSerieFromUi || descrizioneSerieFromMeta || displaySetSeriesDescription;
+    if (typeof descrizioneSerie === 'string') {
+      descrizioneSerie = descrizioneSerie.trim();
+    }
+    if (!descrizioneSerie && seriesInstanceUID) {
+      const displaySets = displaySetService?.getDisplaySetsForSeries?.(seriesInstanceUID) || [];
+      const ds = displaySets[0];
+      descrizioneSerie = ds?.SeriesDescription || ds?.instances?.[0]?.SeriesDescription || '';
+    }
     // // //
-    const numeroIstanza = viewport.currentImageIdIndex + 1;
+    let numeroIstanza = null;
+    if (Number.isFinite(viewport?.currentImageIdIndex)) {
+      numeroIstanza = viewport.currentImageIdIndex + 1;
+    } else if (typeof viewport?.getCurrentImageIdIndex === 'function') {
+      const idx = viewport.getCurrentImageIdIndex();
+      if (Number.isFinite(idx)) {
+        numeroIstanza = idx + 1;
+      }
+    }
     istanzeSpecifiche.push(numeroIstanza);
+    const seriesLabel = (() => {
+      if (descrizioneSerie && seriesNumber != null) {
+        return `Serie ${seriesNumber} ${descrizioneSerie}`;
+      }
+      if (descrizioneSerie) {
+        return `Serie ${descrizioneSerie}`;
+      }
+      if (seriesNumber != null) {
+        return `Serie ${seriesNumber}`;
+      }
+      return 'Serie';
+    })();
+    serieLabels.push(seriesLabel);
     const displaySetKey = `DisplaySet${i}`;
     //Serie (se salvo come studio specifico mi vado a settare la SeriesInstanceUID piuttosto che la SeriesDescription)
     const usaSeriesNumber = modalita !== 'specificStudy' && !descrizioneSerie && seriesNumber != null;
@@ -484,7 +918,7 @@ async function componiHP(modalita) {
       ? { contains: seriesInstanceUID }
       : usaSeriesNumber
         ? { equals: seriesNumber }
-        : { contains: descrizioneSerie };
+        : { equals: descrizioneSerie };
     nolexHP.displaySetSelectors[displaySetKey].seriesMatchingRules = [
       {
         attribute: attributoMatch,
@@ -515,12 +949,11 @@ async function saveSpecificStudy() {
     }
   }
 
-  const {
-    cameraHP = {},
-    cameraByIndex = [],
-    attualiHP = {},
-    preferenzeRemote = {},
-  } = (await componiHP('specificStudy')) || {};
+  const hpComposed = await componiHP('specificStudy');
+  if (!hpComposed?.preferenzeRemote?.json || !hpComposed?.attualiHP) {
+    return;
+  }
+  const { cameraHP = {}, cameraByIndex = [], attualiHP = {}, preferenzeRemote = {} } = hpComposed;
 
   const entry = {
     performanceHP: nolexHP,
@@ -533,6 +966,7 @@ async function saveSpecificStudy() {
     cameraByIndex: cameraByIndex,
     serieSpecifiche: null,
     istanzeSpecifiche: istanzeSpecifiche,
+    serieLabels: serieLabels,
   };
   attualiHP.studioSpecifico[studyInstanceUIDs] = entry;
   logHpSalvataggio('studioSpecifico', entry);
@@ -559,14 +993,16 @@ async function saveConfigExam() {
       return;
     }
   }
-  const {
-    cameraHP = {},
-    cameraByIndex = [],
-    attualiHP = {},
-    preferenzeRemote = {},
-  } = (await componiHP('descrizioneEsame')) || {};
+  const hpComposed = await componiHP('descrizioneEsame');
+  if (!hpComposed?.preferenzeRemote?.json || !hpComposed?.attualiHP) {
+    return;
+  }
+  const { cameraHP = {}, cameraByIndex = [], attualiHP = {}, preferenzeRemote = {} } = hpComposed;
+  if (!Array.isArray(attualiHP.nomeEsame)) {
+    attualiHP.nomeEsame = [];
+  }
 
-  const index = attualiHP.nomeEsame.findIndex(element => element.nomeEsame === studyDescription);
+  const index = attualiHP.nomeEsame.findIndex(element => element?.nomeEsame === studyDescription);
   const entry = {
     nomeEsame: studyDescription,
     performanceHP: nolexHP,
@@ -579,6 +1015,7 @@ async function saveConfigExam() {
     cameraByIndex: cameraByIndex,
     serieSpecifiche: null,
     istanzeSpecifiche: istanzeSpecifiche,
+    serieLabels: serieLabels,
   };
   if (index !== -1) {
     // Sovrascrivi l'oggetto esistente
@@ -612,14 +1049,16 @@ async function saveConfigModality() {
       return;
     }
   }
-  const {
-    cameraHP = {},
-    cameraByIndex = [],
-    attualiHP = {},
-    preferenzeRemote = {},
-  } = (await componiHP('modality')) || {};
+  const hpComposed = await componiHP('modality');
+  if (!hpComposed?.preferenzeRemote?.json || !hpComposed?.attualiHP) {
+    return;
+  }
+  const { cameraHP = {}, cameraByIndex = [], attualiHP = {}, preferenzeRemote = {} } = hpComposed;
+  if (!Array.isArray(attualiHP.modality)) {
+    attualiHP.modality = [];
+  }
 
-  const index = attualiHP.modality.findIndex(element => element.nomeModality === modality);
+  const index = attualiHP.modality.findIndex(element => element?.nomeModality === modality);
   const entry = {
     nomeModality: modality,
     performanceHP: nolexHP,
@@ -632,6 +1071,7 @@ async function saveConfigModality() {
     cameraByIndex: cameraByIndex,
     serieSpecifiche: null,
     istanzeSpecifiche: istanzeSpecifiche,
+    serieLabels: serieLabels,
   };
   if (index !== -1) {
     // Sovrascrivi l'oggetto esistente
@@ -663,10 +1103,11 @@ async function deleteConfigSpecificStudy() {
     return;
   }
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
-  if (!preferenzeRemote || !preferenzeRemote.json) {
+  const preferenzeRemoteRaw = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
+  if (!preferenzeRemoteRaw) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
+  const preferenzeRemote = ensurePreferenzePayload(preferenzeRemoteRaw);
   const attualiHP = preferenzeRemote.json.hp;
   delete attualiHP.studioSpecifico[studyInstanceUIDs];
   preferenzeRemote.json.hp = attualiHP;
@@ -690,13 +1131,17 @@ async function deleteConfigExam() {
     return;
   }
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
-  if (!preferenzeRemote || !preferenzeRemote.json) {
+  const preferenzeRemoteRaw = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
+  if (!preferenzeRemoteRaw) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
+  const preferenzeRemote = ensurePreferenzePayload(preferenzeRemoteRaw);
   const attualiHP = preferenzeRemote.json.hp;
+  if (!Array.isArray(attualiHP.nomeEsame)) {
+    attualiHP.nomeEsame = [];
+  }
 
-  attualiHP.nomeEsame = attualiHP.nomeEsame.filter(item => item.nomeEsame !== studyDescription);
+  attualiHP.nomeEsame = attualiHP.nomeEsame.filter(item => item?.nomeEsame !== studyDescription);
 
   preferenzeRemote.json.hp = attualiHP;
 
@@ -719,12 +1164,16 @@ async function deleteConfigModality() {
     return;
   }
   //Ottengo gli HP aggiornati in tempo reale
-  const preferenzeRemote = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
-  if (!preferenzeRemote || !preferenzeRemote.json) {
+  const preferenzeRemoteRaw = await letturaPreferenzeAPI(aetitle, username, studyInstanceUIDs);
+  if (!preferenzeRemoteRaw) {
     return console.warn('Non è stato possibile recuperare le preferenze utente per gli HP');
   }
+  const preferenzeRemote = ensurePreferenzePayload(preferenzeRemoteRaw);
   const attualiHP = preferenzeRemote.json.hp;
-  attualiHP.modality = attualiHP.modality.filter(item => item.nomeModality !== modality);
+  if (!Array.isArray(attualiHP.modality)) {
+    attualiHP.modality = [];
+  }
+  attualiHP.modality = attualiHP.modality.filter(item => item?.nomeModality !== modality);
 
   preferenzeRemote.json.hp = attualiHP;
 

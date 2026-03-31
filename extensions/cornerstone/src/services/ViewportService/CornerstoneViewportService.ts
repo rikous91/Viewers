@@ -12,6 +12,7 @@ import {
   Enums as csEnums,
   BaseVolumeViewport,
   eventTarget,
+  metaData,
 } from '@cornerstonejs/core';
 
 import { utilities as csToolsUtils, Enums as csToolsEnums } from '@cornerstonejs/tools';
@@ -40,6 +41,26 @@ const EVENTS = {
 };
 
 export const WITH_NAVIGATION = { withNavigation: true, withOrientation: true };
+
+function isColorImageByImageId(imageId: string): boolean {
+  if (!imageId) {
+    return false;
+  }
+
+  const imagePixelModule =
+    metaData.get(csEnums.MetadataModules.IMAGE_PIXEL, imageId) ||
+    metaData.get('imagePixelModule', imageId) ||
+    {};
+  const photometric = imagePixelModule?.photometricInterpretation?.toUpperCase?.() || '';
+  const samplesPerPixel = Number(imagePixelModule?.samplesPerPixel ?? 0);
+
+  return (
+    samplesPerPixel > 1 ||
+    photometric.includes('RGB') ||
+    photometric.includes('YBR') ||
+    photometric.includes('PALETTE')
+  );
+}
 
 /**
  * Handles cornerstone viewport logic including enabling, disabling, and
@@ -103,6 +124,43 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
   volumeUIDs: unknown;
   displaySetsNeedRerendering: unknown;
   viewportDisplaySets: unknown;
+  private _clearVolumeStateForViewport(viewportId: string, element?: HTMLElement) {
+    if (!viewportId) {
+      return;
+    }
+    const pending = this.viewportIdToPendingVolumeIds.get(viewportId);
+    if (pending) {
+      this.viewportIdToPendingVolumeIds.delete(viewportId);
+    }
+    const idleTimeout = this.volumeIdleTimeoutByViewportId.get(viewportId);
+    if (idleTimeout) {
+      clearTimeout(idleTimeout);
+      this.volumeIdleTimeoutByViewportId.delete(viewportId);
+    }
+
+    const lastVolumeInputs = this.lastVolumeInputArrayByViewportId.get(viewportId) || [];
+    lastVolumeInputs.forEach(input => {
+      const volumeId = input?.volumeId;
+      if (!volumeId) {
+        return;
+      }
+      const viewportIds = this.volumeIdToViewportIds.get(volumeId);
+      if (!viewportIds) {
+        return;
+      }
+      viewportIds.delete(viewportId);
+      if (!viewportIds.size) {
+        this.volumeIdToViewportIds.delete(volumeId);
+      } else {
+        this.volumeIdToViewportIds.set(volumeId, viewportIds);
+      }
+    });
+
+    if (element) {
+      this.removeTooltipLoadingDynamicVolume(element);
+      element.classList.remove('viewport-loading');
+    }
+  }
 
   /**
    * Adds the HTML element to the viewportService
@@ -597,6 +655,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     _presentations: Presentations = {}
   ): Promise<void> {
     const [displaySet] = viewportData.data;
+    this._clearVolumeStateForViewport(viewport.id, viewportInfo?.element);
     return viewport.setDataIds(displaySet.imageIds, {
       groupId: displaySet.displaySetInstanceUID,
       viewReference: viewportInfo.getViewReference(),
@@ -611,6 +670,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
   ): Promise<void> {
     const displaySetOptions = viewportInfo.getDisplaySetOptions();
     const { element } = viewportInfo;
+    this._clearVolumeStateForViewport(viewport.id, element);
     element.classList.add('viewport-loading');
 
     const displaySetInstanceUIDs = viewportData.data.map(data => data.displaySetInstanceUID);
@@ -658,6 +718,22 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     let imageIdsToSet = imageIds;
     const overlayProcessingResult = this._processExtraDisplaySetsForViewport(viewport);
     imageIdsToSet = overlayProcessingResult?.imageIds ?? imageIdsToSet;
+    const firstImageIdForColorCheck = imageIdsToSet?.[0];
+
+    if (properties.colormap !== undefined && isColorImageByImageId(firstImageIdForColorCheck)) {
+      if (
+        typeof window !== 'undefined' &&
+        window?.localStorage?.getItem('ohifPaletteRuntimeDebug') === '1'
+      ) {
+        // eslint-disable-next-line no-console
+        console.log('[ohifPaletteRuntime:stack:setStack:dropColormap]', {
+          viewportId: viewport.id,
+          imageId: firstImageIdForColorCheck,
+          colormap: properties.colormap,
+        });
+      }
+      delete properties.colormap;
+    }
 
     const referencedImageId = presentations?.positionPresentation?.viewReference?.referencedImageId;
     if (referencedImageId) {
@@ -1379,7 +1455,25 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
         viewport.setProperties(properties);
       }
     } else {
-      viewport.setProperties(properties);
+      const stackProperties = { ...(properties || {}) };
+      if (stackProperties.colormap !== undefined) {
+        const currentImageId = (viewport as Types.IStackViewport).getCurrentImageId?.();
+        if (isColorImageByImageId(currentImageId)) {
+          if (
+            typeof window !== 'undefined' &&
+            window?.localStorage?.getItem('ohifPaletteRuntimeDebug') === '1'
+          ) {
+            // eslint-disable-next-line no-console
+            console.log('[ohifPaletteRuntime:stack:setLutPresentation:dropColormap]', {
+              viewportId: viewport.id,
+              imageId: currentImageId,
+              colormap: stackProperties.colormap,
+            });
+          }
+          delete stackProperties.colormap;
+        }
+      }
+      viewport.setProperties(stackProperties);
     }
   }
 

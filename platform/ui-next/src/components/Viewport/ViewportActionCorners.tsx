@@ -13,7 +13,7 @@ export enum ViewportActionCornersLocations {
   bottomRight,
 }
 
-const commonClasses = 'pointer-events-auto flex items-center gap-1';
+const commonClasses = 'pointer-events-auto flex flex-nowrap items-center gap-1';
 const locationClasses = {
   [ViewportActionCornersLocations.topLeft]: classNames(
     commonClasses,
@@ -52,7 +52,12 @@ function ViewportActionCorners({ cornerComponents }) {
           className={locationClasses[location]}
         >
           {locationArray.map(componentInfo => (
-            <div key={componentInfo.id}>{componentInfo.component}</div>
+            <div
+              key={componentInfo.id}
+              className="shrink-0"
+            >
+              {componentInfo.component}
+            </div>
           ))}
         </div>
       ))}

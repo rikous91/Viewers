@@ -13,14 +13,85 @@ if (window.self === window.top) {
 const isStudyListEnabled = window?.config?.showStudyList !== false;
 
 const iframeSpinnerById = new Map();
+const iframeLoadTimeoutById = new Map();
+const iframeLoadErrorById = new Map();
+const IFRAME_READY_TIMEOUT_MS = 25000;
+
+function showStudyLoadErrorNotification(message) {
+  const uiNotificationService = window?.servicesManager?.services?.uiNotificationService;
+  if (uiNotificationService?.show) {
+    uiNotificationService.show({
+      title: 'Errore caricamento studio',
+      message,
+      type: 'error',
+    });
+    return;
+  }
+  console.error(message);
+}
+
+function clearIframeLoadTimeout(iframeId) {
+  const timeoutId = iframeLoadTimeoutById.get(iframeId);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    iframeLoadTimeoutById.delete(iframeId);
+  }
+}
+
+function startIframeReadyTimeout(iframeId, studyTitle = 'Studio') {
+  if (!iframeId) {
+    return;
+  }
+  clearIframeLoadTimeout(iframeId);
+  const timeoutId = setTimeout(() => {
+    markIframeFailed(
+      iframeId,
+      `Impossibile completare il caricamento di "${studyTitle}". Verifica disponibilita studio/token/aetitle.`
+    );
+  }, IFRAME_READY_TIMEOUT_MS);
+  iframeLoadTimeoutById.set(iframeId, timeoutId);
+}
+
+function markIframeFailed(iframeId, message) {
+  clearIframeLoadTimeout(iframeId);
+  iframeLoadErrorById.set(iframeId, message);
+
+  const iframe = document.getElementById(iframeId);
+  if (iframe) {
+    iframe.dataset.loaded = 'error';
+  }
+
+  const spinner = iframeSpinnerById.get(iframeId);
+  if (spinner) {
+    spinner.style.display = 'none';
+  }
+
+  const tab = document.querySelector(`.nolex-dynamic-tab[data-iframe-id="${iframeId}"]`);
+  if (tab) {
+    tab.style.border = '1px solid #e30613';
+    tab.style.background = 'rgb(40 15 15)';
+    tab.title = message;
+  }
+
+  if (pendingIframeId === iframeId || activeIframeId === iframeId) {
+    showStudyLoadErrorNotification(message);
+  }
+}
 
 function markIframeReady(iframe) {
   if (!iframe) return;
   iframe.dataset.loaded = 'true';
+  clearIframeLoadTimeout(iframe.id);
+  iframeLoadErrorById.delete(iframe.id);
 
   const spinner = iframeSpinnerById.get(iframe.id);
   if (spinner) {
     spinner.style.display = 'none';
+  }
+  const tab = document.querySelector(`.nolex-dynamic-tab[data-iframe-id="${iframe.id}"]`);
+  if (tab && !tab.classList.contains('active-tab')) {
+    tab.style.background = 'rgb(7 7 7)';
+    tab.style.border = '1px solid transparent';
   }
 
   if (pendingIframeId === iframe.id) {
@@ -33,6 +104,108 @@ function markIframeReady(iframe) {
 }
 
 let quickDateFilterIntervalId = null;
+let patientTabInfoRefreshIntervalId = null;
+
+function normalizeInfoText(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  const normalized = String(value).replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return '';
+  }
+  const lowered = normalized.toLowerCase();
+  if (lowered === 'n/a' || lowered === 'na' || lowered === 'null' || lowered === 'undefined') {
+    return '';
+  }
+  return normalized;
+}
+
+function getQueryParamCaseInsensitive(...keys) {
+  if (!keys.length) {
+    return '';
+  }
+  const params = new URLSearchParams(window.location.search);
+  const entries = Array.from(params.entries());
+  for (const key of keys) {
+    const hit = entries.find(([paramName]) => paramName.toLowerCase() === key.toLowerCase());
+    const value = normalizeInfoText(hit?.[1]);
+    if (value) {
+      return value;
+    }
+  }
+  return '';
+}
+
+function getAccessionFromDom() {
+  const nodesWithTitle = Array.from(document.querySelectorAll('[title]'));
+  for (const node of nodesWithTitle) {
+    const title = normalizeInfoText(node.getAttribute('title'));
+    if (!title || !title.toLowerCase().includes('accession')) {
+      continue;
+    }
+    const value = normalizeInfoText(node.textContent);
+    if (!value) {
+      continue;
+    }
+    if (value.toLowerCase() === title.toLowerCase()) {
+      continue;
+    }
+    return value;
+  }
+  return '';
+}
+
+function getPatientNameForTab() {
+  return (
+    normalizeInfoText(window.nolexPatientInfo?.PatientName) ||
+    getQueryParamCaseInsensitive('PatientName', 'patientName')
+  );
+}
+
+function getAccessionForTab() {
+  return (
+    normalizeInfoText(window.nolexStudyInfo?.AccessionNumber) ||
+    normalizeInfoText(window.nolexPatientInfo?.AccessionNumber) ||
+    getQueryParamCaseInsensitive('AccessionNumber', 'accessionNumber', 'accession') ||
+    getAccessionFromDom()
+  );
+}
+
+function buildPatientTabDescription() {
+  const patientName = getPatientNameForTab() || 'N/A';
+  const accession = getAccessionForTab() || 'N/A';
+  return `${patientName} - ${accession}`;
+}
+
+function updatePatientTabDescription() {
+  const titleNode = document.querySelector('#explorer-tab-btn .patient-title');
+  if (!titleNode) {
+    return false;
+  }
+  const accession = getAccessionForTab();
+  titleNode.textContent = buildPatientTabDescription();
+  return Boolean(accession);
+}
+
+function clearPatientTabInfoRefresh() {
+  if (patientTabInfoRefreshIntervalId) {
+    clearInterval(patientTabInfoRefreshIntervalId);
+    patientTabInfoRefreshIntervalId = null;
+  }
+}
+
+function startPatientTabInfoRefresh() {
+  clearPatientTabInfoRefresh();
+  let attempts = 0;
+  patientTabInfoRefreshIntervalId = setInterval(() => {
+    attempts += 1;
+    const resolvedAccession = updatePatientTabDescription();
+    if (resolvedAccession || attempts >= 30 || !document.getElementById('explorer-tab-btn')) {
+      clearPatientTabInfoRefresh();
+    }
+  }, 350);
+}
 
 function setInputValue(input, value) {
   const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(input), 'value')?.set;
@@ -261,12 +434,10 @@ function openRouteInModal(url) {
   } catch (_) {
     studyId = null;
   }
-  if (studyId && openStudyTabsById.has(studyId)) {
-    const existingTab = openStudyTabsById.get(studyId);
-    if (existingTab?.dataset?.iframeId) {
-      showIframeForTab(existingTab.dataset.iframeId);
-      return;
-    }
+  const existingTab = studyId ? getExistingTabForStudy(studyId) : null;
+  if (existingTab?.dataset?.iframeId) {
+    showIframeForTab(existingTab.dataset.iframeId);
+    return;
   }
 
   const modal = document.createElement('div');
@@ -322,8 +493,30 @@ let loadingNotificationTimeoutId = null;
 const openStudyTabsById = new Map();
 let nolexExtensionDetected = false;
 
+function getExistingTabForStudy(studyId) {
+  if (!studyId) {
+    return null;
+  }
+  const existingTab = openStudyTabsById.get(studyId);
+  if (!existingTab) {
+    return null;
+  }
+
+  const iframeId = existingTab.dataset?.iframeId;
+  const iframe = iframeId ? document.getElementById(iframeId) : null;
+  const tabStillAttached = document.body.contains(existingTab);
+
+  if (!tabStillAttached || !iframeId || !iframe) {
+    openStudyTabsById.delete(studyId);
+    notifyOpenTabsChange();
+    return null;
+  }
+
+  return existingTab;
+}
+
 if (window.self === window.top) {
-  window.nolexIsStudyOpenInTab = studyId => openStudyTabsById.has(studyId);
+  window.nolexIsStudyOpenInTab = studyId => Boolean(getExistingTabForStudy(studyId));
 }
 
 function notifyOpenTabsChange() {
@@ -410,6 +603,93 @@ let tabsInitIntervalId = null;
 let tabsInitObserver = null;
 let tabsInitTimeoutId = null;
 let tabsInitInProgress = false;
+let mainAreaHeightSyncInitialized = false;
+let mainAreaHeightRafId = null;
+let mainAreaHeightResizeObserver = null;
+let mainAreaHeightMutationObserver = null;
+let visualViewportResizeHandler = null;
+
+function getCurrentViewportHeight() {
+  return window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0;
+}
+
+function applyMainAreaViewportHeight() {
+  const mainArea = document.querySelector('.nolex-main-area');
+  if (!mainArea) {
+    return;
+  }
+
+  const { top } = mainArea.getBoundingClientRect();
+  const viewportHeight = getCurrentViewportHeight();
+  const availableHeight = Math.max(0, Math.floor(viewportHeight - Math.max(0, top)));
+
+  if (!availableHeight) {
+    return;
+  }
+
+  mainArea.style.height = `${availableHeight}px`;
+  mainArea.style.maxHeight = `${availableHeight}px`;
+}
+
+function scheduleMainAreaHeightSync() {
+  if (window.self !== window.top) {
+    return;
+  }
+
+  if (mainAreaHeightRafId) {
+    cancelAnimationFrame(mainAreaHeightRafId);
+  }
+
+  mainAreaHeightRafId = requestAnimationFrame(() => {
+    mainAreaHeightRafId = null;
+    applyMainAreaViewportHeight();
+  });
+}
+
+function startMainAreaHeightSync() {
+  if (window.self !== window.top) {
+    return;
+  }
+
+  if (!mainAreaHeightSyncInitialized) {
+    mainAreaHeightSyncInitialized = true;
+
+    const observeLayoutTarget = selector => {
+      const element = document.querySelector(selector);
+      if (element && mainAreaHeightResizeObserver) {
+        mainAreaHeightResizeObserver.observe(element);
+      }
+    };
+
+    window.addEventListener('resize', scheduleMainAreaHeightSync);
+    window.addEventListener('panelOpen', scheduleMainAreaHeightSync);
+
+    if (window.visualViewport?.addEventListener) {
+      visualViewportResizeHandler = () => scheduleMainAreaHeightSync();
+      window.visualViewport.addEventListener('resize', visualViewportResizeHandler);
+    }
+
+    mainAreaHeightResizeObserver = new ResizeObserver(() => {
+      scheduleMainAreaHeightSync();
+    });
+    observeLayoutTarget('.nolex-bar');
+    observeLayoutTarget('#nolex-tab-container');
+    observeLayoutTarget('.toolbar-child-flex');
+    observeLayoutTarget('.div-info-paziente');
+
+    mainAreaHeightMutationObserver = new MutationObserver(() => {
+      observeLayoutTarget('.nolex-bar');
+      observeLayoutTarget('#nolex-tab-container');
+      scheduleMainAreaHeightSync();
+    });
+    mainAreaHeightMutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  scheduleMainAreaHeightSync();
+}
 
 function stopTabsInitWatcher() {
   if (tabsInitIntervalId) {
@@ -475,8 +755,10 @@ function injectMacWindowControls() {
   controls.id = 'nolex-window-controls';
   controls.style.display = 'flex';
   controls.style.alignItems = 'center';
+  controls.style.flexWrap = 'nowrap';
   controls.style.gap = '6px';
   controls.style.padding = '6px 8px';
+  controls.style.width = 'max-content';
   // controls.style.background = 'rgb(7 7 7)';
   controls.style.position = 'absolute';
   controls.style.top = '8px';
@@ -489,6 +771,10 @@ function injectMacWindowControls() {
   colors.forEach((color, index) => {
     const btn = document.createElement('span');
     btn.style.display = 'inline-block';
+    btn.style.flex = '0 0 13px';
+    btn.style.minWidth = '13px';
+    btn.style.maxWidth = '13px';
+    btn.style.flexShrink = '0';
     btn.style.width = '13px';
     btn.style.height = '13px';
     btn.style.borderRadius = '50%';
@@ -555,11 +841,7 @@ function injectMacWindowControls() {
   document.body.appendChild(controls);
 
   const updateControlsPosition = () => {
-    const rect = leftPanel.getBoundingClientRect();
-    const controlsRect = controls.getBoundingClientRect();
-    controls.style.width = `${rect.width}px`;
-    // controls.style.left = `${rect.left + window.scrollX}px`;
-    // controls.style.top = `${rect.top + window.scrollY - controlsRect.height}px`;
+    // Placeholder hook: keep observers active for future position updates.
   };
 
   requestAnimationFrame(updateControlsPosition);
@@ -581,9 +863,7 @@ function injectTabs(target) {
   if (document.getElementById('nolex-tab-container')) return;
 
 
-  const patientName = window.nolexPatientInfo?.PatientName || 'N/A';
-  const accession = document.querySelector('[title="Accession"]')?.textContent || 'N/A';
-  const tabDesc = `${patientName} - ${accession}`;
+  const tabDesc = buildPatientTabDescription();
 
   // ============ CONTAINER FLEX ============
 
@@ -685,16 +965,30 @@ function injectTabs(target) {
   // target.insertAdjacentElement('afterbegin', container);
   //document.body.insertAdjacentElement('beforebegin', container);
   document.querySelector(".nolex-main-area").insertAdjacentElement('beforebegin', container);
+  updatePatientTabDescription();
+  startPatientTabInfoRefresh();
 
   injectMacWindowControls();
 
   if (layoutPanel) {
     const updateContainerLeft = () => {
-      const { left } = layoutPanel.getBoundingClientRect();
-      container.style.marginLeft = `${left}px`;
+      const { left: layoutLeft } = layoutPanel.getBoundingClientRect();
+      const logoContainer = document.querySelector('.logo-container');
+      const logoRect = logoContainer?.getBoundingClientRect();
+      const logoRight = logoRect?.right || 0;
+      const safeLeft = Math.max(layoutLeft, logoRight + 12);
+      container.style.marginLeft = `${Math.max(0, Math.floor(safeLeft))}px`;
+
+      const viewportWidth =
+        window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 0;
+      if (viewportWidth > 0) {
+        const maxWidth = Math.max(220, Math.floor(viewportWidth - safeLeft - 12));
+        container.style.maxWidth = `${maxWidth}px`;
+      }
     };
     updateContainerLeft();
     window.addEventListener('resize', updateContainerLeft);
+    window.addEventListener('panelOpen', updateContainerLeft);
 
     const layoutResizeObserver = new ResizeObserver(updateContainerLeft);
     layoutResizeObserver.observe(layoutPanel);
@@ -704,6 +998,18 @@ function injectTabs(target) {
       attributes: true,
       attributeFilter: ['style', 'class'],
     });
+
+    const logoContainer = document.querySelector('.logo-container');
+    if (logoContainer) {
+      const logoResizeObserver = new ResizeObserver(updateContainerLeft);
+      logoResizeObserver.observe(logoContainer);
+
+      const logoMutationObserver = new MutationObserver(updateContainerLeft);
+      logoMutationObserver.observe(logoContainer, {
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+      });
+    }
   }
 
   document.getElementById("close-patient-tab").addEventListener("click", (e) => {
@@ -729,11 +1035,7 @@ function injectTabs(target) {
     }
   });
 
-  //Sistemo altezza dopo aver iniettato tabs
-  if (window.self === window.top) {
-    document.querySelector(".nolex-main-area").style.height = "calc(100vh - 80px)";
-
-  }
+  startMainAreaHeightSync();
 
 }
 
@@ -809,6 +1111,8 @@ function setExplorerUiVisibility(isExplorer) {
   if (infoPazienteDiv) {
     infoPazienteDiv.style.display = isExplorer ? 'none' : '';
   }
+
+  scheduleMainAreaHeightSync();
 }
 
 function hidePatientTab() {
@@ -861,12 +1165,10 @@ window.openStudyInInternalTab = function (url, options = {}) {
   } catch (_) {
     studyId = null;
   }
-  if (studyId && openStudyTabsById.has(studyId)) {
-    const existingTab = openStudyTabsById.get(studyId);
-    if (existingTab?.dataset?.iframeId) {
-      showIframeForTab(existingTab.dataset.iframeId);
-      return;
-    }
+  const existingTab = studyId ? getExistingTabForStudy(studyId) : null;
+  if (existingTab?.dataset?.iframeId) {
+    showIframeForTab(existingTab.dataset.iframeId);
+    return;
   }
 
   // ID unico per l’iframe
@@ -1008,6 +1310,7 @@ window.openStudyInInternalTab = function (url, options = {}) {
     // Attendo il segnale di ready dal contenuto per mostrare l'iframe
   });
   iframeSpinnerById.set(iframeId, spinner);
+  startIframeReadyTimeout(iframeId, title);
 
   // ATTACH CLICK
   tab.addEventListener('click', () => showIframeForTab(iframeId));
@@ -1028,6 +1331,14 @@ function showIframeForTab(iframeId) {
   const resolvedIframeId =
     !isStudyListEnabled && iframeId === 'nolex-dynamic-iframe-empty' ? 'none' : iframeId;
   const iframe = document.getElementById(resolvedIframeId);
+  if (iframe && resolvedIframeId !== 'nolex-dynamic-iframe-empty' && iframe.dataset.loaded === 'error') {
+    pendingIframeId = null;
+    showStudyLoadErrorNotification(
+      iframeLoadErrorById.get(resolvedIframeId) ||
+      'Impossibile completare il caricamento dello studio.'
+    );
+    return;
+  }
   if (iframe && resolvedIframeId !== 'nolex-dynamic-iframe-empty' && iframe.dataset.loaded !== 'true') {
     pendingIframeId = resolvedIframeId;
     showLoadingNotification();
@@ -1135,6 +1446,9 @@ function removeDynamicTab(tab) {
   const studyId = tab.dataset.studyId;
   const iframe = document.getElementById(iframeId);
 
+  clearIframeLoadTimeout(iframeId);
+  iframeLoadErrorById.delete(iframeId);
+  iframeSpinnerById.delete(iframeId);
   if (iframe) iframe.remove();
   tab.remove();
   if (studyId) {

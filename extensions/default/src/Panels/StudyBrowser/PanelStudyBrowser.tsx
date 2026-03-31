@@ -374,18 +374,78 @@ export default PanelStudyBrowser;
  * @param {*} studies
  */
 function _mapDataSourceStudies(studies) {
+  const getDicomTagValue = (item, tag) => {
+    if (!item || !tag) {
+      return '';
+    }
+
+    const values = item?.[tag]?.Value;
+    if (!Array.isArray(values) || !values.length) {
+      return '';
+    }
+
+    const firstValue = values[0];
+    if (firstValue === undefined || firstValue === null) {
+      return '';
+    }
+
+    if (typeof firstValue === 'object') {
+      return `${firstValue.Alphabetic || firstValue.Alphanumeric || firstValue.Ideographic || ''}`.trim();
+    }
+
+    return `${firstValue}`.trim();
+  };
+
+  const getDicomTagValues = (item, tag) => {
+    if (!item || !tag) {
+      return [];
+    }
+
+    const values = item?.[tag]?.Value;
+    if (!Array.isArray(values) || !values.length) {
+      return [];
+    }
+
+    return values
+      .map(value => {
+        if (value === undefined || value === null) {
+          return '';
+        }
+        if (typeof value === 'object') {
+          return `${value.Alphabetic || value.Alphanumeric || value.Ideographic || ''}`.trim();
+        }
+        return `${value}`.trim();
+      })
+      .filter(Boolean);
+  };
+
   return studies.map(study => {
+    const modalitiesFromTags =
+      getDicomTagValues(study, '00080061').join('\\') ||
+      getDicomTagValue(study, '00080060') ||
+      '';
+    const numInstancesRaw =
+      study.NumInstances ?? study.instances ?? getDicomTagValue(study, '00201208') ?? 0;
+    const normalizedNumInstances = Number(numInstancesRaw);
+
     // TODO: Why does the data source return in this format?
     return {
-      AccessionNumber: study.accession,
-      StudyDate: study.date,
-      StudyDescription: study.description,
-      NumInstances: study.instances,
-      ModalitiesInStudy: study.modalities,
-      PatientID: study.mrn,
-      PatientName: study.patientName,
-      StudyInstanceUID: study.studyInstanceUid,
-      StudyTime: study.time,
+      AccessionNumber:
+        study.AccessionNumber ?? study.accession ?? getDicomTagValue(study, '00080050'),
+      StudyDate: study.StudyDate ?? study.date ?? getDicomTagValue(study, '00080020'),
+      StudyDescription:
+        study.StudyDescription ??
+        study.studyDescription ??
+        study.description ??
+        getDicomTagValue(study, '00081030') ??
+        '',
+      NumInstances: Number.isFinite(normalizedNumInstances) ? normalizedNumInstances : 0,
+      ModalitiesInStudy: study.ModalitiesInStudy ?? study.modalities ?? modalitiesFromTags ?? '',
+      PatientID: study.PatientID ?? study.mrn ?? getDicomTagValue(study, '00100020'),
+      PatientName: study.PatientName ?? study.patientName ?? getDicomTagValue(study, '00100010'),
+      StudyInstanceUID:
+        study.StudyInstanceUID ?? study.studyInstanceUid ?? getDicomTagValue(study, '0020000D'),
+      StudyTime: study.StudyTime ?? study.time ?? getDicomTagValue(study, '00080030'),
     };
   });
 }
@@ -406,6 +466,8 @@ function _mapDisplaySets(displaySets, thumbnailImageSrcMap) {
       array.push({
         displaySetInstanceUID: ds.displaySetInstanceUID,
         description: ds.SeriesDescription || '',
+        studyDescription: ds.StudyDescription || ds.studyDescription || '',
+        studyDate: ds.StudyDate || ds.studyDate || ds.SeriesDate || '',
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
         seriesDate: ds.SeriesDate,

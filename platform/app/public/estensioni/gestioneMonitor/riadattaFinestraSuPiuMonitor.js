@@ -7,6 +7,27 @@ let larghezzaPannelloSX;
 let larghezzaPannelloDX;
 let larghezzaCorrettaViewportDaSxVersoDx;
 let larghezzaCorrettaViewportDaDxVersoSx;
+let offsetSecondaColonna = 289;
+let offsetSecondaColonnaSdoppiata = 306;
+let riservaLatoDestro = 32;
+let mezzoPannelloSX = 146.5;
+let margineSxViewport = 13;
+
+function getLarghezzaOccupataPannello(pannello) {
+  if (!pannello) {
+    return 0;
+  }
+  const stylePannello = window.getComputedStyle(pannello);
+  const larghezzaPannello =
+    pannello.getBoundingClientRect().width ||
+    parseFloat(stylePannello.width) ||
+    pannello.offsetWidth ||
+    0;
+  const marginLeft = parseFloat(stylePannello.marginLeft) || 0;
+  const marginRight = parseFloat(stylePannello.marginRight) || 0;
+  const larghezzaOccupata = larghezzaPannello + marginLeft + marginRight;
+  return Math.max(0, Math.round(larghezzaOccupata));
+}
 
 function riadattaFinestraSuPiuMonitor(
   larghezzaMonitorPrimario,
@@ -26,18 +47,55 @@ function riadattaFinestraSuPiuMonitor(
 
   sistemaToolbar(larghezzaMonitorPrimario, eccedenzaLarghezzaMonitorSecondario, fromLeftToRight);
 
-  pannelloSX = document.querySelectorAll('.nolex-new-panel')[0];
-  pannelloDX = document.querySelectorAll('.nolex-new-panel')[1];
-  larghezzaPannelloSX = pannelloSX.offsetWidth;
-  larghezzaPannelloDX =
-    parseFloat(pannelloDX.style.width) + parseFloat(pannelloDX.style.marginRight);
-  larghezzaCorrettaViewportDaSxVersoDx = larghezzaMonitorPrimario - larghezzaPannelloSX;
-  larghezzaCorrettaViewportDaDxVersoSx = larghezzaMonitorPrimario - larghezzaPannelloDX;
+  const isBottomDocked = document.body.classList.contains('nolex-study-panel-bottom');
+  const pannelliLaterali = document.querySelectorAll('.nolex-new-panel');
+  pannelloSX = pannelliLaterali[0];
+  pannelloDX = pannelliLaterali[1];
+
   const layoutAttuale = window.layout;
   const viewports = document.querySelectorAll('.viewport-parent-div');
   if (viewports.length === 0) {
     return;
   }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // BOTTOM DOCK MODE — logica isolata: nessun pannello laterale sinistro
+  // I viewport usano tutta la larghezza disponibile del monitor.
+  // ═══════════════════════════════════════════════════════════════════
+  if (isBottomDocked) {
+    const vpParent = document.querySelector('.viewport-parent-div')?.parentElement;
+    const vpParentWidth = vpParent ? vpParent.getBoundingClientRect().width : (larghezzaMonitorPrimario + eccedenzaLarghezzaMonitorSecondario);
+    const rightPanelOffset = (larghezzaMonitorPrimario + eccedenzaLarghezzaMonitorSecondario) - vpParentWidth;
+    const riserva = Math.max(4, Math.round(rightPanelOffset) + 4);
+
+    // Vincola il pannello bottom al solo monitor primario tramite variabili CSS
+    if (fromLeftToRight) {
+      document.body.style.setProperty('--nolex-bottom-panel-left', '0px');
+      document.body.style.setProperty('--nolex-bottom-panel-right', eccedenzaLarghezzaMonitorSecondario + 'px');
+    } else {
+      document.body.style.setProperty('--nolex-bottom-panel-left', eccedenzaLarghezzaMonitorSecondario + 'px');
+      document.body.style.setProperty('--nolex-bottom-panel-right', '0px');
+    }
+
+    transformBottomDock(viewports, larghezzaMonitorPrimario, eccedenzaLarghezzaMonitorSecondario, fromLeftToRight, riserva, layoutAttuale);
+    return;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // LEFT/RIGHT PANEL MODE — logica originale invariata
+  // ═══════════════════════════════════════════════════════════════════
+  larghezzaPannelloSX = getLarghezzaOccupataPannello(pannelloSX);
+  larghezzaPannelloDX = getLarghezzaOccupataPannello(pannelloDX);
+
+  const pannelloSinistroCompatto = larghezzaPannelloSX < 140;
+  offsetSecondaColonna = pannelloSinistroCompatto ? Math.max(32, larghezzaPannelloSX + 8) : 289;
+  offsetSecondaColonnaSdoppiata = offsetSecondaColonna + 17;
+  riservaLatoDestro = Math.max(32, larghezzaPannelloDX + 4);
+  larghezzaCorrettaViewportDaSxVersoDx = larghezzaMonitorPrimario - larghezzaPannelloSX;
+  larghezzaCorrettaViewportDaDxVersoSx = larghezzaMonitorPrimario - larghezzaPannelloDX;
+  mezzoPannelloSX = (larghezzaPannelloSX + 4) / 2;
+  margineSxViewport = 13;
+
   //Se ho la visualizzazione dello storico come iframe nella stessa finestra lo gestisco direttamente nell'altro monitor senza toccare tutto il resto
   if (document.body.classList.contains('storico-injected-iframe')) {
     transformStoricoIframe(
@@ -241,14 +299,14 @@ function transform1Column(
   const viewport0 = viewports[0];
 
   if (fromLeftToRight) {
-    viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+    viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
     viewport0.style.left = 0;
     if (viewports[1]) {
-      viewports[1].style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewports[1].style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
       viewports[1].style.left = 0;
     }
     if (viewports[2]) {
-      viewports[2].style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewports[2].style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
       viewports[2].style.left = 0;
     }
   }
@@ -281,59 +339,59 @@ function transform2Columns(
   if (fromLeftToRight) {
     //2x1
 
-    viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+    viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
     //Sistemo la seconda viewport
     if (viewports[1]) {
-      viewports[1].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[1].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[1].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[1].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
 
     //2x2
     if (viewports[2]) {
-      viewports[2].style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewports[2].style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
     }
     if (viewports[3]) {
-      viewports[3].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[3].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[3].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[3].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
     //2x3
     if (viewports[4]) {
-      viewports[4].style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewports[4].style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
     }
     if (viewports[5]) {
-      viewports[5].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[5].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[5].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[5].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
   }
   //Da destra verso sinistra, solo se nel monitor a sx c'è almeno visibile il pannello sx altrimenti non applico nulla
   else if (eccedenzaLarghezzaMonitorSecondario > larghezzaPannelloSX) {
     //2x1
     viewport0.style.left = 0;
-    viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+    viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     if (viewports[1]) {
-      viewports[1].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-      viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[1].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+      viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
 
     //2x2
     if (viewports[2]) {
       viewports[2].style.left = 0;
       viewports[2].style.width =
-        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     }
     if (viewports[3]) {
-      viewports[3].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-      viewports[3].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[3].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+      viewports[3].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
     //2x3
     if (viewports[4]) {
       viewports[4].style.left = 0;
       viewports[4].style.width =
-        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     }
     if (viewports[5]) {
-      viewports[5].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-      viewports[5].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[5].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+      viewports[5].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
   } else {
     ripristinoVisualizzazioneSuUnMonitor();
@@ -350,31 +408,31 @@ function transform3Columns(
   const viewport0 = viewports[0];
   if (fromLeftToRight) {
     //3x1
-    viewport0.style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
+    viewport0.style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
     //Sistemo la seconda viewport
     if (viewports[1]) {
-      viewports[1].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
-      viewports[1].style.left = larghezzaMonitorPrimario / 2 - 146.5 + 'px';
+      viewports[1].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
+      viewports[1].style.left = larghezzaMonitorPrimario / 2 - mezzoPannelloSX + 'px';
     }
 
     //Sistemo la terza viewport
     if (viewports[2]) {
-      viewports[2].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[2].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[2].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[2].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
 
 
     //3x2
     if (viewports[3]) {
-      viewports[3].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
+      viewports[3].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
     }
     if (viewports[4]) {
-      viewports[4].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
-      viewports[4].style.left = larghezzaMonitorPrimario / 2 - 146.5 + 'px';
+      viewports[4].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
+      viewports[4].style.left = larghezzaMonitorPrimario / 2 - mezzoPannelloSX + 'px';
     }
     if (viewports[5]) {
-      viewports[5].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[5].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[5].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[5].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
 
     //3x2 layout particolare MPR - Volume 3D principale in alto
@@ -383,7 +441,7 @@ function transform3Columns(
       document.body.classList.contains('main3D')
     ) {
       viewport0.style.left = 0;
-      viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
     }
 
     //3x2 layout particolare MPR - Piano assiale primario
@@ -391,15 +449,15 @@ function transform3Columns(
       document.body.classList.contains('hp-mpr-active') &&
       document.body.classList.contains('primaryAxial')
     ) {
-      viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
       if (viewports[1]) {
-        viewports[1].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-        viewports[1].style.left = larghezzaMonitorPrimario - 289 + 'px';
+        viewports[1].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+        viewports[1].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
       }
 
       if (viewports[2]) {
-        viewports[2].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-        viewports[2].style.left = larghezzaMonitorPrimario - 289 + 'px';
+        viewports[2].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+        viewports[2].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
       }
 
 
@@ -407,15 +465,15 @@ function transform3Columns(
 
     //3x3
     if (viewports[6]) {
-      viewports[6].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
+      viewports[6].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
     }
     if (viewports[7]) {
-      viewports[7].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
-      viewports[7].style.left = larghezzaMonitorPrimario / 2 - 146.5 + 'px';
+      viewports[7].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
+      viewports[7].style.left = larghezzaMonitorPrimario / 2 - mezzoPannelloSX + 'px';
     }
     if (viewports[8]) {
-      viewports[8].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[8].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[8].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[8].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
 
     //3x3 layout particolare MPR - Volume 3D principale a sx
@@ -423,31 +481,31 @@ function transform3Columns(
       document.body.classList.contains('hp-mpr-active') &&
       document.body.classList.contains('primary3D')
     ) {
-      viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - 13 + 'px';
+      viewport0.style.width = larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport + 'px';
       if (viewports[1]) {
-        viewports[1].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-        viewports[1].style.left = larghezzaMonitorPrimario - 289 + 'px';
+        viewports[1].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+        viewports[1].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
       }
 
-      viewports[3].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[3].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[3].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[3].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
   }
   //Da destra verso sinistra, solo se nel monitor a sx c'è almeno visibile il pannello sx altrimenti non applico nulla
   else if (eccedenzaLarghezzaMonitorSecondario > larghezzaPannelloSX) {
     //3x1
     viewport0.style.left = 0;
-    viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+    viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     if (viewports[1]) {
       viewports[1].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 + 'px';
-      viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
 
     if (viewports[2]) {
-      viewports[2].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 - 13 + 'px';
+      viewports[2].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 - margineSxViewport + 'px';
       viewports[2].style.left =
         eccedenzaLarghezzaMonitorSecondario -
-        289 +
+        offsetSecondaColonna +
         (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 +
         'px';
     }
@@ -456,17 +514,17 @@ function transform3Columns(
     if (viewports[3]) {
       viewports[3].style.left = 0;
       viewports[3].style.width =
-        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     }
     if (viewports[4]) {
       viewports[4].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 + 'px';
-      viewports[4].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[4].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
     if (viewports[5]) {
-      viewports[5].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 - 13 + 'px';
+      viewports[5].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 - margineSxViewport + 'px';
       viewports[5].style.left =
         eccedenzaLarghezzaMonitorSecondario -
-        289 +
+        offsetSecondaColonna +
         (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 +
         'px';
     }
@@ -487,15 +545,15 @@ function transform3Columns(
       document.body.classList.contains('primaryAxial')
     ) {
       viewport0.style.left = 0;
-      viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+      viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
       if (viewports[1]) {
-        viewports[1].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-        viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+        viewports[1].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+        viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
       }
 
       if (viewports[2]) {
-        viewports[2].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-        viewports[2].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+        viewports[2].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+        viewports[2].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
       }
 
 
@@ -505,17 +563,17 @@ function transform3Columns(
     if (viewports[6]) {
       viewports[6].style.left = 0;
       viewports[6].style.width =
-        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     }
     if (viewports[7]) {
       viewports[7].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 + 'px';
-      viewports[7].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[7].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
     if (viewports[8]) {
-      viewports[8].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 - 13 + 'px';
+      viewports[8].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 - margineSxViewport + 'px';
       viewports[8].style.left =
         eccedenzaLarghezzaMonitorSecondario -
-        289 +
+        offsetSecondaColonna +
         (larghezzaMonitorPrimario - larghezzaPannelloDX) / 2 +
         'px';
     }
@@ -526,21 +584,21 @@ function transform3Columns(
       document.body.classList.contains('primary3D')
     ) {
       viewport0.style.left = 0;
-      viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+      viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
       if (viewports[1]) {
-        viewports[1].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-        viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+        viewports[1].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+        viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
       }
 
       if (viewports[2]) {
-        viewports[2].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-        viewports[2].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+        viewports[2].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+        viewports[2].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
       }
 
 
       if (viewports[3]) {
-        viewports[3].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - 13 + 'px';
-        viewports[3].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+        viewports[3].style.width = larghezzaMonitorPrimario - larghezzaPannelloDX - margineSxViewport + 'px';
+        viewports[3].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
       }
 
     }
@@ -559,75 +617,75 @@ function transform4Columns(
   if (fromLeftToRight) {
     //METTO TRE A SX E DUE A DX
     //4x1
-    viewport0.style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+    viewport0.style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
     //Sistemo la seconda viewport
     if (viewports[1]) {
-      viewports[1].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[1].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
       viewports[1].style.left = larghezzaMonitorPrimario / 3 - 98 + 'px';
     }
 
     //Sistemo la terza viewport
     if (viewports[2]) {
-      viewports[2].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[2].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
       viewports[2].style.left = larghezzaMonitorPrimario / 1.5 - 196 + 'px';
     }
 
     //Sistemo la quarta viewport
     if (viewports[3]) {
-      viewports[3].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[3].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[3].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[3].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
 
     //4x2
     if (viewports[4]) {
-      viewports[4].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[4].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
     }
     if (viewports[5]) {
-      viewports[5].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[5].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
       viewports[5].style.left = larghezzaMonitorPrimario / 3 - 98 + 'px';
     }
     if (viewports[6]) {
-      viewports[6].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[6].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
       viewports[6].style.left = larghezzaMonitorPrimario / 1.5 - 196 + 'px';
     }
     if (viewports[7]) {
-      viewports[7].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[7].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[7].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[7].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
 
     //4x3
 
     if (viewports[8]) {
-      viewports[8].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[8].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
     }
     if (viewports[9]) {
-      viewports[9].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[9].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
       viewports[9].style.left = larghezzaMonitorPrimario / 3 - 98 + 'px';
     }
     if (viewports[10]) {
-      viewports[10].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 3 + 'px';
+      viewports[10].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 3 + 'px';
       viewports[10].style.left = larghezzaMonitorPrimario / 1.5 - 196 + 'px';
     }
     if (viewports[11]) {
-      viewports[11].style.width = eccedenzaLarghezzaMonitorSecondario - 32 + 'px';
-      viewports[11].style.left = larghezzaMonitorPrimario - 289 + 'px';
+      viewports[11].style.width = eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro + 'px';
+      viewports[11].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
     }
   }
   //Da destra verso sinistra, solo se nel monitor a sx c'è almeno visibile il pannello sx altrimenti non applico nulla
   else if (eccedenzaLarghezzaMonitorSecondario > larghezzaPannelloSX) {
     //4x1
     viewport0.style.left = 0;
-    viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+    viewport0.style.width = eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     if (viewports[1]) {
       viewports[1].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 + 'px';
-      viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[1].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
 
     if (viewports[2]) {
       viewports[2].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 - 3 + 'px';
       viewports[2].style.left =
         eccedenzaLarghezzaMonitorSecondario -
-        289 +
+        offsetSecondaColonna +
         (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 +
         'px';
     }
@@ -643,17 +701,17 @@ function transform4Columns(
     if (viewports[4]) {
       viewports[4].style.left = 0;
       viewports[4].style.width =
-        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     }
     if (viewports[5]) {
       viewports[5].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 + 'px';
-      viewports[5].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[5].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
     if (viewports[6]) {
       viewports[6].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 - 3 + 'px';
       viewports[6].style.left =
         eccedenzaLarghezzaMonitorSecondario -
-        289 +
+        offsetSecondaColonna +
         (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 +
         'px';
     }
@@ -668,17 +726,17 @@ function transform4Columns(
     if (viewports[8]) {
       viewports[8].style.left = 0;
       viewports[8].style.width =
-        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - 13 + 'px';
+        eccedenzaLarghezzaMonitorSecondario - larghezzaPannelloSX - margineSxViewport + 'px';
     }
     if (viewports[9]) {
       viewports[9].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 + 'px';
-      viewports[9].style.left = eccedenzaLarghezzaMonitorSecondario - 289 + 'px';
+      viewports[9].style.left = eccedenzaLarghezzaMonitorSecondario - offsetSecondaColonna + 'px';
     }
     if (viewports[10]) {
       viewports[10].style.width = (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 - 3 + 'px';
       viewports[10].style.left =
         eccedenzaLarghezzaMonitorSecondario -
-        289 +
+        offsetSecondaColonna +
         (larghezzaMonitorPrimario - larghezzaPannelloDX) / 3 +
         'px';
     }
@@ -695,68 +753,192 @@ function transform4Columns(
   if (eccedenzaLarghezzaMonitorSecondario > 450) {
     if (fromLeftToRight) {
       //4x1
-      viewport0.style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
+      viewport0.style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
       //Sistemo la seconda viewport
       if (viewports[1]) {
-        viewports[1].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
-        viewports[1].style.left = larghezzaMonitorPrimario / 2 - 146.5 + 'px';
+        viewports[1].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
+        viewports[1].style.left = larghezzaMonitorPrimario / 2 - mezzoPannelloSX + 'px';
       }
 
       //Sistemo la terza viewport
       if (viewports[2]) {
-        viewports[2].style.width = (eccedenzaLarghezzaMonitorSecondario - 32) / 2 + 'px';
-        viewports[2].style.left = larghezzaMonitorPrimario - 289 + 'px';
+        viewports[2].style.width = (eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro) / 2 + 'px';
+        viewports[2].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
       }
 
       //Sistemo la quarta viewport
       if (viewports[3]) {
-        viewports[3].style.width = (eccedenzaLarghezzaMonitorSecondario - 32) / 2 + 'px';
+        viewports[3].style.width = (eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro) / 2 + 'px';
         viewports[3].style.left =
-          larghezzaMonitorPrimario - 306 + eccedenzaLarghezzaMonitorSecondario / 2 + 'px';
+          larghezzaMonitorPrimario - offsetSecondaColonnaSdoppiata + eccedenzaLarghezzaMonitorSecondario / 2 + 'px';
       }
 
 
       //4x2
       if (viewports[4]) {
-        viewports[4].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
+        viewports[4].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
       }
       if (viewports[5]) {
-        viewports[5].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
-        viewports[5].style.left = larghezzaMonitorPrimario / 2 - 146.5 + 'px';
+        viewports[5].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
+        viewports[5].style.left = larghezzaMonitorPrimario / 2 - mezzoPannelloSX + 'px';
       }
       if (viewports[6]) {
-        viewports[6].style.width = (eccedenzaLarghezzaMonitorSecondario - 32) / 2 + 'px';
-        viewports[6].style.left = larghezzaMonitorPrimario - 289 + 'px';
+        viewports[6].style.width = (eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro) / 2 + 'px';
+        viewports[6].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
       }
       if (viewports[7]) {
-        viewports[7].style.width = (eccedenzaLarghezzaMonitorSecondario - 32) / 2 + 'px';
+        viewports[7].style.width = (eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro) / 2 + 'px';
         viewports[7].style.left =
-          larghezzaMonitorPrimario - 306 + eccedenzaLarghezzaMonitorSecondario / 2 + 'px';
+          larghezzaMonitorPrimario - offsetSecondaColonnaSdoppiata + eccedenzaLarghezzaMonitorSecondario / 2 + 'px';
       }
 
       //4x3
 
       if (viewports[8]) {
-        viewports[8].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
+        viewports[8].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
       }
       if (viewports[9]) {
-        viewports[9].style.width = (larghezzaCorrettaViewportDaSxVersoDx - 13) / 2 + 'px';
-        viewports[9].style.left = larghezzaMonitorPrimario / 2 - 146.5 + 'px';
+        viewports[9].style.width = (larghezzaCorrettaViewportDaSxVersoDx - margineSxViewport) / 2 + 'px';
+        viewports[9].style.left = larghezzaMonitorPrimario / 2 - mezzoPannelloSX + 'px';
       }
       if (viewports[10]) {
-        viewports[10].style.width = (eccedenzaLarghezzaMonitorSecondario - 32) / 2 + 'px';
-        viewports[10].style.left = larghezzaMonitorPrimario - 289 + 'px';
+        viewports[10].style.width = (eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro) / 2 + 'px';
+        viewports[10].style.left = larghezzaMonitorPrimario - offsetSecondaColonna + 'px';
       }
       if (viewports[11]) {
-        viewports[11].style.width = (eccedenzaLarghezzaMonitorSecondario - 32) / 2 + 'px';
+        viewports[11].style.width = (eccedenzaLarghezzaMonitorSecondario - riservaLatoDestro) / 2 + 'px';
         viewports[11].style.left =
-          larghezzaMonitorPrimario - 306 + eccedenzaLarghezzaMonitorSecondario / 2 + 'px';
+          larghezzaMonitorPrimario - offsetSecondaColonnaSdoppiata + eccedenzaLarghezzaMonitorSecondario / 2 + 'px';
       }
     }
   } else if (eccedenzaLarghezzaMonitorSecondario > larghezzaPannelloSX) {
     //Da implementare due colonne a dx e due a sx per espansione da monitor dx a monitor sx
   } else {
     ripristinoVisualizzazioneSuUnMonitor();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BOTTOM DOCK: logica multi-monitor isolata.
+// Nessun pannello laterale sinistro → i viewport usano tutta la larghezza.
+//
+// Principio di distribuzione (identico alla modalità pannello-sx):
+//   • Le prime N-1 colonne vanno sul monitor PRIMARIO
+//   • L'ultima colonna va sul monitor SECONDARIO
+//   • Per fromRightToLeft la prima colonna va sul SECONDARIO (sx), il resto sul PRIMARIO (dx)
+// ═══════════════════════════════════════════════════════════════════════════════
+function transformBottomDock(viewports, monPri, monSec, ltr, riserva, layout) {
+  const cols = parseInt(layout) || 1; // "2x3" → 2, "1x1" → 1
+  const rows = parseInt((layout || '').split('x')[1]) || 1;
+  const total = cols * rows;
+  const gap = 10; // margine bordi viewport
+
+  // Applica width+left a ogni viewport in base alla colonna
+  function applicaViewport(idx, width, left) {
+    if (viewports[idx]) {
+      viewports[idx].style.width = width + 'px';
+      viewports[idx].style.left = left + 'px';
+    }
+  }
+
+  // Larghezze effettive considerando la riserva del pannello destro
+  // LTR: primario a sx, riserva si mangia il secondario a dx
+  // RTL: primario a dx, riserva si mangia il primario a dx
+  const ltrPri = monPri - gap;                    // viewport primario LTR
+  const ltrSec = monSec - riserva;                // viewport secondario LTR
+  const rtlSec = monSec - gap;                    // viewport secondario RTL (monitor sx)
+  const rtlPri = monPri - riserva;                // viewport primario RTL (monitor dx, riserva per pannello DX)
+  const rtlPriStart = monSec;                     // dove inizia il primario RTL
+
+  if (cols === 1) {
+    for (let i = 0; i < total; i++) {
+      if (ltr) {
+        applicaViewport(i, ltrPri, 0);
+      } else {
+        applicaViewport(i, rtlPri, rtlPriStart);
+      }
+    }
+    return;
+  }
+
+  if (cols === 2) {
+    for (let row = 0; row < rows; row++) {
+      const i0 = row * cols;
+      const i1 = i0 + 1;
+      if (ltr) {
+        applicaViewport(i0, ltrPri, 0);
+        applicaViewport(i1, ltrSec, monPri);
+      } else {
+        applicaViewport(i0, rtlSec, 0);
+        applicaViewport(i1, rtlPri, rtlPriStart);
+      }
+    }
+    return;
+  }
+
+  if (cols === 3) {
+    const halfLtrPri = Math.floor(ltrPri / 2);
+    const halfRtlPri = Math.floor(rtlPri / 2);
+    for (let row = 0; row < rows; row++) {
+      const i0 = row * cols;
+      const i1 = i0 + 1;
+      const i2 = i0 + 2;
+      if (ltr) {
+        applicaViewport(i0, halfLtrPri, 0);
+        applicaViewport(i1, halfLtrPri, halfLtrPri);
+        applicaViewport(i2, ltrSec, monPri);
+      } else {
+        applicaViewport(i0, rtlSec, 0);
+        applicaViewport(i1, halfRtlPri, rtlPriStart);
+        applicaViewport(i2, halfRtlPri, rtlPriStart + halfRtlPri);
+      }
+    }
+
+    // Gestione layout particolari MPR
+    if (document.body.classList.contains('hp-mpr-active')) {
+      if (document.body.classList.contains('main3D')) {
+        // Volume 3D principale: viewport0 occupa tutto il primario
+        applicaViewport(0, monPri, ltr ? 0 : monSec);
+      }
+      if (document.body.classList.contains('primaryAxial')) {
+        // Piano assiale primario: viewport0 su primario, col1+col2 su secondario
+        if (ltr) {
+          applicaViewport(0, monPri, 0);
+          const halfSec = Math.floor((monSec - riserva) / 2);
+          applicaViewport(1, halfSec, monPri);
+          applicaViewport(2, halfSec, monPri + halfSec);
+        }
+      }
+      if (document.body.classList.contains('primary3D')) {
+        // Volume 3D a sx: viewport0 su primario, altri su secondario stacked
+        if (ltr) {
+          applicaViewport(0, monPri, 0);
+          applicaViewport(1, monSec - riserva, monPri);
+          if (viewports[3]) applicaViewport(3, monSec - riserva, monPri);
+        }
+      }
+    }
+    return;
+  }
+
+  if (cols >= 4) {
+    const thirdLtrPri = Math.floor(ltrPri / 3);
+    const thirdRtlPri = Math.floor(rtlPri / 3);
+    for (let row = 0; row < rows; row++) {
+      const i0 = row * cols;
+      if (ltr) {
+        applicaViewport(i0, thirdLtrPri, 0);
+        applicaViewport(i0 + 1, thirdLtrPri, thirdLtrPri);
+        applicaViewport(i0 + 2, thirdLtrPri, thirdLtrPri * 2);
+        applicaViewport(i0 + 3, ltrSec, monPri);
+      } else {
+        applicaViewport(i0, rtlSec, 0);
+        applicaViewport(i0 + 1, thirdRtlPri, rtlPriStart);
+        applicaViewport(i0 + 2, thirdRtlPri, rtlPriStart + thirdRtlPri);
+        applicaViewport(i0 + 3, thirdRtlPri, rtlPriStart + thirdRtlPri * 2);
+      }
+    }
+    return;
   }
 }
 

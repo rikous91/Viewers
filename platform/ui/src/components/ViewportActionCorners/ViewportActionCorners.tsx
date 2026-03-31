@@ -16,7 +16,7 @@ export type ViewportActionCornersProps = {
   >;
 };
 
-const commonClasses = 'pointer-events-auto flex items-center gap-1';
+const commonClasses = 'pointer-events-auto flex flex-nowrap items-center gap-1';
 const classes = {
   [ViewportActionCornersLocations.topLeft]: classNames(
     commonClasses,
@@ -66,7 +66,7 @@ function ViewportActionCorners({ cornerComponents }: ViewportActionCornersProps)
             {locationComponents.map(componentInfo => {
               return (
                 <div
-                  className="div-icone-right-viewport"
+                  className="div-icone-right-viewport shrink-0"
                   key={componentInfo.id}
                 >
                   {componentInfo.component}

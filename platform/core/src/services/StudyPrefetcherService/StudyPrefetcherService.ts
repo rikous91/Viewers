@@ -291,14 +291,19 @@ class StudyPrefetcherService extends PubSubService {
     }
 
     const activeViewport = viewports.get(activeViewportId);
-    const displaySetUpdated = this._setActiveDisplaySetsUIDs(activeViewport.displaySetInstanceUIDs);
+    const displaySetInstanceUIDs = Array.isArray(activeViewport?.displaySetInstanceUIDs)
+      ? activeViewport.displaySetInstanceUIDs
+      : [];
+    const displaySetUpdated = this._setActiveDisplaySetsUIDs(displaySetInstanceUIDs);
 
     if (forceRestart || displaySetUpdated) {
       this._restartPrefetching();
     }
   }
 
-  private _setActiveDisplaySetsUIDs(newActiveDisplaySetInstanceUIDs: string[]): boolean {
+  private _setActiveDisplaySetsUIDs(
+    newActiveDisplaySetInstanceUIDs: string[] = []
+  ): boolean {
     const sameDisplaySets =
       newActiveDisplaySetInstanceUIDs.length === this._activeDisplaySetsInstanceUIDs.length &&
       newActiveDisplaySetInstanceUIDs.every(uid =>

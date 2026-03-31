@@ -1,0 +1,19 @@
+diff --git a/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/StackViewport.js b/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/StackViewport.js
+index 1d586a7e1b..f6f0a42f8c 100644
+--- a/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/StackViewport.js
++++ b/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/StackViewport.js
+@@ -1841,8 +1841,13 @@ class StackViewport extends Viewport {
+     }
+     _getImagePlaneModule(imageId) {
+         const imagePlaneModule = getImagePlaneModule(imageId);
++        const hasExplicitPixelSpacing = Array.isArray(imagePlaneModule.pixelSpacing) &&
++            imagePlaneModule.pixelSpacing.length >= 2 &&
++            imagePlaneModule.pixelSpacing[0] > 0 &&
++            imagePlaneModule.pixelSpacing[1] > 0;
+         this.hasPixelSpacing =
+-            !imagePlaneModule.usingDefaultValues ||
++            hasExplicitPixelSpacing ||
++                !imagePlaneModule.usingDefaultValues ||
+                 this.calibration?.scale > 0 ||
+                 this.calibration?.rowPixelSpacing > 0;
+         this.calibration ||= imagePlaneModule.calibration;

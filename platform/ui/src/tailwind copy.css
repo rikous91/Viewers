@@ -126,8 +126,709 @@
   background-color: transparent !important;
 }
 
-.\!text-black[data-cy='StackScroll'] svg {
-  filter: invert(1);
+[data-cy='StackScroll'] img {
+  filter: none;
+}
+
+body.nolex-study-panel-bottom .nolex-main-area {
+  padding-bottom: var(--nolex-study-panel-bottom-height, 176px);
+}
+
+/* Bottom dock final overrides */
+body.nolex-study-panel-bottom .nolex-study-browser-bottom-layout .nolex-panel-header-bottom,
+body.nolex-study-panel-bottom .nolex-study-browser-bottom-layout .nolex-study-browser-options,
+body.nolex-study-panel-bottom .nolex-panel-header-bottom {
+  width: var(--nolex-study-panel-controls-width, 390px) !important;
+  min-width: var(--nolex-study-panel-controls-width, 390px) !important;
+  max-width: var(--nolex-study-panel-controls-width, 390px) !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-bottom-layout .nolex-study-accordion-item-bottom {
+  justify-content: flex-start !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  .nolex-study-accordion-item-bottom
+  > h3,
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  .nolex-study-accordion-trigger-bottom {
+  flex: 0 0 var(--nolex-study-panel-controls-width, 390px) !important;
+  width: var(--nolex-study-panel-controls-width, 390px) !important;
+  min-width: var(--nolex-study-panel-controls-width, 390px) !important;
+  max-width: var(--nolex-study-panel-controls-width, 390px) !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  .nolex-study-accordion-item-bottom
+  > [data-state] {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  gap: 4px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip::-webkit-scrollbar {
+  height: 4px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail'],
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail-no-image'] {
+  flex: 0 0 86px !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  height: 96px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  align-self: flex-start !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail-no-image']
+  .items-center {
+  display: flex !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail-no-image']
+  .bg-background {
+  visibility: visible !important;
+}
+
+/* Bottom dock stability overrides */
+body.nolex-study-panel-bottom {
+  --nolex-study-panel-controls-width: 390px;
+}
+
+.nolex-study-browser-bottom-layout .nolex-study-browser-options,
+.nolex-study-browser-bottom-layout .nolex-panel-header {
+  width: var(--nolex-study-panel-controls-width, 390px) !important;
+  min-width: var(--nolex-study-panel-controls-width, 390px) !important;
+  max-width: var(--nolex-study-panel-controls-width, 390px) !important;
+}
+
+.nolex-panel-header-bottom {
+  width: var(--nolex-study-panel-controls-width, 390px) !important;
+  min-width: var(--nolex-study-panel-controls-width, 390px) !important;
+  max-width: var(--nolex-study-panel-controls-width, 390px) !important;
+}
+
+.nolex-study-browser-bottom-layout .nolex-study-accordion-item-bottom {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+}
+
+.nolex-study-browser-bottom-layout .nolex-study-accordion-item-bottom > h3,
+.nolex-study-browser-bottom-layout .nolex-study-accordion-trigger-bottom {
+  flex: 0 0 var(--nolex-study-panel-controls-width, 390px) !important;
+  width: var(--nolex-study-panel-controls-width, 390px) !important;
+  min-width: var(--nolex-study-panel-controls-width, 390px) !important;
+  max-width: var(--nolex-study-panel-controls-width, 390px) !important;
+}
+
+.nolex-study-browser-bottom-layout .nolex-study-accordion-item-bottom > [data-state] {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+
+.nolex-study-browser-bottom-layout .nolex-study-accordion-content-bottom,
+.nolex-study-browser-bottom-layout .nolex-study-accordion-content-bottom > div,
+.nolex-study-browser-bottom-layout .nolex-study-accordion-content-bottom > div > .flex {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  justify-content: flex-start !important;
+}
+
+.nolex-study-browser-bottom-layout #ohif-thumbnail-list.nolex-bottom-thumbnail-strip {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  gap: 4px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #555 #1a1a1a !important;
+}
+
+.nolex-study-browser-bottom-layout #ohif-thumbnail-list.nolex-bottom-thumbnail-strip::-webkit-scrollbar {
+  display: block !important;
+  height: 4px !important;
+}
+
+.nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip::-webkit-scrollbar-track {
+  background: #1a1a1a !important;
+  border-radius: 9999px !important;
+}
+
+.nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip::-webkit-scrollbar-thumb {
+  background: #555 !important;
+  border-radius: 9999px !important;
+}
+
+.nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail'],
+.nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail-no-image'] {
+  flex: 0 0 86px !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  height: 96px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  align-self: flex-start !important;
+}
+
+.nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full,
+.nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.nolex-study-browser-bottom-layout [data-cy='study-browser-thumbnail-no-image'] {
+  padding: 0 !important;
+  max-width: none !important;
+}
+
+.nolex-study-browser-bottom-layout [data-cy='study-browser-thumbnail-no-image'] .items-center {
+  display: flex !important;
+}
+
+.nolex-study-browser-bottom-layout [data-cy='study-browser-thumbnail-no-image'] .bg-background {
+  visibility: visible !important;
+}
+
+body.nolex-study-panel-bottom {
+  --nolex-study-panel-controls-width: 320px;
+}
+
+body.nolex-study-panel-bottom [data-panel-id='viewerLayoutResizableLeftPanel'] {
+  flex: 0 0 0px !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+}
+
+body.nolex-study-panel-bottom
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  + [data-panel-resize-handle-id] {
+  display: none !important;
+  width: 0 !important;
+}
+
+body.nolex-study-panel-bottom
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  > .left.nolex-new-panel {
+  position: fixed !important;
+  left: 0 !important;
+  right: var(--nolex-study-panel-right-offset, 0px) !important;
+  bottom: 0 !important;
+  top: auto !important;
+  width: auto !important;
+  max-width: none !important;
+  height: var(--nolex-study-panel-bottom-height, 176px) !important;
+  margin: 0 !important;
+  border-top: 1px solid #2f2f2f !important;
+  z-index: 90 !important;
+  overflow: hidden !important;
+}
+
+body.nolex-study-panel-bottom
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  > .left.nolex-new-panel
+  > .bg-bkg-med {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: var(--nolex-study-panel-controls-width) !important;
+  height: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  pointer-events: none !important;
+  z-index: 6 !important;
+}
+
+body.nolex-study-panel-bottom
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  > .left.nolex-new-panel
+  > .bg-bkg-med
+  [data-cy='side-panel-header-left'] {
+  position: absolute !important;
+  right: 8px !important;
+  top: 4px !important;
+  width: 22px !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+  z-index: 7 !important;
+}
+
+body.nolex-study-panel-bottom
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  > .left.nolex-new-panel
+  > .bg-bkg-med
+  [data-cy='seriesList-btn']
+  > span {
+  display: none !important;
+}
+
+body.nolex-study-panel-bottom
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  [data-orientation='horizontal'] {
+  display: none !important;
+}
+
+body.nolex-study-panel-bottom .nolex-panel-header {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: var(--nolex-study-panel-controls-width) !important;
+  height: 30px !important;
+  padding: 2px 34px 2px 8px !important;
+  border-right: 1px solid #2f2f2f !important;
+  border-bottom: 1px solid #2f2f2f !important;
+  border-radius: 0 !important;
+  z-index: 3 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-panel-header .ml-auto {
+  margin-left: 0 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-bottom-layout {
+  position: relative !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-options {
+  position: absolute !important;
+  left: 0 !important;
+  top: 30px !important;
+  z-index: 6 !important;
+  background: #000 !important;
+  width: var(--nolex-study-panel-controls-width) !important;
+  padding-top: 0 !important;
+  border-right: 1px solid #2f2f2f !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-options-tabs {
+  justify-content: flex-start !important;
+  height: auto !important;
+  min-height: 30px !important;
+  padding: 2px 8px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-options-tabs .qualestudio-btn {
+  padding: 4px 10px !important;
+  font-size: 11px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-scroll-area {
+  height: 100% !important;
+  margin-top: 0 !important;
+  overflow: hidden !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-scroll-area > div {
+  height: 100% !important;
+  padding-bottom: 0 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-bottom {
+  height: 100% !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-item-bottom {
+  display: flex !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-item-bottom > h3 {
+  display: flex !important;
+  width: var(--nolex-study-panel-controls-width) !important;
+  min-width: var(--nolex-study-panel-controls-width) !important;
+  border-right: 1px solid #2f2f2f !important;
+  border-top: 1px solid #2f2f2f !important;
+  align-items: flex-start !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-trigger-bottom {
+  width: 100% !important;
+  height: 32px !important;
+  margin-top: 60px !important;
+  border-radius: 0 !important;
+  align-items: center !important;
+  padding: 0 8px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-trigger-bottom > div:first-child {
+  width: 100% !important;
+  height: 28px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-info-row-bottom {
+  height: 28px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-info-left-bottom {
+  gap: 0 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-info-date-bottom,
+body.nolex-study-panel-bottom .nolex-study-info-desc-bottom {
+  height: 14px !important;
+  line-height: 14px !important;
+  font-size: 10px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-info-right-bottom {
+  padding-left: 6px !important;
+  font-size: 10px !important;
+  line-height: 12px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-trigger-bottom svg {
+  display: none !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-item-bottom .open-storico-modes {
+  display: none !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom > div {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom > div > .flex {
+  height: 100% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  grid-template-columns: none !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  height: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #7a7a7a #101010 !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list::-webkit-scrollbar {
+  display: block !important;
+  height: 6px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list::-webkit-scrollbar-track {
+  background: #101010 !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list::-webkit-scrollbar-thumb {
+  background: #7a7a7a !important;
+  border-radius: 9999px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail'],
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image'] {
+  height: 104px !important;
+  width: 90px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex {
+  padding: 1px !important;
+  gap: 1px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex
+  > div:first-child,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex
+  > div:first-child {
+  height: 58px !important;
+  width: 82px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex
+  > div:first-child
+  img,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex
+  > div:first-child
+  .bg-background,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex
+  > div:first-child
+  img,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex
+  > div:first-child
+  .bg-background {
+  height: 58px !important;
+  width: 82px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex
+  > div:last-child,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex
+  > div:last-child {
+  min-height: 26px !important;
+  width: 82px !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex
+  > div:last-child
+  > div:first-child,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex
+  > div:last-child
+  > div:first-child {
+  font-size: 10px !important;
+  line-height: 11px !important;
+  max-height: 22px !important;
+  overflow: hidden !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list > * {
+  flex: 0 0 auto !important;
+}
+
+/* Final override: prevent vertical stretching and remove black gap under image in bottom dock */
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list {
+  align-items: flex-start !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail'],
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image'] {
+  height: auto !important;
+  min-height: 0 !important;
+  align-self: flex-start !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full {
+  height: auto !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail']
+  > .h-full.w-full
+  > .flex,
+body.nolex-study-panel-bottom
+  .nolex-study-accordion-content-bottom
+  #ohif-thumbnail-list
+  > [data-cy='study-browser-thumbnail-no-image']
+  > .h-full.w-full
+  > .flex {
+  height: auto !important;
+  min-height: 0 !important;
+  gap: 0 !important;
+}
+
+/* Final compact override: do not stretch thumbnail strip vertically */
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom > div > .flex {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  max-height: none !important;
+  padding-bottom: 0 !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  padding: 4px 4px 2px 4px !important;
+}
+
+/* Ultra-compact docking: keep strip aligned to top and remove extra vertical gaps */
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom,
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom > div,
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom > div > .flex {
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list {
+  display: inline-flex !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 4px 0 4px !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-accordion-content-bottom #ohif-thumbnail-list::-webkit-scrollbar {
+  height: 4px !important;
+}
+
+body.nolex-study-panel-bottom.loading-spinner-into-grid
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  > .left.nolex-new-panel,
+body.nolex-study-panel-bottom:has(.nolex-scrolling-loading)
+  [data-panel-id='viewerLayoutResizableLeftPanel']
+  > .left.nolex-new-panel {
+  display: none !important;
+}
+
+body.nolex-study-panel-bottom [data-cy='studyBrowser-panel'] {
+  height: 100% !important;
+}
+
+body.nolex-study-panel-bottom [data-cy='studyBrowser-panel'] > .ohif-scrollbar {
+  overflow-y: hidden !important;
 }
 
 [data-cy='hideInfoDicom'] img {
@@ -143,8 +844,9 @@
   }
 }
 
-.bg-primary-light[data-cy='StackScroll'] img {
-  filter: invert(1);
+[data-cy='StackScroll'][data-active='true'] img {
+  filter: brightness(0) saturate(100%) invert(14%) sepia(89%) saturate(3061%)
+    hue-rotate(344deg) brightness(84%) contrast(96%);
 }
 
 [data-cy='panelSegmentation-btn'] .bg-customblue-40,
@@ -518,7 +1220,7 @@ input[type='range']::-webkit-slider-thumb {
     select {
       -webkit-appearance: menulist; /* Per WebKit */
       appearance: menulist; /* Per i browser moderni */
-      cursor: pointer; /* Aggiungi un puntatore per indicare che è cliccabile */
+      cursor: pointer; /* Aggiungi un puntatore per indicare che Ã¨ cliccabile */
       option {
         background-color: #fff; /* Colore di sfondo predefinito */
         color: #333; /* Colore del testo */
@@ -1019,7 +1721,7 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
-/* Divido la toolbar in due o più righe */
+/* Divido la toolbar in due o piÃ¹ righe */
 @media only screen and (max-width: 1300px) {
   .toolbar-child-flex {
     flex-wrap: wrap !important;
@@ -1114,7 +1816,7 @@ input[type='range']::-webkit-slider-thumb {
       }
     }
     [data-cy='side-panel-header-left']::after {
-      content: '← Nascondi Serie';
+      content: 'Nascondi Serie';
       padding: 10px;
       color: #fff;
       left: 0px;
@@ -1140,7 +1842,7 @@ input[type='range']::-webkit-slider-thumb {
       }
     }
     [data-cy='side-panel-header-left']::after {
-      content: 'Serie →';
+      content: 'Serie';
       padding: 10px;
       color: #fff;
       left: 50px;
@@ -1210,7 +1912,7 @@ input[type='range']::-webkit-slider-thumb {
   .div-info-paziente {
     display: none;
   }
-  /*Nascondo il pannello dx ma solo se non è lo storico splittato*/
+  /*Nascondo il pannello dx ma solo se non Ã¨ lo storico splittato*/
   .right.nolex-new-panel {
     display: none !important;
   }
@@ -1257,4 +1959,65 @@ input[type='range']::-webkit-slider-thumb {
       display: none !important;
     }
   }
+}
+
+/* Bottom dock absolute final overrides */
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 4px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail'],
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  #ohif-thumbnail-list.nolex-bottom-thumbnail-strip
+  > [data-cy='study-browser-thumbnail-no-image'] {
+  flex: 0 0 86px !important;
+  width: 86px !important;
+  min-width: 86px !important;
+  height: 96px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  .nolex-study-accordion-item-bottom
+  > h3,
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  .nolex-study-accordion-trigger-bottom,
+body.nolex-study-panel-bottom .nolex-panel-header-bottom,
+body.nolex-study-panel-bottom .nolex-study-browser-options {
+  width: var(--nolex-study-panel-controls-width, 390px) !important;
+  min-width: var(--nolex-study-panel-controls-width, 390px) !important;
+  max-width: var(--nolex-study-panel-controls-width, 390px) !important;
+}
+
+body.nolex-study-panel-bottom .nolex-study-browser-bottom-layout .nolex-study-accordion-item-bottom {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+}
+
+body.nolex-study-panel-bottom
+  .nolex-study-browser-bottom-layout
+  .nolex-study-accordion-item-bottom
+  > [data-state] {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
 }

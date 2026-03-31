@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from 'classnames';
 import { ThumbnailList } from '../ThumbnailList';
@@ -8,6 +8,91 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../Tooltip';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../Accordion';
 import openStorico from '../../../../app/public/estensioni/aperturaStorico/aperturaStorico.js';
+
+const STORICO_SERIES_LOADING_TIMEOUT_MS = 12000;
+const INVALID_STUDY_DESCRIPTION_VALUES = new Set([
+  'no data studio',
+  'no data study',
+  'no data',
+  'n/a',
+  'na',
+  'null',
+  'undefined',
+  '(vuoto)',
+]);
+
+const normalizeText = value => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value).replace(/\s+/g, ' ').trim();
+};
+
+const normalizeStudyDescription = value => {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return '';
+  }
+
+  if (INVALID_STUDY_DESCRIPTION_VALUES.has(normalized.toLowerCase())) {
+    return '';
+  }
+
+  return normalized;
+};
+
+const getUrlStudyDescription = () => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get('StudyDescription') ||
+    params.get('studyDescription') ||
+    params.get('description') ||
+    ''
+  );
+};
+
+const getWindowStudyDescription = () => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const appWindow = window as Window & { nolexStudyDescription?: string };
+  return appWindow.nolexStudyDescription || '';
+};
+
+const resolveStudyDescription = ({ description, isStorico, displaySets }) => {
+  const fromDescription = normalizeStudyDescription(description);
+  if (fromDescription) {
+    return fromDescription;
+  }
+
+  const fromDisplaySets = Array.isArray(displaySets)
+    ? displaySets
+        .map(ds => normalizeStudyDescription(ds?.studyDescription || ds?.StudyDescription))
+        .find(Boolean)
+    : '';
+  if (fromDisplaySets) {
+    return fromDisplaySets;
+  }
+
+  if (!isStorico) {
+    const fromWindow = normalizeStudyDescription(getWindowStudyDescription());
+    if (fromWindow) {
+      return fromWindow;
+    }
+
+    const fromUrl = normalizeStudyDescription(getUrlStudyDescription());
+    if (fromUrl) {
+      return fromUrl;
+    }
+  }
+
+  return '';
+};
 
 const StudyItem = ({
   studyInstanceUID,
@@ -28,53 +113,114 @@ const StudyItem = ({
   ThumbnailMenuItems,
   StudyMenuItems,
   StudyInstanceUID,
+  isBottomDocked = false,
 }: withAppTypes) => {
   const isStudyUIDDefined =
     studyInstanceUID !== undefined && studyInstanceUID !== null && studyInstanceUID !== '';
+  const resolvedDescription = resolveStudyDescription({ description, isStorico, displaySets });
 
   const espandi = e => {
     e.target.parentElement.parentElement.parentElement.querySelector('button').click();
   };
 
+  const isLoadingStoricoDisplaySets =
+    isStorico && isExpanded && isStudyUIDDefined && (!displaySets || displaySets.length === 0);
+  const [storicoLoadError, setStoricoLoadError] = useState(false);
+
+  useEffect(() => {
+    if (!isLoadingStoricoDisplaySets) {
+      setStoricoLoadError(false);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setStoricoLoadError(true);
+    }, STORICO_SERIES_LOADING_TIMEOUT_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [isLoadingStoricoDisplaySets, studyInstanceUID]);
+
   return (
     <Accordion
+      className={classnames(
+        'nolex-study-accordion',
+        isBottomDocked && 'nolex-study-accordion-bottom'
+      )}
       type="single"
-      collapsible
+      collapsible={!isBottomDocked}
       onClick={onClick}
-      onKeyDown={() => { }}
+      onKeyDown={() => {}}
       role="button"
       tabIndex={0}
       defaultValue={isActive ? 'study-item' : undefined}
+      value={isBottomDocked ? 'study-item' : undefined}
     >
-      <AccordionItem value="study-item">
-        <AccordionTrigger className={classnames('hover:bg-accent bg-popover group w-full rounded')}>
-          <div className="flex h-[40px] w-full flex-row overflow-hidden">
+      <AccordionItem
+        value="study-item"
+        className={classnames(
+          'nolex-study-accordion-item',
+          isBottomDocked && 'nolex-study-accordion-item-bottom'
+        )}
+      >
+        <AccordionTrigger
+          className={classnames(
+            'hover:bg-accent bg-popover group w-full rounded',
+            isExpanded && !isBottomDocked && 'border-secondary-light/40 sticky top-0 z-10 border-b',
+            isBottomDocked && 'nolex-study-accordion-trigger-bottom'
+          )}
+        >
+          <div
+            className={classnames(
+              'flex h-[40px] w-full flex-row overflow-hidden',
+              isBottomDocked && 'nolex-study-info-row-bottom'
+            )}
+          >
             <div className="flex w-full flex-row items-center justify-between">
-              <div className="flex min-w-0 flex-col items-start text-[13px]">
+              <div
+                className={classnames(
+                  'flex min-w-0 flex-col items-start text-[13px]',
+                  isBottomDocked && 'nolex-study-info-left-bottom'
+                )}
+              >
                 <Tooltip>
                   <TooltipContent>{date}</TooltipContent>
                   <TooltipTrigger
                     className="w-full"
                     asChild
                   >
-                    <div className="h-[18px] w-full max-w-[160px] overflow-hidden truncate whitespace-nowrap text-left text-white">
+                    <div
+                      className={classnames(
+                        'h-[18px] w-full max-w-[160px] overflow-hidden truncate whitespace-nowrap text-left text-white',
+                        isBottomDocked && 'nolex-study-info-date-bottom'
+                      )}
+                    >
                       {date}
                     </div>
                   </TooltipTrigger>
                 </Tooltip>
                 <Tooltip>
-                  <TooltipContent>{description}</TooltipContent>
+                  <TooltipContent>{resolvedDescription}</TooltipContent>
                   <TooltipTrigger
                     className="w-full"
                     asChild
                   >
-                    <div className="text-muted-foreground h-[18px] w-full overflow-hidden truncate whitespace-nowrap text-left">
-                      {description}
+                    <div
+                      className={classnames(
+                        'text-muted-foreground h-[18px] w-full overflow-hidden truncate whitespace-nowrap text-left',
+                        isBottomDocked && 'nolex-study-info-desc-bottom'
+                      )}
+                    >
+                      {resolvedDescription}
                     </div>
                   </TooltipTrigger>
                 </Tooltip>
               </div>
-              <div className="text-muted-foreground flex flex-col items-end pl-[10px] text-[12px]">
+              <div
+                className={classnames(
+                  'text-muted-foreground flex flex-col items-end pl-[10px] text-[12px]',
+                  isBottomDocked && 'nolex-study-info-right-bottom'
+                )}
+              >
                 <div className="max-w-[150px] overflow-hidden text-ellipsis">{modalities}</div>
                 <div>{numInstances}</div>
               </div>
@@ -148,20 +294,38 @@ const StudyItem = ({
           </div>
         )} */}
         <AccordionContent
+          className={classnames(isBottomDocked && 'nolex-study-accordion-content-bottom')}
           onClick={event => {
             event.stopPropagation();
           }}
         >
-          {isExpanded && displaySets && (
-            <ThumbnailList
-              thumbnails={displaySets}
-              activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
-              onThumbnailClick={onClickThumbnail}
-              onThumbnailDoubleClick={onDoubleClickThumbnail}
-              onClickUntrack={onClickUntrack}
-              viewPreset={viewPreset}
-              ThumbnailMenuItems={ThumbnailMenuItems}
-            />
+          {isLoadingStoricoDisplaySets ? (
+            storicoLoadError ? (
+              <div className="flex items-center justify-center gap-2 py-3">
+                <span className="text-[12px] text-[#f87171]">
+                  Errore caricamento serie. Riprova oppure apri un altro studio.
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 py-3">
+                <Icons.LoadingSpinner className="text-primary-main h-4 w-4" />
+                <span className="text-muted-foreground text-[12px]">Caricamento serie...</span>
+              </div>
+            )
+          ) : (
+            isExpanded &&
+            displaySets && (
+              <ThumbnailList
+                thumbnails={displaySets}
+                activeDisplaySetInstanceUIDs={activeDisplaySetInstanceUIDs}
+                onThumbnailClick={onClickThumbnail}
+                onThumbnailDoubleClick={onDoubleClickThumbnail}
+                onClickUntrack={onClickUntrack}
+                viewPreset={viewPreset}
+                ThumbnailMenuItems={ThumbnailMenuItems}
+                isBottomDocked={isBottomDocked}
+              />
+            )
           )}
         </AccordionContent>
       </AccordionItem>
@@ -187,6 +351,7 @@ StudyItem.propTypes = {
   isStorico: PropTypes.bool,
   StudyMenuItems: PropTypes.func,
   StudyInstanceUID: PropTypes.string,
+  isBottomDocked: PropTypes.bool,
 };
 
 export { StudyItem };

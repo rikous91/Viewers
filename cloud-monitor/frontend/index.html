@@ -1,0 +1,2971 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Dashboard Viewer Clienti</title>
+    <style>
+      :root {
+        --bg: #f2f6fc;
+        --surface: #ffffff;
+        --text: #182230;
+        --muted: #607083;
+        --accent: #165dff;
+        --accent-soft: #e8f0ff;
+        --success: #146c43;
+        --warning: #995300;
+        --danger: #b4232d;
+        --border: #d8e1ef;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 0% 0%, #e0eaff 0, transparent 38%),
+          radial-gradient(circle at 95% -10%, #d9f2ff 0, transparent 30%), var(--bg);
+      }
+      body.auth-checking #loginView,
+      body.auth-checking #dashboardApp {
+        display: none !important;
+      }
+      .auth-boot-overlay {
+        display: none;
+      }
+      body.auth-checking .auth-boot-overlay {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1200;
+        background:
+          radial-gradient(circle at 0% 0%, #e0eaff 0, transparent 38%),
+          radial-gradient(circle at 95% -10%, #d9f2ff 0, transparent 30%), var(--bg);
+      }
+      .auth-boot-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid var(--border);
+        color: #304257;
+        font-size: 13px;
+        box-shadow: 0 12px 28px rgba(17, 24, 39, 0.08);
+      }
+      .auth-boot-spinner {
+        width: 14px;
+        height: 14px;
+      }
+      .page {
+        width: 100%;
+        max-width: none;
+        margin: 16px auto;
+        padding: 0 20px 24px;
+      }
+      .header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #dashboardApp {
+        display: none;
+      }
+      .login-shell {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .login-card {
+        width: min(440px, 100%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: 0 18px 44px rgba(17, 24, 39, 0.16);
+        padding: 22px;
+      }
+      .login-title {
+        margin: 0 0 6px;
+        font-size: 24px;
+      }
+      .login-subtitle {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .login-form {
+        display: grid;
+        gap: 7px;
+      }
+      .login-form + .login-form {
+        margin-top: 12px;
+      }
+      .login-form label {
+        font-size: 12px;
+        color: #304257;
+        font-weight: 600;
+      }
+      .login-form input[type='email'],
+      .login-form input[type='text'] {
+        height: 38px;
+      }
+      .login-form button {
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .login-inline-spinner {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+      }
+      .login-feedback {
+        margin-top: 12px;
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 12px;
+        line-height: 1.4;
+        border: 1px solid #d8e1ef;
+        background: #f8fbff;
+        color: #304257;
+      }
+      .login-feedback.success {
+        border-color: #bdebd0;
+        background: #ebf9f1;
+        color: #146c43;
+      }
+      .login-feedback.error {
+        border-color: #ffd0d6;
+        background: #fff1f3;
+        color: #b4232d;
+      }
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: #123d9e;
+        border: 1px solid #cddcff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 12px 28px rgba(17, 24, 39, 0.08);
+        overflow: hidden;
+      }
+      .card-head {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .card-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .card-body {
+        padding: 12px 14px;
+      }
+      .release-form {
+        display: grid;
+        grid-template-columns: 180px 1fr 240px auto;
+        gap: 8px;
+      }
+      input[type='text'],
+      input[type='file'],
+      select,
+      button {
+        height: 34px;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        padding: 0 10px;
+        font-size: 13px;
+      }
+      input[type='file'] {
+        padding-top: 5px;
+      }
+      button {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.56;
+      }
+      .btn-primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .btn-danger {
+        color: #fff;
+        background: #d23545;
+        border-color: #d23545;
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        border: 1px solid #f3c7cc;
+        background: #fff4f6;
+        color: var(--danger);
+        font-size: 16px;
+        line-height: 1;
+        padding: 0;
+      }
+      .inline-release-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .release-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid #cfe0ff;
+        background: #f2f7ff;
+        border-radius: 999px;
+        padding: 3px 6px 3px 10px;
+      }
+      .release-tag {
+        border: none;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        color: #1a4aa0;
+        font-size: 12px;
+      }
+      .release-delete-btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 1px solid #f1b5be;
+        background: #fff4f6;
+        color: #b4232d;
+        padding: 0;
+        line-height: 1;
+        font-size: 13px;
+      }
+      .release-delete-btn:hover {
+        border-color: #d23545;
+        background: #ffe6ea;
+      }
+      .table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      table {
+        width: 100%;
+        min-width: 1180px;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 10px 10px;
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        text-align: left;
+        vertical-align: middle;
+      }
+      th {
+        background: #f8fbff;
+        text-transform: uppercase;
+        letter-spacing: 0.45px;
+        font-size: 11px;
+        color: #304257;
+      }
+      tbody tr:hover {
+        background: #f6faff;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        height: 26px;
+        padding: 0 9px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .st-idle,
+      .st-confirmed {
+        background: #eef4ff;
+        color: #1f4e9f;
+        border-color: #cfdfff;
+      }
+      .st-commanded,
+      .st-downloading,
+      .st-installing,
+      .st-restarting {
+        background: #fff6e8;
+        color: var(--warning);
+        border-color: #ffe0b8;
+      }
+      .st-success {
+        background: #ebf9f1;
+        color: var(--success);
+        border-color: #bdebd0;
+      }
+      .st-failed {
+        background: #fff1f3;
+        color: var(--danger);
+        border-color: #ffd0d6;
+      }
+      .version-cell {
+        white-space: nowrap;
+      }
+      .actions-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .actions-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .actions-row-secondary button {
+        width: 100%;
+      }
+      .actions-row-tertiary button {
+        width: 100%;
+      }
+      .poll-interval-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .poll-interval-row input[type='number'] {
+        width: 60px;
+        padding: 2px 4px;
+        font-size: 11px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+      }
+      .poll-interval-row button {
+        padding: 2px 7px;
+        font-size: 11px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--surface);
+        cursor: pointer;
+      }
+      .poll-interval-row button:hover {
+        background: var(--accent-soft);
+      }
+      .small {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .muted-label {
+        font-size: 10px;
+        color: var(--muted);
+        opacity: 0.75;
+        margin-top: 2px;
+      }
+      .upload-info {
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid #cfe0ff;
+        background: #f2f7ff;
+        color: #1a4aa0;
+      }
+      .upload-info[data-state='progress'] {
+        border-color: #d7dbff;
+        background: #f4f5ff;
+        color: #3a45a6;
+      }
+      .upload-info[data-state='success'] {
+        border-color: #bdebd0;
+        background: #ebf9f1;
+        color: #1f6f45;
+      }
+      .upload-info[data-state='error'] {
+        border-color: #ffd0d6;
+        background: #fff1f3;
+        color: #a21c2c;
+      }
+      .clip-line {
+        display: block;
+        max-width: 320px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .rename-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        white-space: nowrap;
+      }
+      .spinner {
+        width: 12px;
+        height: 12px;
+        border: 2px solid #d5e2ff;
+        border-top-color: #2f63d9;
+        border-radius: 999px;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .empty {
+        padding: 18px;
+        color: var(--muted);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: rgba(17, 24, 39, 0.45);
+        z-index: 1100;
+      }
+      .modal-backdrop.open {
+        display: flex;
+      }
+      .modal {
+        width: min(560px, 100%);
+        background: #fff;
+        border-radius: 14px;
+        border: 1px solid #dbe6f5;
+        box-shadow: 0 20px 55px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+      }
+      .modal-head {
+        padding: 16px 18px;
+        border-bottom: 1px solid #e8eef7;
+        font-weight: 700;
+        font-size: 17px;
+      }
+      .modal-body {
+        padding: 16px 18px;
+        color: #2c3c50;
+        line-height: 1.45;
+      }
+      .modal-body .warn {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid #ffd9de;
+        background: #fff5f6;
+        border-radius: 10px;
+        color: #8d1d2a;
+        font-size: 13px;
+      }
+      .modal-grid {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .modal-grid label {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        color: #304257;
+      }
+      .modal-grid input {
+        width: 100%;
+        height: 38px;
+      }
+      .btn-ghost-danger {
+        border-color: #f1b5be;
+        background: #fff4f6;
+        color: #b4232d;
+      }
+      .modal-foot {
+        padding: 14px 18px;
+        border-top: 1px solid #e8eef7;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      @media (max-width: 1080px) {
+        .release-form {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 1280px) {
+        table {
+          min-width: 1080px;
+        }
+        .clip-line {
+          max-width: 240px;
+        }
+      }
+      @media (max-width: 900px) {
+        .page {
+          padding: 0 10px 18px;
+        }
+      }
+      /* ── Toast notifications ────────────────────────────── */
+      #toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 10px;
+        pointer-events: none;
+      }
+      .toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        min-width: 280px;
+        max-width: 420px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        font-size: 13px;
+        line-height: 1.45;
+        pointer-events: auto;
+        animation: toast-in 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: default;
+      }
+      .toast.leaving {
+        animation: toast-out 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(16px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      @keyframes toast-out {
+        from {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(8px) scale(0.96);
+        }
+      }
+      .toast-success {
+        background: #ecfdf5;
+        border: 1px solid #6ee7b7;
+        color: #065f46;
+      }
+      .toast-error {
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+      }
+      .toast-info {
+        background: #eff6ff;
+        border: 1px solid #93c5fd;
+        color: #1e40af;
+      }
+      .toast-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .toast-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        cursor: pointer;
+        opacity: 0.5;
+        font-size: 15px;
+        padding: 0 0 0 8px;
+        color: inherit;
+        height: auto;
+        flex-shrink: 0;
+      }
+      .toast-close:hover {
+        opacity: 1;
+      }
+      /* ── Custom Tooltip ─────────────────────────────────── */
+      .tooltip-box {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        max-width: 340px;
+        padding: 7px 11px;
+        background: #1a2335;
+        color: #e8f0ff;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.5;
+        border-radius: 9px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+        opacity: 0;
+        transform: translateY(5px);
+        transition:
+          opacity 0.14s ease,
+          transform 0.14s ease;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .tooltip-box.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /* ── Release notes pill ──────────────────────────────── */
+      .release-notes-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: #c9dbff;
+        color: #1a4aa0;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: default;
+        flex-shrink: 0;
+      }
+      /* ── Release notes inline (sotto select) ────────────── */
+      .release-notes-hint {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.4;
+        max-width: 220px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      /* ── Creds badge ─────────────────────────────────────── */
+      .creds-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+      .creds-badge.ok {
+        background: #ebf9f1;
+        color: #146c43;
+        border: 1px solid #bdebd0;
+      }
+      .creds-badge.missing {
+        background: #fff1f3;
+        color: #b4232d;
+        border: 1px solid #ffd0d6;
+      }
+      /* ── Modernize table header ──────────────────────────── */
+      th {
+        background: #f4f8ff;
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+        color: #4a5f77;
+        font-weight: 700;
+        text-transform: uppercase;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      /* ── Better row hover ────────────────────────────────── */
+      tbody tr {
+        transition: background 0.1s;
+      }
+      tbody tr:hover {
+        background: #f0f6ff;
+      }
+      /* ── Compact actions ─────────────────────────────────── */
+      .actions-cell {
+        gap: 5px;
+      }
+      .actions-row {
+        flex-wrap: wrap;
+      }
+    </style>
+  </head>
+  <body class="auth-checking">
+    <div
+      id="authBootOverlay"
+      class="auth-boot-overlay"
+      aria-hidden="true"
+    >
+      <div class="auth-boot-card">
+        <span class="spinner auth-boot-spinner"></span>
+        <span>Verifica sessione...</span>
+      </div>
+    </div>
+    <div
+      id="loginView"
+      class="login-shell"
+    >
+      <div class="login-card">
+        <h1 class="login-title">Dashboard Viewer Cloud</h1>
+        <p class="login-subtitle">
+          Inserisci la tua email e richiedi il codice di accesso. Il codice ricevuto via email scade
+          dopo 10 minuti.
+        </p>
+
+        <form
+          id="loginEmailForm"
+          class="login-form"
+          novalidate
+        >
+          <label for="loginEmailInput">Email</label>
+          <input
+            type="email"
+            id="loginEmailInput"
+            placeholder="Inserisci indirizzo email"
+            autocomplete="email"
+            required
+          />
+          <button
+            type="submit"
+            class="btn-primary"
+            id="sendCodeBtn"
+          >
+            <span id="sendCodeBtnLabel">Invia codice</span>
+            <span
+              id="sendCodeSpinner"
+              class="spinner login-inline-spinner hidden"
+              aria-hidden="true"
+            ></span>
+          </button>
+        </form>
+
+        <form
+          id="loginCodeForm"
+          class="login-form hidden"
+          novalidate
+        >
+          <label for="loginCodeInput">Codice ricevuto via email</label>
+          <input
+            type="text"
+            id="loginCodeInput"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Inserisci codice a 6 cifre"
+            autocomplete="one-time-code"
+          />
+          <button
+            type="submit"
+            class="btn-primary"
+            id="verifyCodeBtn"
+          >
+            <span id="verifyCodeBtnLabel">Accedi</span>
+            <span
+              id="verifyCodeSpinner"
+              class="spinner login-inline-spinner hidden"
+              aria-hidden="true"
+            ></span>
+          </button>
+        </form>
+
+        <div
+          id="loginFeedback"
+          class="login-feedback"
+        >
+          Inserisci l'email per ricevere il codice di accesso.
+        </div>
+      </div>
+    </div>
+
+    <div id="dashboardApp">
+      <div class="page">
+        <div class="header">
+          <div>
+            <h1>Dashboard Viewer Cloud</h1>
+          </div>
+          <div class="actions">
+            <button id="refreshBtn">Aggiorna</button>
+            <span
+              class="status-pill"
+              id="countBadge"
+              >0 clienti</span
+            >
+          </div>
+        </div>
+        <div
+          class="muted"
+          id="lastRefresh"
+        >
+          Ultimo refresh: -
+        </div>
+
+        <div
+          class="grid"
+          style="margin-top: 10px"
+        >
+          <section class="card">
+            <div class="card-head">
+              <h2 class="card-title">Carica nuova release</h2>
+              <span
+                class="small upload-info"
+                id="uploadInfo"
+                data-state="info"
+              >
+                Carica una nuova versione .zip
+              </span>
+            </div>
+            <div class="card-body">
+              <form
+                id="releaseUploadForm"
+                class="release-form"
+              >
+                <input
+                  type="text"
+                  id="releaseVersionInput"
+                  placeholder="Versione (es. 3.10.0-prod.140)"
+                  required
+                />
+                <input
+                  type="text"
+                  id="releaseNotesInput"
+                  placeholder="Note release (opzionale)"
+                />
+                <input
+                  type="file"
+                  id="releaseFileInput"
+                  accept=".zip,application/zip"
+                  required
+                />
+                <button
+                  type="submit"
+                  class="btn-primary"
+                  id="uploadReleaseBtn"
+                >
+                  Carica release
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2 class="card-title">Release disponibili</h2>
+              <span
+                class="small"
+                id="releaseCount"
+                >0 release</span
+              >
+            </div>
+            <div class="card-body">
+              <div
+                class="inline-release-list"
+                id="releaseTags"
+              ></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2 class="card-title">Clienti installati</h2>
+              <span class="small">
+                Se il target e diverso dalla versione attuale, usa "Effettua aggiornamento".
+              </span>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Versione attuale</th>
+                    <th>Versione target</th>
+                    <th>Stato update</th>
+                    <th>Prima ricezione</th>
+                    <th>Ultima attivita</th>
+                    <th>Client Id</th>
+                    <th>IP</th>
+                    <th>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+            <div
+              class="empty"
+              id="emptyState"
+              style="display: none"
+            >
+              Nessun cliente registrato.
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div id="toast-container"></div>
+
+      <div
+        class="modal-backdrop"
+        id="deleteModalBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deleteModalTitle"
+      >
+        <div class="modal">
+          <div
+            class="modal-head"
+            id="deleteModalTitle"
+          >
+            Conferma eliminazione centro
+          </div>
+          <div class="modal-body">
+            <div id="deleteModalText"></div>
+            <div class="warn">
+              Nota: se l'installazione in questione invia una nuova prima comunicazione o una live
+              session, il sistema ricreera automaticamente la riga.
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button id="cancelDeleteBtn">Annulla</button>
+            <button
+              class="btn-danger"
+              id="confirmDeleteBtn"
+            >
+              Elimina centro
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal-backdrop"
+        id="deleteReleaseModalBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="deleteReleaseModalTitle"
+      >
+        <div class="modal">
+          <div
+            class="modal-head"
+            id="deleteReleaseModalTitle"
+          >
+            Conferma eliminazione release
+          </div>
+          <div class="modal-body">
+            <div id="deleteReleaseModalText"></div>
+            <div class="warn">
+              Nota: i client che hanno questa release come versione target verranno riportati a
+              nessun target. Se assegni una nuova versione target, il polling ripartira normalmente.
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button id="cancelDeleteReleaseBtn">Annulla</button>
+            <button
+              class="btn-danger"
+              id="confirmDeleteReleaseBtn"
+            >
+              Elimina release
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal-backdrop"
+        id="cancelUpdateModalBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cancelUpdateModalTitle"
+      >
+        <div class="modal">
+          <div
+            class="modal-head"
+            id="cancelUpdateModalTitle"
+          >
+            Ferma richieste client
+          </div>
+          <div class="modal-body">
+            <div id="cancelUpdateModalText"></div>
+            <div style="margin-top: 12px; display: grid; gap: 8px">
+              <label
+                id="cancelUpdateOptionWrap"
+                style="display: flex; align-items: center; gap: 8px"
+              >
+                <input
+                  type="checkbox"
+                  id="cancelUpdateOptionInput"
+                />
+                <span>Annulla richiesta aggiornamento versione</span>
+              </label>
+              <label
+                id="cancelRenameOptionWrap"
+                style="display: flex; align-items: center; gap: 8px"
+              >
+                <input
+                  type="checkbox"
+                  id="cancelRenameOptionInput"
+                />
+                <span>Annulla richiesta rename cliente</span>
+              </label>
+            </div>
+            <div class="warn">
+              Nota: il blocco vale per i comandi non ancora eseguiti. Se il client ha gia iniziato
+              un'operazione, quel ciclo puo comunque completarsi.
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button id="cancelCancelUpdateBtn">Chiudi</button>
+            <button
+              class="btn-danger"
+              id="confirmCancelUpdateBtn"
+            >
+              Ferma richieste
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal-backdrop"
+        id="renameClientModalBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="renameClientModalTitle"
+      >
+        <div class="modal">
+          <div
+            class="modal-head"
+            id="renameClientModalTitle"
+          >
+            Cambia nome cliente
+          </div>
+          <div class="modal-body">
+            <div id="renameClientModalText"></div>
+            <div style="margin-top: 12px">
+              <input
+                type="text"
+                id="renameClientInput"
+                placeholder="Nuovo nome cliente"
+                style="width: 100%; height: 38px"
+              />
+            </div>
+            <div class="warn">
+              Il nome in dashboard verra aggiornato solo dopo conferma dal client (file dicom-proxy
+              aggiornati con successo).
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button id="cancelRenameClientBtn">Annulla</button>
+            <button
+              class="btn-primary"
+              id="confirmRenameClientBtn"
+            >
+              Invia richiesta rename
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="modal-backdrop"
+        id="adminCredsModalBackdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="adminCredsModalTitle"
+      >
+        <div class="modal">
+          <div
+            class="modal-head"
+            id="adminCredsModalTitle"
+          >
+            Credenziali amministratore
+          </div>
+          <div class="modal-body">
+            <div id="adminCredsModalText"></div>
+            <div class="modal-grid">
+              <label>
+                Username admin
+                <input
+                  type="text"
+                  id="adminCredsUsernameInput"
+                  autocomplete="username"
+                  placeholder="DOMINIO\\utente oppure utente locale"
+                />
+              </label>
+              <label>
+                Password admin
+                <input
+                  type="password"
+                  id="adminCredsPasswordInput"
+                  autocomplete="current-password"
+                  placeholder="Password amministratore"
+                />
+              </label>
+            </div>
+            <div class="warn">
+              Nota: la password salvata viene mostrata mascherata. Se lasci il valore mascherato, la
+              password corrente viene mantenuta.
+            </div>
+            <div
+              id="adminCredsTestResult"
+              style="
+                display: none;
+                margin-top: 10px;
+                padding: 8px 12px;
+                border-radius: 6px;
+                font-size: 13px;
+              "
+            ></div>
+          </div>
+          <div class="modal-foot">
+            <button id="cancelAdminCredsBtn">Annulla</button>
+            <button
+              class="btn-ghost-danger"
+              id="clearAdminCredsBtn"
+            >
+              Rimuovi credenziali
+            </button>
+            <button id="testAdminCredsBtn">Testa credenziali</button>
+            <button
+              class="btn-primary"
+              id="confirmAdminCredsBtn"
+            >
+              Salva credenziali
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── Tooltip engine ──────────────────────────────────────
+      const _ttEl = document.createElement('div');
+      _ttEl.className = 'tooltip-box';
+      document.body.appendChild(_ttEl);
+      let _ttActive = null;
+      function _ttShow(e) {
+        const t = e.target.closest('[data-tooltip]');
+        if (!t || !t.dataset.tooltip) {
+          _ttHide();
+          return;
+        }
+        _ttActive = t;
+        _ttEl.textContent = t.dataset.tooltip;
+        _ttEl.classList.add('visible');
+        _ttMove(e);
+      }
+      function _ttMove(e) {
+        if (!_ttActive) return;
+        const margin = 12;
+        const tx = e.clientX + margin;
+        const ty = e.clientY - margin;
+        const w = _ttEl.offsetWidth,
+          h = _ttEl.offsetHeight;
+        const left = Math.min(tx, window.innerWidth - w - 6);
+        const top = Math.max(6, Math.min(ty, window.innerHeight - h - 6));
+        _ttEl.style.left = left + 'px';
+        _ttEl.style.top = top + 'px';
+      }
+      function _ttHide() {
+        _ttEl.classList.remove('visible');
+        _ttActive = null;
+      }
+      document.addEventListener('mouseover', _ttShow);
+      document.addEventListener('mousemove', _ttMove);
+      document.addEventListener('mouseout', e => {
+        if (_ttActive && !_ttActive.contains(e.relatedTarget)) _ttHide();
+      });
+      // ────────────────────────────────────────────────────────
+
+      // ── Toast system ─────────────────────────────────────────
+      const _toastContainer = document.getElementById('toast-container');
+      const TOAST_ICONS = { success: '✓', error: '✕', info: 'ℹ' };
+      function showToast(message, type = 'info', durationMs = 4000) {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+          <span class="toast-icon">${TOAST_ICONS[type] || 'ℹ'}</span>
+          <span>${String(message || '')}</span>
+          <button class="toast-close" aria-label="Chiudi">✕</button>
+        `;
+        const dismiss = () => {
+          toast.classList.add('leaving');
+          toast.addEventListener('animationend', () => toast.remove(), { once: true });
+        };
+        toast.querySelector('.toast-close').addEventListener('click', dismiss);
+        _toastContainer.appendChild(toast);
+        setTimeout(dismiss, durationMs);
+      }
+      // ─────────────────────────────────────────────────────────
+
+      const SESSION_TOKEN_STORAGE_KEY = 'dashboardViewerAuthToken';
+      const authBootOverlayEl = document.getElementById('authBootOverlay');
+      const loginViewEl = document.getElementById('loginView');
+      const dashboardAppEl = document.getElementById('dashboardApp');
+      const loginEmailFormEl = document.getElementById('loginEmailForm');
+      const loginEmailInputEl = document.getElementById('loginEmailInput');
+      const sendCodeBtnEl = document.getElementById('sendCodeBtn');
+      const sendCodeBtnLabelEl = document.getElementById('sendCodeBtnLabel');
+      const sendCodeSpinnerEl = document.getElementById('sendCodeSpinner');
+      const loginCodeFormEl = document.getElementById('loginCodeForm');
+      const loginCodeInputEl = document.getElementById('loginCodeInput');
+      const verifyCodeBtnEl = document.getElementById('verifyCodeBtn');
+      const verifyCodeBtnLabelEl = document.getElementById('verifyCodeBtnLabel');
+      const verifyCodeSpinnerEl = document.getElementById('verifyCodeSpinner');
+      const loginFeedbackEl = document.getElementById('loginFeedback');
+
+      let dashboardRefreshIntervalId = null;
+      let pendingLoginEmail = '';
+
+      function readStoredSessionToken() {
+        try {
+          return String(localStorage.getItem(SESSION_TOKEN_STORAGE_KEY) || '').trim();
+        } catch (_err) {
+          return '';
+        }
+      }
+
+      function storeSessionToken(token) {
+        try {
+          localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, String(token || '').trim());
+        } catch (_err) {
+          // ignore storage errors
+        }
+      }
+
+      function clearStoredSessionToken() {
+        try {
+          localStorage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+        } catch (_err) {
+          // ignore storage errors
+        }
+      }
+
+      function setLoginFeedback(message, type = 'info') {
+        loginFeedbackEl.textContent = String(message || '');
+        loginFeedbackEl.classList.remove('success', 'error');
+        if (type === 'success') {
+          loginFeedbackEl.classList.add('success');
+          return;
+        }
+        if (type === 'error') {
+          loginFeedbackEl.classList.add('error');
+        }
+      }
+
+      function setSendCodeLoading(isLoading) {
+        sendCodeBtnEl.disabled = Boolean(isLoading);
+        sendCodeBtnLabelEl.textContent = isLoading ? 'Invio in corso...' : 'Invia codice';
+        sendCodeSpinnerEl.classList.toggle('hidden', !isLoading);
+      }
+
+      function setVerifyCodeLoading(isLoading) {
+        verifyCodeBtnEl.disabled = Boolean(isLoading);
+        verifyCodeBtnLabelEl.textContent = isLoading ? 'Verifica...' : 'Accedi';
+        verifyCodeSpinnerEl.classList.toggle('hidden', !isLoading);
+      }
+
+      function setCodeStepVisible(isVisible) {
+        loginCodeFormEl.classList.toggle('hidden', !isVisible);
+      }
+
+      function completeAuthBootstrap() {
+        document.body.classList.remove('auth-checking');
+        if (authBootOverlayEl) {
+          authBootOverlayEl.style.display = 'none';
+        }
+      }
+
+      function setDashboardVisible(isVisible) {
+        dashboardAppEl.style.display = isVisible ? 'block' : 'none';
+        loginViewEl.style.display = isVisible ? 'none' : 'flex';
+      }
+
+      function stopDashboardPolling() {
+        if (dashboardRefreshIntervalId) {
+          clearInterval(dashboardRefreshIntervalId);
+          dashboardRefreshIntervalId = null;
+        }
+      }
+
+      function startDashboardPolling() {
+        stopDashboardPolling();
+        refreshAll();
+        dashboardRefreshIntervalId = setInterval(refreshAll, 10000);
+      }
+
+      function resetLoginState() {
+        setSendCodeLoading(false);
+        setVerifyCodeLoading(false);
+        setCodeStepVisible(false);
+        loginCodeInputEl.value = '';
+        pendingLoginEmail = '';
+      }
+
+      function readApiError(data, fallback) {
+        if (data && typeof data.error === 'string' && data.error.trim()) {
+          return data.error.trim();
+        }
+        return fallback;
+      }
+
+      function isAllowedNolexEmail(value) {
+        const email = String(value || '')
+          .trim()
+          .toLowerCase();
+        const atIndex = email.lastIndexOf('@');
+        if (atIndex < 0) return false;
+        const domain = email.slice(atIndex + 1);
+        return domain === 'nolex' || domain === 'nolex.it' || domain.endsWith('.nolex.it');
+      }
+
+      async function requestAuthCode(email) {
+        const response = await fetch('/api/auth/request-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(readApiError(payload, `HTTP ${response.status}`));
+        }
+        return payload;
+      }
+
+      async function verifyAuthCode(email, code) {
+        const response = await fetch('/api/auth/verify-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, code }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(readApiError(payload, `HTTP ${response.status}`));
+        }
+        return payload;
+      }
+
+      async function checkStoredSession(sessionToken) {
+        const response = await fetch('/api/auth/session', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${sessionToken}`,
+          },
+          cache: 'no-store',
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const err = new Error(readApiError(payload, 'Sessione non valida'));
+          err.statusCode = response.status;
+          throw err;
+        }
+        return payload;
+      }
+
+      function enterLoginMode(message = '', type = 'info') {
+        stopDashboardPolling();
+        completeAuthBootstrap();
+        setDashboardVisible(false);
+        if (message) {
+          setLoginFeedback(message, type);
+        } else {
+          setLoginFeedback("Inserisci l'email per ricevere il codice di accesso.", 'info');
+        }
+      }
+
+      function enterDashboardMode() {
+        completeAuthBootstrap();
+        setDashboardVisible(true);
+        startDashboardPolling();
+      }
+
+      async function bootstrapAuth() {
+        const storedToken = readStoredSessionToken();
+        if (!storedToken) {
+          resetLoginState();
+          enterLoginMode();
+          loginEmailInputEl.focus();
+          return;
+        }
+
+        try {
+          const payload = await checkStoredSession(storedToken);
+          const sessionEmail = String(payload?.session?.email || '').trim();
+          if (sessionEmail) {
+            pendingLoginEmail = sessionEmail;
+            loginEmailInputEl.value = sessionEmail;
+          }
+          enterDashboardMode();
+        } catch (err) {
+          const statusCode = Number(err?.statusCode || 0);
+          if (statusCode === 401 || statusCode === 403) {
+            clearStoredSessionToken();
+            resetLoginState();
+            enterLoginMode('Sessione non valida o scaduta. Richiedi un nuovo codice.', 'error');
+            loginEmailInputEl.focus();
+            return;
+          }
+
+          // Errore temporaneo durante la verifica sessione: non invalidare la sessione locale.
+          enterDashboardMode();
+          showToast('Verifica sessione temporaneamente non disponibile. Continuo con sessione locale.', 'info', 5000);
+        }
+      }
+
+      async function handleRequestCode(event) {
+        event.preventDefault();
+        const email = String(loginEmailInputEl.value || '')
+          .trim()
+          .toLowerCase();
+        if (!email) {
+          setLoginFeedback('Inserisci una email valida.', 'error');
+          return;
+        }
+        if (!isAllowedNolexEmail(email)) {
+          setLoginFeedback('Email non autorizzata', 'error');
+          return;
+        }
+
+        setSendCodeLoading(true);
+        setLoginFeedback('Invio codice in corso...', 'info');
+        try {
+          const payload = await requestAuthCode(email);
+          pendingLoginEmail = String(payload?.email || email).toLowerCase();
+          loginEmailInputEl.value = pendingLoginEmail;
+          setCodeStepVisible(true);
+          setLoginFeedback(
+            'Codice inviato. Controlla la tua email e inserisci il codice entro 10 minuti.',
+            'success'
+          );
+          loginCodeInputEl.focus();
+        } catch (err) {
+          setLoginFeedback(`Errore invio codice: ${err.message}`, 'error');
+        } finally {
+          setSendCodeLoading(false);
+        }
+      }
+
+      async function handleVerifyCode(event) {
+        event.preventDefault();
+        const email = String(pendingLoginEmail || loginEmailInputEl.value || '')
+          .trim()
+          .toLowerCase();
+        const code = String(loginCodeInputEl.value || '')
+          .replace(/\D+/g, '')
+          .slice(0, 6);
+
+        if (!email) {
+          setLoginFeedback('Inserisci prima la mail e richiedi il codice.', 'error');
+          return;
+        }
+        if (!isAllowedNolexEmail(email)) {
+          setLoginFeedback('Email non autorizzata', 'error');
+          return;
+        }
+        if (!/^\d{6}$/.test(code)) {
+          setLoginFeedback('Inserisci un codice a 6 cifre.', 'error');
+          return;
+        }
+
+        setVerifyCodeLoading(true);
+        setLoginFeedback('Verifica codice in corso...', 'info');
+        try {
+          const payload = await verifyAuthCode(email, code);
+          const token = String(payload?.token || '').trim();
+          if (!token) {
+            throw new Error('Token sessione mancante nella risposta');
+          }
+          storeSessionToken(token);
+          pendingLoginEmail = email;
+          setLoginFeedback('Accesso effettuato.', 'success');
+          enterDashboardMode();
+        } catch (err) {
+          setLoginFeedback(`Errore verifica codice: ${err.message}`, 'error');
+        } finally {
+          setVerifyCodeLoading(false);
+        }
+      }
+
+      loginCodeInputEl.addEventListener('input', () => {
+        loginCodeInputEl.value = String(loginCodeInputEl.value || '')
+          .replace(/\D+/g, '')
+          .slice(0, 6);
+      });
+
+      const rowsEl = document.getElementById('rows');
+      const emptyStateEl = document.getElementById('emptyState');
+      const countBadgeEl = document.getElementById('countBadge');
+      const lastRefreshEl = document.getElementById('lastRefresh');
+      const refreshBtnEl = document.getElementById('refreshBtn');
+
+      const releaseCountEl = document.getElementById('releaseCount');
+      const releaseTagsEl = document.getElementById('releaseTags');
+      const releaseUploadFormEl = document.getElementById('releaseUploadForm');
+      const releaseVersionInputEl = document.getElementById('releaseVersionInput');
+      const releaseNotesInputEl = document.getElementById('releaseNotesInput');
+      const releaseFileInputEl = document.getElementById('releaseFileInput');
+      const uploadReleaseBtnEl = document.getElementById('uploadReleaseBtn');
+      const uploadInfoEl = document.getElementById('uploadInfo');
+
+      const deleteModalBackdropEl = document.getElementById('deleteModalBackdrop');
+      const deleteModalTextEl = document.getElementById('deleteModalText');
+      const cancelDeleteBtnEl = document.getElementById('cancelDeleteBtn');
+      const confirmDeleteBtnEl = document.getElementById('confirmDeleteBtn');
+      const deleteReleaseModalBackdropEl = document.getElementById('deleteReleaseModalBackdrop');
+      const deleteReleaseModalTextEl = document.getElementById('deleteReleaseModalText');
+      const cancelDeleteReleaseBtnEl = document.getElementById('cancelDeleteReleaseBtn');
+      const confirmDeleteReleaseBtnEl = document.getElementById('confirmDeleteReleaseBtn');
+      const cancelUpdateModalBackdropEl = document.getElementById('cancelUpdateModalBackdrop');
+      const cancelUpdateModalTextEl = document.getElementById('cancelUpdateModalText');
+      const cancelCancelUpdateBtnEl = document.getElementById('cancelCancelUpdateBtn');
+      const confirmCancelUpdateBtnEl = document.getElementById('confirmCancelUpdateBtn');
+      const cancelUpdateOptionWrapEl = document.getElementById('cancelUpdateOptionWrap');
+      const cancelUpdateOptionInputEl = document.getElementById('cancelUpdateOptionInput');
+      const cancelRenameOptionWrapEl = document.getElementById('cancelRenameOptionWrap');
+      const cancelRenameOptionInputEl = document.getElementById('cancelRenameOptionInput');
+      const renameClientModalBackdropEl = document.getElementById('renameClientModalBackdrop');
+      const renameClientModalTextEl = document.getElementById('renameClientModalText');
+      const renameClientInputEl = document.getElementById('renameClientInput');
+      const cancelRenameClientBtnEl = document.getElementById('cancelRenameClientBtn');
+      const confirmRenameClientBtnEl = document.getElementById('confirmRenameClientBtn');
+      const adminCredsModalBackdropEl = document.getElementById('adminCredsModalBackdrop');
+      const adminCredsModalTextEl = document.getElementById('adminCredsModalText');
+      const adminCredsUsernameInputEl = document.getElementById('adminCredsUsernameInput');
+      const adminCredsPasswordInputEl = document.getElementById('adminCredsPasswordInput');
+      const cancelAdminCredsBtnEl = document.getElementById('cancelAdminCredsBtn');
+      const clearAdminCredsBtnEl = document.getElementById('clearAdminCredsBtn');
+      const confirmAdminCredsBtnEl = document.getElementById('confirmAdminCredsBtn');
+      const testAdminCredsBtnEl = document.getElementById('testAdminCredsBtn');
+      const adminCredsTestResultEl = document.getElementById('adminCredsTestResult');
+
+      const DEFAULT_EMPTY_STATE = 'Nessun cliente registrato.';
+      const ADMIN_PASSWORD_MASK = '********';
+      const state = {
+        clients: [],
+        releases: [],
+        selectedTargets: {},
+        pendingDeleteClient: null,
+        pendingDeleteReleaseVersion: '',
+        pendingCancelRequests: null,
+        pendingRenameClient: null,
+        pendingAdminCredentials: null,
+        credTestPolling: false,
+        credTestStartedAt: 0,
+      };
+
+      function setUploadInfo(text, type = 'info') {
+        const normalizedType = ['info', 'progress', 'success', 'error'].includes(type)
+          ? type
+          : 'info';
+        uploadInfoEl.textContent = String(text || '');
+        uploadInfoEl.dataset.state = normalizedType;
+      }
+
+      function mapReleaseUploadErrorMessage(statusCode, backendError) {
+        const normalized = String(backendError || '').trim();
+        if (statusCode === 409 || /versione gia presente/i.test(normalized)) {
+          return 'Versione gia presente: scegli una nuova versione o elimina prima la release esistente.';
+        }
+        if (/pacchetto non valido/i.test(normalized)) {
+          return 'Pacchetto non valido';
+        }
+        return normalized || `Errore upload release (HTTP ${statusCode})`;
+      }
+
+      function escapeHtml(value) {
+        return String(value || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function fmtDate(iso) {
+        if (!iso) return '-';
+        const dt = new Date(iso);
+        if (Number.isNaN(dt.getTime())) return iso;
+        return dt.toLocaleString('it-IT');
+      }
+
+      function fmtBytes(value) {
+        const size = Number(value || 0);
+        if (!Number.isFinite(size) || size <= 0) return '-';
+        if (size < 1024) return `${size} B`;
+        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+      }
+
+      function extractVersionFromFileName(fileName) {
+        const raw = String(fileName || '').trim();
+        if (!raw) {
+          return '';
+        }
+
+        const withoutExt = raw.replace(/\.zip$/i, '').trim();
+
+        // Example: build-viewer_update_VisualizzatorePACS_3D_Version 3.10.0-prod.138_20260319-183432.zip
+        const fromVersionLabel = withoutExt.match(/(?:^|[_\s-])version\s+(.+)$/i);
+        if (fromVersionLabel && fromVersionLabel[1]) {
+          return fromVersionLabel[1].trim();
+        }
+
+        // Example: release_3.10.0-prod.138_20260319-183432.zip
+        const fromReleasePrefix = withoutExt.match(/^release[_-](.+)$/i);
+        if (fromReleasePrefix && fromReleasePrefix[1]) {
+          return fromReleasePrefix[1].trim();
+        }
+
+        return '';
+      }
+
+      const STATUS_LABELS = {
+        idle: 'In attesa',
+        pending: 'In coda',
+        commanded: 'Comando inviato',
+        downloading: 'Download',
+        installing: 'Installazione',
+        restarting: 'Riavvio',
+        success: 'Completato',
+        confirmed: 'Confermato',
+        failed: 'Fallito',
+        cancelled: 'Annullato',
+        cancel_requested: 'Stop richiesto',
+        up_to_date: 'Aggiornato',
+        unknown: 'Sconosciuto',
+      };
+
+      function translateStatus(status) {
+        const key = String(status || 'idle').toLowerCase();
+        return STATUS_LABELS[key] || status || 'idle';
+      }
+
+      function getStatusClass(status) {
+        const normalized = String(status || 'idle').toLowerCase();
+        if (normalized === 'failed') return 'st-failed';
+        if (normalized === 'cancelled') return 'st-confirmed';
+        if (normalized === 'success') return 'st-success';
+        if (normalized === 'confirmed') return 'st-confirmed';
+        if (normalized === 'pending' || normalized === 'cancel_requested') {
+          return 'st-commanded';
+        }
+        if (['commanded', 'downloading', 'installing', 'restarting'].includes(normalized)) {
+          return `st-${normalized}`;
+        }
+        return 'st-idle';
+      }
+
+      function isRenameInProgressStatus(status) {
+        const normalized = String(status || '').toLowerCase();
+        return ['pending', 'commanded', 'applying'].includes(normalized);
+      }
+
+      function isUpdateInProgressStatus(status) {
+        const normalized = String(status || '').toLowerCase();
+        return [
+          'pending',
+          'commanded',
+          'downloading',
+          'installing',
+          'restarting',
+          'cancel_requested',
+        ].includes(normalized);
+      }
+
+      function hasCancelableUpdateRequest(client) {
+        if (!client) {
+          return false;
+        }
+        const currentVersion = String(client.version || '');
+        const targetVersion = String(client.targetVersion || '');
+        if (targetVersion && targetVersion !== currentVersion) {
+          return true;
+        }
+        return isUpdateInProgressStatus(client.updateStatus);
+      }
+
+      function hasCancelableRenameRequest(client) {
+        if (!client) {
+          return false;
+        }
+        const pendingName = String(client.pendingCustomerName || '');
+        const currentName = String(client.customerName || '');
+        if (pendingName && pendingName !== currentName) {
+          return true;
+        }
+        return isRenameInProgressStatus(client.renameStatus);
+      }
+
+      function getSelectedTargetForClient(client) {
+        const key = client.customerKey || '';
+        const fromState = state.selectedTargets[key];
+        if (fromState !== undefined) {
+          return fromState;
+        }
+        return client.targetVersion || '';
+      }
+
+      function syncSelectedTargets(clients, releases) {
+        const validVersions = new Set(releases.map(item => item.version).filter(Boolean));
+        const next = {};
+
+        clients.forEach(client => {
+          const key = client.customerKey || '';
+          if (!key) return;
+          const stateValue = state.selectedTargets[key];
+          const candidate = stateValue !== undefined ? stateValue : client.targetVersion || '';
+          next[key] = candidate && validVersions.has(candidate) ? candidate : '';
+        });
+
+        state.selectedTargets = next;
+      }
+
+      function renderReleaseTags() {
+        const releases = state.releases;
+        releaseCountEl.textContent = `${releases.length} release`;
+
+        if (!releases.length) {
+          releaseTagsEl.innerHTML = `<span class="small">Nessuna release caricata.</span>`;
+          return;
+        }
+
+        releaseTagsEl.innerHTML = releases
+          .map(release => {
+            const infoTip = `${release.fileName || ''} | ${fmtBytes(release.size)} | SHA: ${release.sha256 || '-'}`;
+            const notesBadge = release.notes
+              ? `<span class="release-notes-icon" data-tooltip="${escapeHtml(release.notes)}">i</span>`
+              : '';
+            return `<div class="release-item">
+                <span class="release-tag" data-tooltip="${escapeHtml(infoTip)}">${escapeHtml(release.version || '-')}</span>
+                ${notesBadge}
+                <button
+                  class="release-delete-btn"
+                  type="button"
+                  data-tooltip="Elimina release ${escapeHtml(release.version || '')}"
+                  data-action="delete-release"
+                  data-release-version="${escapeHtml(release.version || '')}"
+                >
+                  &times;
+                </button>
+              </div>`;
+          })
+          .join('');
+      }
+
+      // Se l'utente ha il focus dentro la tabella (select aperta, input in modifica)
+      // deferiamo il render a quando il focus esce, per non interrompere l'interazione.
+      let _clientRenderPending = false;
+
+      function flushClientRender() {
+        if (_clientRenderPending) {
+          _clientRenderPending = false;
+          renderClients();
+          checkCredTestResultFromRefresh();
+        }
+      }
+
+      rowsEl.addEventListener('focusout', e => {
+        // relatedTarget è null/fuori dalla tabella → focus uscito
+        if (!rowsEl.contains(e.relatedTarget)) {
+          flushClientRender();
+        }
+      });
+
+      function renderClients() {
+        // Se c'è un elemento attivo dentro la tabella, defer
+        if (rowsEl.contains(document.activeElement)) {
+          _clientRenderPending = true;
+          return;
+        }
+        _clientRenderPending = false;
+
+        // Salva valori poll-interval che l'utente ha modificato ma non ancora salvato
+        const unsavedPollValues = {};
+        rowsEl.querySelectorAll('[data-action="poll-interval-input"]').forEach(input => {
+          if (input.value !== input.dataset.original) {
+            unsavedPollValues[input.dataset.customerKey] = input.value;
+          }
+        });
+
+        rowsEl.innerHTML = '';
+        const clients = state.clients;
+        const releases = state.releases;
+
+        if (!clients.length) {
+          emptyStateEl.style.display = 'block';
+          return;
+        }
+
+        emptyStateEl.style.display = 'none';
+
+        clients.forEach(client => {
+          const selectedTarget = getSelectedTargetForClient(client);
+          const currentVersion = client.version || '';
+          const hasPendingTarget = hasCancelableUpdateRequest(client);
+          const pendingCustomerName = client.pendingCustomerName || '';
+          const renameStatus = client.renameStatus || 'idle';
+          const renameInProgress = isRenameInProgressStatus(renameStatus);
+          const hasPendingRename = hasCancelableRenameRequest(client);
+          const hasCancelableRequests = hasPendingTarget || hasPendingRename;
+          const hasAdminCredentials = Boolean(client.hasAdminCredentials);
+          const updateInProgress = isUpdateInProgressStatus(client.updateStatus);
+          const canUpdate =
+            !updateInProgress &&
+            !renameInProgress &&
+            hasAdminCredentials &&
+            !!selectedTarget &&
+            !!currentVersion &&
+            selectedTarget !== currentVersion &&
+            releases.some(item => item.version === selectedTarget);
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <div><strong>${escapeHtml(client.customerName || '-')}</strong></div>
+              ${
+                pendingCustomerName
+                  ? `<div class="small clip-line" data-tooltip="${escapeHtml(
+                      `Target nome: ${pendingCustomerName}`
+                    )}">Target nome: ${escapeHtml(pendingCustomerName)}</div>`
+                  : ''
+              }
+              ${
+                client.renameMessage
+                  ? `<div class="small clip-line" data-tooltip="${escapeHtml(client.renameMessage)}">${escapeHtml(
+                      client.renameMessage
+                    )}</div>`
+                  : ''
+              }
+              <span class="creds-badge ${hasAdminCredentials ? 'ok' : 'missing'}">
+                ${hasAdminCredentials ? '✓ Credenziali admin' : '✗ Credenziali admin mancanti'}
+              </span>
+              <div class="poll-interval-row">
+                Polling:
+                <input
+                  type="number"
+                  min="10"
+                  max="3600"
+                  value="${escapeHtml(String(client.pollIntervalSec || 45))}"
+                  data-action="poll-interval-input"
+                  data-customer-key="${escapeHtml(client.customerKey || '')}"
+                  data-original="${escapeHtml(String(client.pollIntervalSec || 45))}"
+                  data-tooltip="Intervallo polling (secondi, min 10, max 3600)"
+                />
+                <span>s</span>
+                <button
+                  type="button"
+                  data-action="save-poll-interval"
+                  data-customer-key="${escapeHtml(client.customerKey || '')}"
+                  data-tooltip="Salva intervallo"
+                >Salva</button>
+              </div>
+              ${
+                renameInProgress
+                  ? `<div class="rename-state"><span class="spinner"></span><span class="small">Cambio nome in corso...</span></div>`
+                  : ''
+              }
+              ${client.renameUpdatedAt ? `<div class="small muted-label">Ultimo rename: ${fmtDate(client.renameUpdatedAt)}</div>` : ''}
+            </td>
+            <td class="version-cell">${escapeHtml(currentVersion || '-')}</td>
+            <td>
+              <select
+                data-action="target-version"
+                data-customer-key="${escapeHtml(client.customerKey || '')}"
+              >
+                <option value="">Seleziona versione</option>
+                ${releases
+                  .map(
+                    rel =>
+                      `<option value="${escapeHtml(rel.version || '')}" ${
+                        selectedTarget === rel.version ? 'selected' : ''
+                      }>${escapeHtml(rel.version || '-')}${rel.notes ? ' 📝' : ''}</option>`
+                  )
+                  .join('')}
+              </select>
+              ${(() => {
+                const selRelease = releases.find(r => r.version === selectedTarget);
+                return selRelease?.notes
+                  ? `<div class="release-notes-hint">${escapeHtml(selRelease.notes)}</div>`
+                  : '';
+              })()}
+            </td>
+            <td>
+              <div class="status ${getStatusClass(client.updateStatus)}">${escapeHtml(
+                translateStatus(client.updateStatus)
+              )}</div>
+              <div class="small clip-line" data-tooltip="${escapeHtml(client.updateMessage || '')}">
+                ${escapeHtml(client.updateMessage || '')}
+              </div>
+              ${client.lastUpdateAppliedAt ? `<div class="small muted-label">Ultimo aggiorn.: ${fmtDate(client.lastUpdateAppliedAt)}</div>` : ''}
+            </td>
+            <td>${fmtDate(client.firstSeenAt)}</td>
+            <td>${fmtDate(client.lastSeenAt)}</td>
+            <td>${escapeHtml(client.clientId || '-')}</td>
+            <td>${escapeHtml(client.lastIp || '-')}</td>
+            <td>
+              <div class="actions-cell">
+                <div class="actions-row">
+                  <button
+                    type="button"
+                    data-action="open-rename"
+                    data-customer-key="${escapeHtml(client.customerKey || '')}"
+                  >
+                    Rinomina
+                  </button>
+                  <button
+                    class="btn-primary"
+                    type="button"
+                    data-action="apply-update"
+                    data-customer-key="${escapeHtml(client.customerKey || '')}"
+                    ${canUpdate ? '' : 'disabled'}
+                    data-tooltip="${updateInProgress ? 'Aggiornamento in corso' : renameInProgress ? 'Rename in corso, attendi il completamento' : !hasAdminCredentials ? 'Configura prima le credenziali admin' : 'Invia richiesta aggiornamento'}"
+                  >
+                    ${updateInProgress ? 'Aggiornamento in corso...' : 'Effettua aggiornamento'}
+                  </button>
+                  <button
+                    class="icon-btn"
+                    type="button"
+                    data-tooltip="Elimina centro"
+                    data-action="delete-client"
+                    data-customer-key="${escapeHtml(client.customerKey || '')}"
+                    data-customer-name="${escapeHtml(client.customerName || '')}"
+                  >
+                    <span aria-hidden="true">&#128465;</span>
+                  </button>
+                </div>
+                ${
+                  hasCancelableRequests
+                    ? `<div class="actions-row actions-row-secondary">
+                        <button
+                          type="button"
+                          data-action="cancel-update"
+                          data-customer-key="${escapeHtml(client.customerKey || '')}"
+                        >
+                          Ferma richieste
+                        </button>
+                      </div>`
+                    : ''
+                }
+                <div class="actions-row actions-row-tertiary">
+                  <button
+                    type="button"
+                    data-action="set-admin-creds"
+                    data-customer-key="${escapeHtml(client.customerKey || '')}"
+                  >
+                    Credenziali admin
+                  </button>
+                </div>
+              </div>
+            </td>
+          `;
+          rowsEl.appendChild(tr);
+        });
+
+        // Ripristina valori poll-interval non ancora salvati dall'utente
+        Object.entries(unsavedPollValues).forEach(([key, val]) => {
+          const input = rowsEl.querySelector(
+            `[data-action="poll-interval-input"][data-customer-key="${CSS.escape(key)}"]`
+          );
+          if (input) input.value = val;
+        });
+      }
+
+      function openDeleteModal(customerKey, customerName) {
+        state.pendingDeleteClient = {
+          customerKey: customerKey || '',
+          customerName: customerName || 'centro selezionato',
+        };
+
+        deleteModalTextEl.innerHTML = `
+          Stai per eliminare il centro <strong>${escapeHtml(
+            state.pendingDeleteClient.customerName
+          )}</strong> dal monitor cloud. Vuoi continuare?
+        `;
+
+        deleteModalBackdropEl.classList.add('open');
+      }
+
+      function closeDeleteModal() {
+        state.pendingDeleteClient = null;
+        deleteModalBackdropEl.classList.remove('open');
+      }
+
+      function openDeleteReleaseModal(version) {
+        const releaseVersion = String(version || '').trim();
+        if (!releaseVersion) {
+          return;
+        }
+
+        state.pendingDeleteReleaseVersion = releaseVersion;
+        deleteReleaseModalTextEl.innerHTML = `
+          Stai per eliminare la release <strong>${escapeHtml(releaseVersion)}</strong> dal cloud.
+          Vuoi continuare?
+        `;
+        deleteReleaseModalBackdropEl.classList.add('open');
+      }
+
+      function closeDeleteReleaseModal() {
+        state.pendingDeleteReleaseVersion = '';
+        deleteReleaseModalBackdropEl.classList.remove('open');
+      }
+
+      function openCancelUpdateModal(client) {
+        if (!client || !client.customerKey) {
+          return;
+        }
+
+        const customerName = client?.customerName || client?.customerKey || '';
+        const pendingTargetVersion =
+          client?.targetVersion && client?.targetVersion !== client?.version
+            ? client.targetVersion
+            : '';
+        const pendingRenameName =
+          client?.pendingCustomerName && client?.pendingCustomerName !== client?.customerName
+            ? client.pendingCustomerName
+            : '';
+        const canCancelUpdate = hasCancelableUpdateRequest(client);
+        const canCancelRename = hasCancelableRenameRequest(client);
+
+        if (!canCancelUpdate && !canCancelRename) {
+          return;
+        }
+
+        state.pendingCancelRequests = {
+          customerKey: client.customerKey,
+          customerName,
+          pendingTargetVersion,
+          pendingRenameName,
+          canCancelUpdate,
+          canCancelRename,
+        };
+
+        cancelUpdateModalTextEl.innerHTML = `
+          Cliente: <strong>${escapeHtml(customerName)}</strong>
+        `;
+
+        cancelUpdateOptionWrapEl.style.display = canCancelUpdate ? 'flex' : 'none';
+        cancelRenameOptionWrapEl.style.display = canCancelRename ? 'flex' : 'none';
+        cancelUpdateOptionInputEl.checked = canCancelUpdate;
+        cancelRenameOptionInputEl.checked = canCancelRename;
+
+        cancelUpdateModalBackdropEl.classList.add('open');
+      }
+
+      function closeCancelUpdateModal() {
+        state.pendingCancelRequests = null;
+        cancelUpdateModalBackdropEl.classList.remove('open');
+      }
+
+      function openRenameClientModal(client) {
+        if (!client || !client.customerKey) {
+          return;
+        }
+
+        state.pendingRenameClient = {
+          customerKey: client.customerKey,
+          customerName: client.customerName || '',
+          pendingCustomerName: client.pendingCustomerName || '',
+        };
+
+        const currentName = state.pendingRenameClient.customerName || '-';
+        renameClientModalTextEl.innerHTML = `
+          Cliente attuale: <strong>${escapeHtml(currentName)}</strong>
+        `;
+        renameClientInputEl.value =
+          state.pendingRenameClient.pendingCustomerName || currentName || '';
+        renameClientModalBackdropEl.classList.add('open');
+        setTimeout(() => {
+          renameClientInputEl.focus();
+          renameClientInputEl.select();
+        }, 0);
+      }
+
+      function closeRenameClientModal() {
+        state.pendingRenameClient = null;
+        renameClientModalBackdropEl.classList.remove('open');
+      }
+
+      function openAdminCredentialsModal(client) {
+        if (!client || !client.customerKey) {
+          return;
+        }
+
+        state.pendingAdminCredentials = {
+          customerKey: client.customerKey,
+          customerName: client.customerName || client.customerKey || '',
+          hasAdminCredentials: Boolean(client.hasAdminCredentials),
+          existingUsername: String(client.adminUsername || '').trim(),
+        };
+
+        adminCredsModalTextEl.innerHTML = `Cliente: <strong>${escapeHtml(
+          state.pendingAdminCredentials.customerName
+        )}</strong>`;
+
+        adminCredsUsernameInputEl.value = state.pendingAdminCredentials.existingUsername;
+        adminCredsPasswordInputEl.value =
+          String(client.adminPasswordMasked || '').trim() ||
+          (state.pendingAdminCredentials.hasAdminCredentials ? ADMIN_PASSWORD_MASK : '');
+        clearAdminCredsBtnEl.disabled = !state.pendingAdminCredentials.hasAdminCredentials;
+        state.credTestPolling = false;
+        adminCredsTestResultEl.style.display = 'none';
+        adminCredsTestResultEl.textContent = '';
+        testAdminCredsBtnEl.disabled = false;
+        testAdminCredsBtnEl.textContent = 'Testa credenziali';
+        adminCredsModalBackdropEl.classList.add('open');
+        setTimeout(() => {
+          adminCredsUsernameInputEl.focus();
+          adminCredsUsernameInputEl.select();
+        }, 0);
+      }
+
+      function closeAdminCredentialsModal() {
+        state.pendingAdminCredentials = null;
+        state.credTestPolling = false;
+        adminCredsTestResultEl.style.display = 'none';
+        adminCredsTestResultEl.textContent = '';
+        testAdminCredsBtnEl.disabled = false;
+        testAdminCredsBtnEl.textContent = 'Testa credenziali';
+        adminCredsModalBackdropEl.classList.remove('open');
+      }
+
+      async function confirmDelete() {
+        const pending = state.pendingDeleteClient;
+        if (!pending || !pending.customerKey) {
+          return;
+        }
+
+        confirmDeleteBtnEl.disabled = true;
+        confirmDeleteBtnEl.textContent = 'Eliminazione...';
+
+        try {
+          const response = await fetch(`/api/clients/${encodeURIComponent(pending.customerKey)}`, {
+            method: 'DELETE',
+          });
+
+          if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            throw new Error(body?.error || `HTTP ${response.status}`);
+          }
+
+          closeDeleteModal();
+          showToast('Centro eliminato con successo.', 'success');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore eliminazione centro: ${err.message}`, 'error');
+        } finally {
+          confirmDeleteBtnEl.disabled = false;
+          confirmDeleteBtnEl.textContent = 'Elimina centro';
+        }
+      }
+
+      async function fetchClients() {
+        const response = await fetch('/api/clients', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data.clients) ? data.clients : [];
+      }
+
+
+      async function fetchReleases() {
+        const response = await fetch('/api/releases', { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data.releases) ? data.releases : [];
+      }
+
+      async function refreshAll() {
+        try {
+          const [clients, releases] = await Promise.all([fetchClients(), fetchReleases()]);
+          state.clients = clients;
+          state.releases = releases;
+          syncSelectedTargets(clients, releases);
+          renderReleaseTags();
+          emptyStateEl.textContent = DEFAULT_EMPTY_STATE;
+          renderClients();
+          checkCredTestResultFromRefresh();
+          countBadgeEl.textContent = `${clients.length} clienti`;
+          lastRefreshEl.textContent = `Ultimo refresh: ${new Date().toLocaleString('it-IT')}`;
+        } catch (err) {
+          rowsEl.innerHTML = '';
+          releaseTagsEl.innerHTML = '';
+          emptyStateEl.style.display = 'block';
+          emptyStateEl.textContent = `Errore refresh: ${err.message}`;
+        }
+      }
+
+      async function setClientTargetVersion(customerKey, targetVersion) {
+        const response = await fetch(
+          `/api/clients/${encodeURIComponent(customerKey)}/target-version`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ targetVersion }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error || `HTTP ${response.status}`);
+        }
+      }
+
+      async function setClientAdminCredentials(
+        customerKey,
+        username,
+        password,
+        keepExistingPassword = false
+      ) {
+        const response = await fetch(
+          `/api/clients/${encodeURIComponent(customerKey)}/admin-credentials`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              username,
+              password,
+              keepExistingPassword: Boolean(keepExistingPassword),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error || `HTTP ${response.status}`);
+        }
+      }
+
+      async function requestClientRename(customerKey, desiredName) {
+        const response = await fetch(
+          `/api/clients/${encodeURIComponent(customerKey)}/rename-request`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ desiredName }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error || `HTTP ${response.status}`);
+        }
+      }
+
+      async function cancelClientRequests(customerKey, options) {
+        const response = await fetch(
+          `/api/clients/${encodeURIComponent(customerKey)}/cancel-requests`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              cancelUpdate: Boolean(options?.cancelUpdate),
+              cancelRename: Boolean(options?.cancelRename),
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error || `HTTP ${response.status}`);
+        }
+      }
+
+      async function handleApplyUpdate(customerKey, buttonEl) {
+        const client = state.clients.find(item => item.customerKey === customerKey);
+        if (!client) {
+          return;
+        }
+
+        if (!client.hasAdminCredentials) {
+          showToast(
+            'Impossibile inviare aggiornamento: credenziali amministratore non configurate.',
+            'error'
+          );
+          return;
+        }
+
+        const selectedTarget = getSelectedTargetForClient(client);
+        if (!selectedTarget || selectedTarget === client.version) {
+          return;
+        }
+
+        const originalText = buttonEl.textContent;
+        buttonEl.disabled = true;
+        buttonEl.textContent = 'Invio...';
+
+        try {
+          await setClientTargetVersion(customerKey, selectedTarget);
+          showToast(`Aggiornamento verso ${selectedTarget} inviato.`, 'success');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore invio aggiornamento: ${err.message}`, 'error');
+        } finally {
+          buttonEl.textContent = originalText;
+        }
+      }
+
+      async function handleSetAdminCredentials(customerKey) {
+        const client = state.clients.find(item => item.customerKey === customerKey);
+        if (!client) {
+          return;
+        }
+        openAdminCredentialsModal(client);
+      }
+
+      async function savePollInterval(customerKey, buttonEl) {
+        const input = document.querySelector(
+          `input[data-action="poll-interval-input"][data-customer-key="${CSS.escape(customerKey)}"]`
+        );
+        if (!input) return;
+        const val = Number(input.value);
+        if (!Number.isFinite(val) || val < 10 || val > 3600) {
+          showToast('Intervallo non valido: inserisci un valore tra 10 e 3600 secondi.', 'error');
+          return;
+        }
+        const origText = buttonEl ? buttonEl.textContent : '';
+        if (buttonEl) {
+          buttonEl.disabled = true;
+          buttonEl.textContent = '...';
+        }
+        try {
+          const response = await fetch(
+            `/api/clients/${encodeURIComponent(customerKey)}/poll-interval`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ pollIntervalSec: Math.round(val) }),
+            }
+          );
+          if (!response.ok) {
+            const body = await response.json().catch(() => null);
+            throw new Error(body?.error || `HTTP ${response.status}`);
+          }
+          input.dataset.original = String(Math.round(val));
+          showToast(`Intervallo polling salvato: ${Math.round(val)}s`, 'success');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore salvataggio intervallo: ${err.message}`, 'error');
+        } finally {
+          if (buttonEl) {
+            buttonEl.disabled = false;
+            buttonEl.textContent = origText;
+          }
+        }
+      }
+
+      async function handleCancelUpdate(customerKey) {
+        const client = state.clients.find(item => item.customerKey === customerKey);
+        if (!client) {
+          return;
+        }
+
+        const hasPendingTarget = hasCancelableUpdateRequest(client);
+        const hasPendingRename = hasCancelableRenameRequest(client);
+        if (!hasPendingTarget && !hasPendingRename) {
+          return;
+        }
+        openCancelUpdateModal(client);
+      }
+
+      async function handleDeleteRelease(version) {
+        const releaseVersion = String(version || '').trim();
+        if (!releaseVersion) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/releases/${encodeURIComponent(releaseVersion)}`, {
+            method: 'DELETE',
+          });
+          if (!response.ok) {
+            const errorPayload = await response.json().catch(() => null);
+            throw new Error(errorPayload?.error || `HTTP ${response.status}`);
+          }
+
+          const data = await response.json().catch(() => ({}));
+          const resetCount = Number(data?.deleted?.clientsReset || 0);
+          if (resetCount > 0) {
+            setUploadInfo(
+              `Release ${releaseVersion} eliminata. Target azzerati su ${resetCount} client.`,
+              'info'
+            );
+          } else {
+            setUploadInfo(`Release ${releaseVersion} eliminata.`, 'info');
+          }
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore eliminazione release: ${err.message}`, 'error');
+        }
+      }
+
+      async function confirmDeleteRelease() {
+        const releaseVersion = String(state.pendingDeleteReleaseVersion || '').trim();
+        if (!releaseVersion) {
+          return;
+        }
+
+        confirmDeleteReleaseBtnEl.disabled = true;
+        confirmDeleteReleaseBtnEl.textContent = 'Eliminazione...';
+        try {
+          await handleDeleteRelease(releaseVersion);
+          closeDeleteReleaseModal();
+        } catch (_err) {
+          // already handled inside handleDeleteRelease
+        } finally {
+          confirmDeleteReleaseBtnEl.disabled = false;
+          confirmDeleteReleaseBtnEl.textContent = 'Elimina release';
+        }
+      }
+
+      async function confirmCancelUpdate() {
+        const pending = state.pendingCancelRequests;
+        if (!pending || !pending.customerKey) {
+          return;
+        }
+
+        const cancelUpdate =
+          Boolean(cancelUpdateOptionInputEl.checked) && Boolean(pending.canCancelUpdate);
+        const cancelRename =
+          Boolean(cancelRenameOptionInputEl.checked) && Boolean(pending.canCancelRename);
+        if (!cancelUpdate && !cancelRename) {
+          showToast('Seleziona almeno una richiesta da annullare.', 'error');
+          return;
+        }
+
+        confirmCancelUpdateBtnEl.disabled = true;
+        confirmCancelUpdateBtnEl.textContent = 'Annullamento...';
+        try {
+          await cancelClientRequests(pending.customerKey, {
+            cancelUpdate,
+            cancelRename,
+          });
+          if (cancelUpdate) {
+            state.selectedTargets[pending.customerKey] = '';
+          }
+          closeCancelUpdateModal();
+          showToast('Richieste annullate con successo.', 'success');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore annullamento update: ${err.message}`, 'error');
+        } finally {
+          confirmCancelUpdateBtnEl.disabled = false;
+          confirmCancelUpdateBtnEl.textContent = 'Ferma richieste';
+        }
+      }
+
+      async function confirmRenameClient() {
+        const pending = state.pendingRenameClient;
+        if (!pending || !pending.customerKey) {
+          return;
+        }
+
+        const desiredName = String(renameClientInputEl.value || '').trim();
+        if (!desiredName) {
+          showToast('Inserisci un nome cliente valido.', 'error');
+          return;
+        }
+
+        const desiredLower = desiredName.toLowerCase();
+        const collision = state.clients.find(
+          c =>
+            c.customerKey !== pending.customerKey &&
+            ((c.customerName || '').toLowerCase() === desiredLower ||
+              (c.pendingCustomerName || '').toLowerCase() === desiredLower)
+        );
+        if (collision) {
+          showToast(
+            `Il nome "${desiredName}" è già utilizzato da "${collision.customerName || collision.customerKey}". Scegli un nome diverso.`,
+            'error'
+          );
+          return;
+        }
+
+        confirmRenameClientBtnEl.disabled = true;
+        confirmRenameClientBtnEl.textContent = 'Invio...';
+        try {
+          await requestClientRename(pending.customerKey, desiredName);
+          closeRenameClientModal();
+          showToast(`Richiesta rename verso "${desiredName}" inviata.`, 'success');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore richiesta rename: ${err.message}`, 'error');
+        } finally {
+          confirmRenameClientBtnEl.disabled = false;
+          confirmRenameClientBtnEl.textContent = 'Invia richiesta rename';
+        }
+      }
+
+      async function confirmAdminCredentials() {
+        const pending = state.pendingAdminCredentials;
+        if (!pending || !pending.customerKey) {
+          return;
+        }
+
+        const username = String(adminCredsUsernameInputEl.value || '').trim();
+        const passwordRaw = String(adminCredsPasswordInputEl.value || '');
+        const isMaskedPassword = pending.hasAdminCredentials && passwordRaw === ADMIN_PASSWORD_MASK;
+        const keepExistingPassword = Boolean(username) && isMaskedPassword;
+        const passwordToSend = keepExistingPassword ? '' : passwordRaw;
+
+        if (!username && passwordRaw.trim()) {
+          showToast('Inserisci anche lo username oppure usa "Rimuovi credenziali".', 'error');
+          return;
+        }
+
+        if (username && !keepExistingPassword && !passwordRaw.trim()) {
+          showToast('Inserisci la password amministratore.', 'error');
+          return;
+        }
+        if (keepExistingPassword && username !== String(pending.existingUsername || '').trim()) {
+          showToast('Hai cambiato username: inserisci anche la nuova password.', 'error');
+          return;
+        }
+
+        confirmAdminCredsBtnEl.disabled = true;
+        confirmAdminCredsBtnEl.textContent = 'Salvataggio...';
+        try {
+          await setClientAdminCredentials(
+            pending.customerKey,
+            username,
+            passwordToSend,
+            keepExistingPassword
+          );
+          closeAdminCredentialsModal();
+          showToast('Credenziali amministratore salvate.', 'success');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore salvataggio credenziali admin: ${err.message}`, 'error');
+        } finally {
+          confirmAdminCredsBtnEl.disabled = false;
+          confirmAdminCredsBtnEl.textContent = 'Salva credenziali';
+        }
+      }
+
+      async function clearAdminCredentials() {
+        const pending = state.pendingAdminCredentials;
+        if (!pending || !pending.customerKey) {
+          return;
+        }
+
+        if (!window.confirm('Vuoi rimuovere le credenziali amministratore per questo cliente?')) {
+          return;
+        }
+
+        clearAdminCredsBtnEl.disabled = true;
+        clearAdminCredsBtnEl.textContent = 'Rimozione...';
+        try {
+          await setClientAdminCredentials(pending.customerKey, '', '', false);
+          closeAdminCredentialsModal();
+          showToast('Credenziali amministratore rimosse.', 'info');
+          await refreshAll();
+        } catch (err) {
+          showToast(`Errore rimozione credenziali admin: ${err.message}`, 'error');
+        } finally {
+          clearAdminCredsBtnEl.disabled = false;
+          clearAdminCredsBtnEl.textContent = 'Rimuovi credenziali';
+        }
+      }
+
+      function setCredTestResultUI(message, type) {
+        // type: 'info' | 'success' | 'error'
+        const colors = {
+          info: { bg: '#f0f4ff', border: '#c0cff7', color: '#304a80' },
+          success: { bg: '#eaffea', border: '#7dd87d', color: '#1a5c1a' },
+          error: { bg: '#fff0f0', border: '#f5b0b0', color: '#7a1a1a' },
+        };
+        const c = colors[type] || colors.info;
+        adminCredsTestResultEl.style.cssText = `display:block;background:${c.bg};border:1px solid ${c.border};color:${c.color};margin-top:10px;padding:8px 12px;border-radius:6px;font-size:13px;`;
+        adminCredsTestResultEl.textContent = message;
+      }
+
+      async function testAdminCredentials() {
+        const pending = state.pendingAdminCredentials;
+        if (!pending?.customerKey) return;
+
+        const username = String(adminCredsUsernameInputEl.value || '').trim();
+        const passwordRaw = String(adminCredsPasswordInputEl.value || '');
+        if (!username) {
+          setCredTestResultUI('Inserisci lo username prima di testare.', 'error');
+          return;
+        }
+        const isMasked = pending.hasAdminCredentials && passwordRaw === ADMIN_PASSWORD_MASK;
+        if (!isMasked && !passwordRaw) {
+          setCredTestResultUI('Inserisci la password prima di testare.', 'error');
+          return;
+        }
+
+        testAdminCredsBtnEl.disabled = true;
+        testAdminCredsBtnEl.textContent = 'Invio test...';
+        setCredTestResultUI('Richiesta inviata, in attesa che il client esegua il test...', 'info');
+        state.credTestPolling = true;
+        state.credTestStartedAt = Date.now();
+
+        try {
+          const response = await fetch(
+            `/api/clients/${encodeURIComponent(pending.customerKey)}/request-credential-test`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username,
+                password: isMasked ? null : passwordRaw,
+                keepExistingPassword: isMasked,
+              }),
+            }
+          );
+          if (!response.ok) {
+            const txt = await response.text();
+            throw new Error(`HTTP ${response.status}: ${txt}`);
+          }
+          // Result will be picked up by the next refreshAll() cycle (every 10s)
+          testAdminCredsBtnEl.textContent = 'In attesa risposta...';
+        } catch (err) {
+          setCredTestResultUI(`Errore invio test: ${err.message}`, 'error');
+          testAdminCredsBtnEl.disabled = false;
+          testAdminCredsBtnEl.textContent = 'Testa credenziali';
+          state.credTestPolling = false;
+        }
+      }
+
+      // Called by refreshAll() after state.clients is updated — updates the modal if a test is in progress
+      function checkCredTestResultFromRefresh() {
+        if (!state.credTestPolling || !state.pendingAdminCredentials?.customerKey) return;
+        const client = state.clients.find(
+          c => c.customerKey === state.pendingAdminCredentials.customerKey
+        );
+        if (!client) return;
+        const s = client.credTestStatus;
+        const maxWaitMs = 120000; // 2 min safety timeout
+        if (s === 'ok') {
+          setCredTestResultUI(
+            `Credenziali verificate con successo. ${client.credTestMessage || ''}`,
+            'success'
+          );
+          testAdminCredsBtnEl.disabled = false;
+          testAdminCredsBtnEl.textContent = 'Testa credenziali';
+          state.credTestPolling = false;
+        } else if (s === 'failed') {
+          setCredTestResultUI(
+            `Test fallito: ${client.credTestMessage || 'Errore sconosciuto'}`,
+            'error'
+          );
+          testAdminCredsBtnEl.disabled = false;
+          testAdminCredsBtnEl.textContent = 'Testa credenziali';
+          state.credTestPolling = false;
+        } else if (s === 'acknowledged') {
+          setCredTestResultUI('Comando inviato al client, in attesa del risultato...', 'info');
+        } else if (Date.now() - (state.credTestStartedAt || 0) > maxWaitMs) {
+          setCredTestResultUI('Timeout: nessuna risposta dal client.', 'error');
+          testAdminCredsBtnEl.disabled = false;
+          testAdminCredsBtnEl.textContent = 'Testa credenziali';
+          state.credTestPolling = false;
+        }
+      }
+
+      async function handleUploadRelease(event) {
+        event.preventDefault();
+        const version = String(releaseVersionInputEl.value || '').trim();
+        const notes = String(releaseNotesInputEl.value || '').trim();
+        const file = releaseFileInputEl.files && releaseFileInputEl.files[0];
+
+        if (!version) {
+          showToast('Inserisci una versione release.', 'error');
+          return;
+        }
+        if (!file) {
+          showToast('Seleziona il file zip della release.', 'error');
+          return;
+        }
+
+        uploadReleaseBtnEl.disabled = true;
+        uploadReleaseBtnEl.textContent = 'Upload...';
+        setUploadInfo(`Caricamento ${file.name} in corso...`, 'progress');
+
+        try {
+          const query = new URLSearchParams({
+            version,
+            filename: file.name,
+            notes,
+          });
+          const response = await fetch(`/api/releases/upload?${query.toString()}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/octet-stream',
+            },
+            body: file,
+          });
+
+          if (!response.ok) {
+            const errorPayload = await response.json().catch(() => null);
+            const uiMessage = mapReleaseUploadErrorMessage(response.status, errorPayload?.error);
+            throw new Error(uiMessage);
+          }
+
+          releaseUploadFormEl.reset();
+          setUploadInfo(`Release ${version} caricata con successo.`, 'success');
+          await refreshAll();
+        } catch (err) {
+          setUploadInfo(`${err.message}`, 'error');
+        } finally {
+          uploadReleaseBtnEl.disabled = false;
+          uploadReleaseBtnEl.textContent = 'Carica release';
+        }
+      }
+
+      releaseFileInputEl.addEventListener('change', () => {
+        const file = releaseFileInputEl.files && releaseFileInputEl.files[0];
+        if (!file) {
+          return;
+        }
+
+        const inferredVersion = extractVersionFromFileName(file.name);
+        if (inferredVersion) {
+          releaseVersionInputEl.value = inferredVersion;
+          setUploadInfo(
+            `Versione rilevata automaticamente: ${inferredVersion} (puoi modificarla).`,
+            'info'
+          );
+          return;
+        }
+
+        setUploadInfo('Versione non rilevata dal nome file, inseriscila manualmente.', 'info');
+      });
+
+      rowsEl.addEventListener('change', async event => {
+        const selectEl = event.target.closest('[data-action="target-version"]');
+        if (!selectEl) {
+          return;
+        }
+
+        const customerKey = selectEl.dataset.customerKey || '';
+        const selectedVersion = selectEl.value || '';
+        state.selectedTargets[customerKey] = selectedVersion;
+
+        // Aggiorna immediatamente il bottone nel DOM senza re-render completo
+        // (renderClients() sarebbe differito perché la select è ancora focused)
+        const client = (state.clients || []).find(c => (c.customerKey || '') === customerKey);
+        const btn = rowsEl.querySelector(
+          `[data-action="apply-update"][data-customer-key="${CSS.escape(customerKey)}"]`
+        );
+        if (btn && client) {
+          const currentVersion = client.version || '';
+          const updateInProgress = isUpdateInProgressStatus(client.updateStatus);
+          const renameInProgress = isRenameInProgressStatus(client.renameStatus || 'idle');
+          const hasAdminCredentials = Boolean(client.hasAdminCredentials);
+          const canUpdate =
+            !updateInProgress &&
+            !renameInProgress &&
+            hasAdminCredentials &&
+            !!selectedVersion &&
+            !!currentVersion &&
+            selectedVersion !== currentVersion &&
+            (state.releases || []).some(item => item.version === selectedVersion);
+          btn.disabled = !canUpdate;
+          btn.dataset.tooltip = updateInProgress
+            ? 'Aggiornamento in corso'
+            : renameInProgress
+              ? 'Rename in corso, attendi il completamento'
+              : !hasAdminCredentials
+                ? 'Configura prima le credenziali admin'
+                : 'Invia richiesta aggiornamento';
+        }
+
+        _clientRenderPending = true;
+      });
+
+      rowsEl.addEventListener('click', event => {
+        const deleteButton = event.target.closest('[data-action="delete-client"]');
+        if (deleteButton) {
+          openDeleteModal(
+            deleteButton.dataset.customerKey || '',
+            deleteButton.dataset.customerName || ''
+          );
+          return;
+        }
+
+        const renameButton = event.target.closest('[data-action="open-rename"]');
+        if (renameButton) {
+          const customerKey = renameButton.dataset.customerKey || '';
+          const client = state.clients.find(item => item.customerKey === customerKey);
+          if (client) {
+            openRenameClientModal(client);
+          }
+          return;
+        }
+
+        const updateButton = event.target.closest('[data-action="apply-update"]');
+        if (updateButton) {
+          handleApplyUpdate(updateButton.dataset.customerKey || '', updateButton);
+          return;
+        }
+
+        const adminCredsButton = event.target.closest('[data-action="set-admin-creds"]');
+        if (adminCredsButton) {
+          handleSetAdminCredentials(adminCredsButton.dataset.customerKey || '');
+          return;
+        }
+
+        const pollSaveButton = event.target.closest('[data-action="save-poll-interval"]');
+        if (pollSaveButton) {
+          savePollInterval(pollSaveButton.dataset.customerKey || '', pollSaveButton);
+          return;
+        }
+
+        const cancelButton = event.target.closest('[data-action="cancel-update"]');
+        if (cancelButton) {
+          handleCancelUpdate(cancelButton.dataset.customerKey || '');
+        }
+      });
+
+      releaseTagsEl.addEventListener('click', event => {
+        const deleteReleaseButton = event.target.closest('[data-action="delete-release"]');
+        if (!deleteReleaseButton) {
+          return;
+        }
+
+        openDeleteReleaseModal(deleteReleaseButton.dataset.releaseVersion || '');
+      });
+
+      cancelDeleteBtnEl.addEventListener('click', closeDeleteModal);
+      confirmDeleteBtnEl.addEventListener('click', confirmDelete);
+      cancelDeleteReleaseBtnEl.addEventListener('click', closeDeleteReleaseModal);
+      confirmDeleteReleaseBtnEl.addEventListener('click', confirmDeleteRelease);
+      cancelCancelUpdateBtnEl.addEventListener('click', closeCancelUpdateModal);
+      confirmCancelUpdateBtnEl.addEventListener('click', confirmCancelUpdate);
+      cancelRenameClientBtnEl.addEventListener('click', closeRenameClientModal);
+      confirmRenameClientBtnEl.addEventListener('click', confirmRenameClient);
+      cancelAdminCredsBtnEl.addEventListener('click', closeAdminCredentialsModal);
+      confirmAdminCredsBtnEl.addEventListener('click', confirmAdminCredentials);
+      clearAdminCredsBtnEl.addEventListener('click', clearAdminCredentials);
+      testAdminCredsBtnEl.addEventListener('click', testAdminCredentials);
+      deleteModalBackdropEl.addEventListener('click', event => {
+        if (event.target === deleteModalBackdropEl) {
+          closeDeleteModal();
+        }
+      });
+      deleteReleaseModalBackdropEl.addEventListener('click', event => {
+        if (event.target === deleteReleaseModalBackdropEl) {
+          closeDeleteReleaseModal();
+        }
+      });
+      cancelUpdateModalBackdropEl.addEventListener('click', event => {
+        if (event.target === cancelUpdateModalBackdropEl) {
+          closeCancelUpdateModal();
+        }
+      });
+      renameClientModalBackdropEl.addEventListener('click', event => {
+        if (event.target === renameClientModalBackdropEl) {
+          closeRenameClientModal();
+        }
+      });
+      adminCredsModalBackdropEl.addEventListener('click', event => {
+        if (event.target === adminCredsModalBackdropEl) {
+          closeAdminCredentialsModal();
+        }
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key !== 'Escape') {
+          return;
+        }
+
+        if (adminCredsModalBackdropEl.classList.contains('open')) {
+          closeAdminCredentialsModal();
+          return;
+        }
+
+        if (renameClientModalBackdropEl.classList.contains('open')) {
+          closeRenameClientModal();
+          return;
+        }
+
+        if (cancelUpdateModalBackdropEl.classList.contains('open')) {
+          closeCancelUpdateModal();
+          return;
+        }
+
+        if (deleteReleaseModalBackdropEl.classList.contains('open')) {
+          closeDeleteReleaseModal();
+          return;
+        }
+
+        if (deleteModalBackdropEl.classList.contains('open')) {
+          closeDeleteModal();
+        }
+      });
+
+      releaseUploadFormEl.addEventListener('submit', handleUploadRelease);
+      refreshBtnEl.addEventListener('click', refreshAll);
+      loginEmailFormEl.addEventListener('submit', handleRequestCode);
+      loginCodeFormEl.addEventListener('submit', handleVerifyCode);
+
+      bootstrapAuth();
+    </script>
+  </body>
+</html>

@@ -8,6 +8,7 @@ function ripristinoVisualizzazioneSuUnMonitor() {
   }
 
   ripristinaToolbar();
+  ripristinaPannelloBottom();
 
   //Se ho la visualizzazione dello storico come iframe nella stessa finestra lo gestisco direttamente nell'altro monitor senza toccare tutto il resto
   if (document.body.classList.contains('storico-injected-iframe')) {
@@ -51,6 +52,12 @@ function ripristinoVisualizzazioneSuUnMonitor() {
       ripristino4Columns(viewports);
       break;
   }
+}
+
+function ripristinaPannelloBottom() {
+  if (!document.body.classList.contains('nolex-study-panel-bottom')) return;
+  document.body.style.removeProperty('--nolex-bottom-panel-left');
+  document.body.style.removeProperty('--nolex-bottom-panel-right');
 }
 
 function ripristinaToolbar() {

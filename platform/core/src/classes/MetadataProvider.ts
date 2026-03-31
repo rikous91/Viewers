@@ -8,6 +8,207 @@ import toNumber from '../utils/toNumber';
 import combineFrameInstance from '../utils/combineFrameInstance';
 import formatPN from '../utils/formatPN';
 
+const PALETTE_DEBUG_LOGGED_SOPS = new Set();
+
+function getPaletteDataSourceInfo(paletteData) {
+  return {
+    present: Boolean(paletteData),
+    inlineBinary: Boolean(paletteData?.InlineBinary),
+    inlineBinaryLength: paletteData?.InlineBinary?.length ?? null,
+    bulkDataURI: paletteData?.BulkDataURI ?? null,
+    retrieveBulkData: typeof paletteData?.retrieveBulkData === 'function',
+    cachedPaletteLength: Array.isArray(paletteData?.palette) ? paletteData.palette.length : null,
+  };
+}
+
+function getPaletteLutInfo(lutValue) {
+  if (Array.isArray(lutValue)) {
+    return {
+      kind: 'array',
+      length: lutValue.length,
+      sample: lutValue.slice(0, 8),
+    };
+  }
+
+  if (lutValue && typeof lutValue.then === 'function') {
+    return { kind: 'promise' };
+  }
+
+  if (lutValue === undefined) {
+    return { kind: 'undefined' };
+  }
+
+  if (lutValue === null) {
+    return { kind: 'null' };
+  }
+
+  return { kind: typeof lutValue };
+}
+
+function analyzePaletteLuts(metadata) {
+  const r = metadata?.redPaletteColorLookupTableData;
+  const g = metadata?.greenPaletteColorLookupTableData;
+  const b = metadata?.bluePaletteColorLookupTableData;
+  const descriptor = metadata?.redPaletteColorLookupTableDescriptor;
+
+  if (!Array.isArray(r) || !Array.isArray(g) || !Array.isArray(b)) {
+    return { ready: false };
+  }
+
+  const length = Math.min(r.length, g.length, b.length);
+  const bits = Array.isArray(descriptor) ? descriptor[2] : undefined;
+  const shift = bits === 8 ? 0 : 8;
+
+  let equalRG = true;
+  let equalRB = true;
+  let equalGB = true;
+  let firstDiffRG = -1;
+  let firstDiffRB = -1;
+  let firstDiffGB = -1;
+
+  let minR = Infinity;
+  let minG = Infinity;
+  let minB = Infinity;
+  let maxR = -Infinity;
+  let maxG = -Infinity;
+  let maxB = -Infinity;
+
+  for (let i = 0; i < length; i++) {
+    const rv = r[i] >> shift;
+    const gv = g[i] >> shift;
+    const bv = b[i] >> shift;
+
+    if (rv < minR) minR = rv;
+    if (gv < minG) minG = gv;
+    if (bv < minB) minB = bv;
+    if (rv > maxR) maxR = rv;
+    if (gv > maxG) maxG = gv;
+    if (bv > maxB) maxB = bv;
+
+    if (equalRG && rv !== gv) {
+      equalRG = false;
+      firstDiffRG = i;
+    }
+    if (equalRB && rv !== bv) {
+      equalRB = false;
+      firstDiffRB = i;
+    }
+    if (equalGB && gv !== bv) {
+      equalGB = false;
+      firstDiffGB = i;
+    }
+  }
+
+  const sampleLength = Math.min(16, length);
+  const to8BitSample = lut => lut.slice(0, sampleLength).map(v => v >> shift);
+
+  return {
+    ready: true,
+    length,
+    bits,
+    shift,
+    equalRG,
+    equalRB,
+    equalGB,
+    allChannelsEqual: equalRG && equalRB && equalGB,
+    firstDiffRG,
+    firstDiffRB,
+    firstDiffGB,
+    minMax8bit: {
+      r: [Number.isFinite(minR) ? minR : null, Number.isFinite(maxR) ? maxR : null],
+      g: [Number.isFinite(minG) ? minG : null, Number.isFinite(maxG) ? maxG : null],
+      b: [Number.isFinite(minB) ? minB : null, Number.isFinite(maxB) ? maxB : null],
+    },
+    sample8bit: {
+      r: to8BitSample(r),
+      g: to8BitSample(g),
+      b: to8BitSample(b),
+    },
+  };
+}
+
+function logPaletteDebugIfNeeded(instance, metadata) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  if (window?.localStorage?.getItem('ohifPaletteDebug') !== '1') {
+    return;
+  }
+
+  const photometric = metadata?.photometricInterpretation;
+  const isPalettePhotometric =
+    typeof photometric === 'string' && photometric.toUpperCase().includes('PALETTE');
+  const hasPaletteTags = Boolean(
+    instance?.RedPaletteColorLookupTableDescriptor ||
+      instance?.GreenPaletteColorLookupTableDescriptor ||
+      instance?.BluePaletteColorLookupTableDescriptor ||
+      instance?.RedPaletteColorLookupTableData ||
+      instance?.GreenPaletteColorLookupTableData ||
+      instance?.BluePaletteColorLookupTableData
+  );
+
+  if (!isPalettePhotometric && !hasPaletteTags) {
+    return;
+  }
+
+  const sopInstanceUID = instance?.SOPInstanceUID || 'unknown';
+  if (PALETTE_DEBUG_LOGGED_SOPS.has(sopInstanceUID)) {
+    return;
+  }
+  PALETTE_DEBUG_LOGGED_SOPS.add(sopInstanceUID);
+
+  // eslint-disable-next-line no-console
+  console.log('[ohifPaletteDebug:imagePixelModule]', {
+    studyInstanceUID: instance?.StudyInstanceUID ?? null,
+    seriesInstanceUID: instance?.SeriesInstanceUID ?? null,
+    sopInstanceUID,
+    instanceNumber: instance?.InstanceNumber ?? null,
+    sopClassUID: instance?.SOPClassUID ?? null,
+    transferSyntaxUID: instance?.TransferSyntaxUID ?? instance?.TransferSyntax ?? null,
+    photometricInterpretationRaw: instance?.PhotometricInterpretation ?? null,
+    photometricInterpretationNormalized: metadata?.photometricInterpretation ?? null,
+    samplesPerPixel: metadata?.samplesPerPixel ?? null,
+    bitsAllocated: metadata?.bitsAllocated ?? null,
+    bitsStored: metadata?.bitsStored ?? null,
+    highBit: metadata?.highBit ?? null,
+    pixelRepresentation: metadata?.pixelRepresentation ?? null,
+    planarConfiguration: metadata?.planarConfiguration ?? null,
+    rows: metadata?.rows ?? null,
+    columns: metadata?.columns ?? null,
+    descriptors: {
+      red: metadata?.redPaletteColorLookupTableDescriptor ?? null,
+      green: metadata?.greenPaletteColorLookupTableDescriptor ?? null,
+      blue: metadata?.bluePaletteColorLookupTableDescriptor ?? null,
+    },
+    rawDataSource: {
+      red: getPaletteDataSourceInfo(instance?.RedPaletteColorLookupTableData),
+      green: getPaletteDataSourceInfo(instance?.GreenPaletteColorLookupTableData),
+      blue: getPaletteDataSourceInfo(instance?.BluePaletteColorLookupTableData),
+      inlineBinaryEquality: {
+        redEqualsGreen:
+          instance?.RedPaletteColorLookupTableData?.InlineBinary != null &&
+          instance?.RedPaletteColorLookupTableData?.InlineBinary ===
+            instance?.GreenPaletteColorLookupTableData?.InlineBinary,
+        redEqualsBlue:
+          instance?.RedPaletteColorLookupTableData?.InlineBinary != null &&
+          instance?.RedPaletteColorLookupTableData?.InlineBinary ===
+            instance?.BluePaletteColorLookupTableData?.InlineBinary,
+        greenEqualsBlue:
+          instance?.GreenPaletteColorLookupTableData?.InlineBinary != null &&
+          instance?.GreenPaletteColorLookupTableData?.InlineBinary ===
+            instance?.BluePaletteColorLookupTableData?.InlineBinary,
+      },
+    },
+    resolvedLut: {
+      red: getPaletteLutInfo(metadata?.redPaletteColorLookupTableData),
+      green: getPaletteLutInfo(metadata?.greenPaletteColorLookupTableData),
+      blue: getPaletteLutInfo(metadata?.bluePaletteColorLookupTableData),
+    },
+    lutAnalysis: analyzePaletteLuts(metadata),
+  });
+}
+
 class MetadataProvider {
   private readonly imageURIToUIDs: Map<string, any> = new Map();
   // Can be used to store custom metadata for a specific type.
@@ -157,9 +358,14 @@ class MetadataProvider {
         };
         break;
       case WADO_IMAGE_LOADER_TAGS.IMAGE_PIXEL_MODULE:
+        const photometricInterpretation =
+          typeof instance.PhotometricInterpretation === 'string'
+            ? instance.PhotometricInterpretation.trim().replace(/\s+/g, ' ')
+            : instance.PhotometricInterpretation;
+
         metadata = {
           samplesPerPixel: toNumber(instance.SamplesPerPixel),
-          photometricInterpretation: instance.PhotometricInterpretation,
+          photometricInterpretation,
           rows: toNumber(instance.Rows),
           columns: toNumber(instance.Columns),
           bitsAllocated: toNumber(instance.BitsAllocated),
@@ -195,6 +401,8 @@ class MetadataProvider {
             'BluePaletteColorLookupTableDescriptor'
           ),
         };
+
+        logPaletteDebugIfNeeded(instance, metadata);
 
         break;
       case WADO_IMAGE_LOADER_TAGS.VOI_LUT_MODULE:

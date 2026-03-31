@@ -2,7 +2,6 @@ import classnames from 'classnames';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Icons } from '../Icons';
 import { TooltipTrigger, TooltipContent, Tooltip } from '../Tooltip';
-import { Separator } from '../Separator';
 
 /**
  * SidePanel component properties.
@@ -27,7 +26,15 @@ type SidePanelProps = {
   expandedInsideBorderSize: number;
   collapsedInsideBorderSize: number;
   collapsedOutsideBorderSize: number;
-  tabs: any;
+  tabs: SidePanelTab[];
+};
+
+type SidePanelTab = {
+  name: string;
+  label: string;
+  iconName: string;
+  disabled?: boolean;
+  content: React.ComponentType;
 };
 
 type StyleMap = {
@@ -57,7 +64,25 @@ type StyleMap = {
 const closeIconWidth = 30;
 const gridHorizontalPadding = 10;
 const tabSpacerWidth = 2;
-let primoAvvio = true
+let primoAvvio = true;
+const STUDY_BROWSER_PANEL_POSITION_STORAGE_KEY = 'nolexStudyPanelPosition';
+const STUDY_BROWSER_BOTTOM_HEIGHT_PX = 107;
+
+const getInitialStudyBrowserPanelPosition = (): 'left' | 'right' | 'top' | 'bottom' => {
+  if (typeof window === 'undefined') {
+    return 'left';
+  }
+  const savedPosition = window.localStorage.getItem(STUDY_BROWSER_PANEL_POSITION_STORAGE_KEY);
+  if (
+    savedPosition === 'left' ||
+    savedPosition === 'right' ||
+    savedPosition === 'top' ||
+    savedPosition === 'bottom'
+  ) {
+    return savedPosition;
+  }
+  return 'left';
+};
 
 const baseClasses =
   'nolex-new-panel transition-all duration-300 ease-in-out bg-black border-black justify-start box-content flex flex-col';
@@ -192,6 +217,24 @@ const createBaseStyle = (expandedWidth: number) => {
   };
 };
 
+const isBottomPanelReady = () => {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+
+  const hasThumbnails = Boolean(
+    document.querySelector(
+      '[data-cy="study-browser-thumbnail"], [data-cy="study-browser-thumbnail-no-image"]'
+    )
+  );
+
+  const hasInitialGridLoading =
+    document.body.classList.contains('loading-spinner-into-grid') ||
+    Boolean(document.querySelector('.nolex-scrolling-loading'));
+
+  return hasThumbnails && !hasInitialGridLoading;
+};
+
 const SidePanel = ({
   side,
   className,
@@ -209,6 +252,10 @@ const SidePanel = ({
 }: SidePanelProps) => {
   const [panelOpen, setPanelOpen] = useState(isExpanded);
   const [activeTabIndex, setActiveTabIndex] = useState(activeTabIndexProp ?? 0);
+  const [studyBrowserPanelPosition, setStudyBrowserPanelPosition] = useState<
+    'left' | 'right' | 'top' | 'bottom'
+  >(getInitialStudyBrowserPanelPosition);
+  const [bottomDockReady, setBottomDockReady] = useState(isBottomPanelReady);
 
   const [styleMap, setStyleMap] = useState(
     createStyleMap(
@@ -228,12 +275,33 @@ const SidePanel = ({
 
   const [gridWidth, setGridWidth] = useState(getGridWidth(tabs.length, gridAvailableWidth));
   const openStatus = panelOpen ? 'open' : 'closed';
-  const style = Object.assign({}, styleMap[openStatus][side], baseStyle);
+  const isBottomDocked = side === 'left' && studyBrowserPanelPosition === 'bottom';
+  const showBottomDockPanel = !isBottomDocked || bottomDockReady;
+  const bottomDockStyle = isBottomDocked
+    ? {
+      position: 'fixed',
+      left: '0px',
+      right: 'var(--nolex-study-panel-right-offset, 0px)',
+      bottom: '0px',
+      top: 'auto',
+      width: 'auto',
+      maxWidth: 'none',
+      height: `var(--nolex-study-panel-bottom-height, ${STUDY_BROWSER_BOTTOM_HEIGHT_PX}px)`,
+      marginLeft: '0px',
+      marginRight: '0px',
+      zIndex: 90,
+      display: showBottomDockPanel ? 'flex' : 'none',
+    }
+    : {};
+  const style = Object.assign({}, styleMap[openStatus][side], baseStyle, bottomDockStyle);
 
   const updatePanelOpen = useCallback(
     (isOpen: boolean) => {
+      if (isBottomDocked && side === 'left' && !isOpen) {
+        return;
+      }
       setPanelOpen(isOpen);
-      const event = new CustomEvent('panelOpen', { detail: { isOpen: panelOpen, side: side } });
+      const event = new CustomEvent('panelOpen', { detail: { isOpen, side } });
       window.dispatchEvent(event);
       if (isOpen !== panelOpen) {
         // only fire events for changes
@@ -244,7 +312,7 @@ const SidePanel = ({
         }
       }
     },
-    [panelOpen, onOpen, onClose]
+    [panelOpen, onOpen, onClose, side, isBottomDocked]
   );
 
   const updateActiveTabIndex = useCallback(
@@ -264,8 +332,8 @@ const SidePanel = ({
 
   useEffect(() => {
     //Evito loop infiniti scatenati dal primo handleOnMobile
-    if (window.matchMedia("(max-width: 768px)").matches) {
-      return
+    if (window.matchMedia('(max-width: 768px)').matches) {
+      return;
     }
     updatePanelOpen(isExpanded);
   }, [isExpanded, updatePanelOpen]);
@@ -297,6 +365,99 @@ const SidePanel = ({
   useEffect(() => {
     updateActiveTabIndex(activeTabIndexProp ?? 0);
   }, [activeTabIndexProp, updateActiveTabIndex]);
+
+  useEffect(() => {
+    const onStudyPanelPositionChanged = (event: CustomEvent<{ position?: string }>) => {
+      const nextPosition = event?.detail?.position;
+      if (
+        nextPosition === 'left' ||
+        nextPosition === 'right' ||
+        nextPosition === 'top' ||
+        nextPosition === 'bottom'
+      ) {
+        setStudyBrowserPanelPosition(nextPosition);
+      }
+    };
+
+    window.addEventListener(
+      'nolex-study-panel-position-change',
+      onStudyPanelPositionChanged as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        'nolex-study-panel-position-change',
+        onStudyPanelPositionChanged as EventListener
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isBottomDocked || side !== 'left') {
+      setBottomDockReady(true);
+      return;
+    }
+
+    const syncBottomDockReady = () => {
+      setBottomDockReady(prev => prev || isBottomPanelReady());
+    };
+
+    syncBottomDockReady();
+
+    const observer = new MutationObserver(() => {
+      syncBottomDockReady();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isBottomDocked, side]);
+
+  useEffect(() => {
+    if (!isBottomDocked || side !== 'left' || !showBottomDockPanel) {
+      return;
+    }
+
+    const updateBottomDockOffset = () => {
+      const rightPanel = document.querySelector(
+        '[data-panel-id="viewerLayoutResizableRightPanel"]'
+      );
+      const rightOffset = rightPanel
+        ? Math.max(0, Math.round((rightPanel as HTMLElement).getBoundingClientRect().width))
+        : 0;
+      document.body.style.setProperty('--nolex-study-panel-right-offset', `${rightOffset}px`);
+    };
+
+    document.body.classList.add('nolex-study-panel-bottom');
+    document.body.style.setProperty(
+      '--nolex-study-panel-bottom-height',
+      `${STUDY_BROWSER_BOTTOM_HEIGHT_PX}px`
+    );
+    updateBottomDockOffset();
+    window.addEventListener('resize', updateBottomDockOffset);
+    window.addEventListener('panelOpen', updateBottomDockOffset as EventListener);
+
+    return () => {
+      window.removeEventListener('resize', updateBottomDockOffset);
+      window.removeEventListener('panelOpen', updateBottomDockOffset as EventListener);
+      document.body.classList.remove('nolex-study-panel-bottom');
+      document.body.style.removeProperty('--nolex-study-panel-right-offset');
+      document.body.style.removeProperty('--nolex-study-panel-bottom-height');
+    };
+  }, [isBottomDocked, side, showBottomDockPanel]);
+
+  useEffect(() => {
+    if (isBottomDocked && side === 'left' && !panelOpen) {
+      setPanelOpen(true);
+    }
+  }, [isBottomDocked, side, panelOpen]);
 
   const getCloseStateComponent = () => {
     const _childComponents = Array.isArray(tabs) ? tabs : [tabs];
@@ -475,17 +636,20 @@ const SidePanel = ({
   };
 
   const handleOnMobile = () => {
+    if (isBottomDocked) {
+      primoAvvio = false;
+      return;
+    }
 
-    if (window.matchMedia("(max-width: 768px)").matches) {
+    if (window.matchMedia('(max-width: 768px)').matches) {
       updatePanelOpen(!panelOpen); // Chiude il pannello
-      isExpanded = false
+      isExpanded = false;
 
-      const mainArea = document.querySelector('.nolex-main-area')
-      const barraHeaderInBasso = document.querySelector('.nolex-bar')
-      const posizioneYBarraHeaderInBasso = barraHeaderInBasso.getBoundingClientRect().y
-      mainArea.style.height = posizioneYBarraHeaderInBasso - 2 + 'px'
-      mainArea.style.top = '2px'
-
+      const mainArea = document.querySelector('.nolex-main-area');
+      const barraHeaderInBasso = document.querySelector('.nolex-bar');
+      const posizioneYBarraHeaderInBasso = barraHeaderInBasso.getBoundingClientRect().y;
+      mainArea.style.height = posizioneYBarraHeaderInBasso - 2 + 'px';
+      mainArea.style.top = '2px';
     }
     primoAvvio = false; // Imposta `primoAvvio` a false per evitare chiamate successive
   };
@@ -497,7 +661,6 @@ const SidePanel = ({
       handleOnMobile(); // Verifica se chiudere il pannello
     }
   }, []);
-
 
   return (
     <div

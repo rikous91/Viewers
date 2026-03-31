@@ -4,17 +4,22 @@ const { DicomMetaDictionary } = dcmjs.data;
 
 const DEFAULT_CLASSNAME = 'overlay-info-dicom';
 
-const tagConfig =
-  typeof window !== 'undefined' ? window?.config?.viewportOverlayTags || {} : {};
+const getTagConfig = overlayConfig => {
+  if (overlayConfig && typeof overlayConfig === 'object') {
+    return overlayConfig;
+  }
+  return typeof window !== 'undefined' ? window?.config?.viewportOverlayTags || {} : {};
+};
 
-const getCornerConfig = cornerKey => {
+const getCornerConfig = (tagConfig, cornerKey) => {
   return (
     tagConfig?.[cornerKey] ??
     tagConfig?.[`corner${cornerKey[0].toUpperCase()}${cornerKey.slice(1)}`]
   );
 };
 
-const hasCornerConfig = cornerKey => Array.isArray(getCornerConfig(cornerKey));
+const hasCornerConfig = (tagConfig, cornerKey) =>
+  Array.isArray(getCornerConfig(tagConfig, cornerKey));
 
 const resolveTagDefinition = tagOrKeyword => {
   if (!tagOrKeyword) {
@@ -84,8 +89,11 @@ const formatFromVR = vr => {
 const getTagValue = (props, { attribute, tag, source }) => {
   const instance =
     source === 'instance' ? props.instance : props.referenceInstance ?? props.instance;
+  const displaySet = props?.displaySet ?? props?.displaySets?.[0];
   if (!instance) {
-    return undefined;
+    if (!displaySet) {
+      return undefined;
+    }
   }
 
   if (attribute && instance[attribute] !== undefined) {
@@ -99,6 +107,24 @@ const getTagValue = (props, { attribute, tag, source }) => {
     }
     if (instance[tag] !== undefined) {
       return instance[tag];
+    }
+  }
+
+  if (!displaySet) {
+    return undefined;
+  }
+
+  if (attribute && displaySet[attribute] !== undefined) {
+    return displaySet[attribute];
+  }
+
+  if (tag) {
+    const cleanedTag = String(tag).replace(/[^0-9A-Fa-f]/g, '');
+    if (cleanedTag && displaySet[cleanedTag] !== undefined) {
+      return displaySet[cleanedTag];
+    }
+    if (displaySet[tag] !== undefined) {
+      return displaySet[tag];
     }
   }
 
@@ -326,70 +352,95 @@ const storicoLabelItem = {
   contentF: ({ referenceInstance }) => 'STORICO',
 };
 
-const lateralityItem = {
-  id: 'Laterality',
-  inheritsFrom: 'ohif.overlayItem',
-  label: '',
-  title: 'Laterality',
-  className: DEFAULT_CLASSNAME,
-  condition: ({ referenceInstance }) => referenceInstance?.Laterality,
-  contentF: ({ referenceInstance }) => referenceInstance.Laterality,
-};
+const buildViewportOverlayCustomizations = overlayConfig => {
+  const tagConfig = getTagConfig(overlayConfig);
 
-const configuredTopLeftItems = buildTagItemsFromConfig(getCornerConfig('topLeft'));
-const configuredTopRightItems = buildTagItemsFromConfig(getCornerConfig('topRight'));
-const configuredBottomLeftItems = buildTagItemsFromConfig(getCornerConfig('bottomLeft'));
-const configuredBottomRightItems = buildTagItemsFromConfig(getCornerConfig('bottomRight'));
+  const configuredTopLeftItems = buildTagItemsFromConfig(getCornerConfig(tagConfig, 'topLeft'));
+  const configuredTopRightItems = buildTagItemsFromConfig(
+    getCornerConfig(tagConfig, 'topRight')
+  );
+  const configuredBottomLeftItems = buildTagItemsFromConfig(
+    getCornerConfig(tagConfig, 'bottomLeft')
+  );
+  const configuredBottomRightItems = buildTagItemsFromConfig(
+    getCornerConfig(tagConfig, 'bottomRight')
+  );
 
-const topLeftItems = dedupeItems(
-  [
-    ...(hasCornerConfig('topLeft') ? configuredTopLeftItems : baseTopLeftItems),
-    storicoLabelItem,
-  ].filter(Boolean)
-);
+  const topLeftItems = dedupeItems(
+    [
+      ...(hasCornerConfig(tagConfig, 'topLeft') ? configuredTopLeftItems : baseTopLeftItems),
+      storicoLabelItem,
+    ].filter(Boolean)
+  );
 
-const topLeftWithLaterality = (() => {
-  const hasLaterality = topLeftItems.some(item => item?.id === 'Laterality');
-  return hasLaterality ? topLeftItems : [...topLeftItems, lateralityItem];
-})();
+  const topRightItems = dedupeItems(
+    hasCornerConfig(tagConfig, 'topRight') ? configuredTopRightItems : baseTopRightItems
+  );
 
-const topRightItems = dedupeItems(
-  hasCornerConfig('topRight') ? configuredTopRightItems : baseTopRightItems
-);
-
-const bottomLeftItems = dedupeItems([
-  //Bottom Left
-  {
-    id: 'WindowLevel',
-    inheritsFrom: 'ohif.overlayItem.windowLevel',
-    className: DEFAULT_CLASSNAME,
-  },
-  {
-    id: 'ZoomLevel',
-    inheritsFrom: 'ohif.overlayItem.zoomLevel',
-    className: DEFAULT_CLASSNAME,
-    condition: props => {
-      const activeToolName = props.toolGroupService.getActiveToolForViewport(props.viewportId);
-      return activeToolName === 'Zoom';
+  const bottomLeftItems = dedupeItems([
+    //Bottom Left
+    {
+      id: 'WindowLevel',
+      inheritsFrom: 'ohif.overlayItem.windowLevel',
+      className: DEFAULT_CLASSNAME,
     },
-  },
-  ...configuredBottomLeftItems,
-]);
+    {
+      id: 'ZoomLevel',
+      inheritsFrom: 'ohif.overlayItem.zoomLevel',
+      className: DEFAULT_CLASSNAME,
+    },
+    ...configuredBottomLeftItems,
+  ]);
 
-const bottomRightItems = dedupeItems([
-  //Bottom Right
-  {
-    id: 'InstanceNumber',
-    inheritsFrom: 'ohif.overlayItem.instanceNumber',
-    className: DEFAULT_CLASSNAME,
-  },
-  ...configuredBottomRightItems,
-]);
+  const bottomRightItems = dedupeItems([
+    //Bottom Right
+    {
+      id: 'InstanceNumber',
+      inheritsFrom: 'ohif.overlayItem.instanceNumber',
+      className: DEFAULT_CLASSNAME,
+    },
+    ...configuredBottomRightItems,
+  ]);
 
-export default {
-  'viewportOverlay.topLeft': topLeftWithLaterality,
-  //Top Right
-  'viewportOverlay.topRight': topRightItems,
-  'viewportOverlay.bottomLeft': bottomLeftItems,
-  'viewportOverlay.bottomRight': bottomRightItems,
+  return {
+    'viewportOverlay.topLeft': topLeftItems,
+    //Top Right
+    'viewportOverlay.topRight': topRightItems,
+    'viewportOverlay.bottomLeft': bottomLeftItems,
+    'viewportOverlay.bottomRight': bottomRightItems,
+  };
 };
+
+if (typeof window !== 'undefined') {
+  window.nolexBuildViewportOverlayCustomizations = buildViewportOverlayCustomizations;
+  window.nolexApplyViewportOverlayIfReady = () => {
+    const pending =
+      window.nolexViewportOverlayPending || window?.config?.viewportOverlayTags;
+    if (!pending) {
+      return false;
+    }
+    const customizationService = window.servicesManager?.services?.customizationService;
+    if (!customizationService || typeof buildViewportOverlayCustomizations !== 'function') {
+      return false;
+    }
+    try {
+      const customizations = buildViewportOverlayCustomizations(pending);
+      const scope =
+        customizationService.Scope?.Global || customizationService.Scope?.Mode;
+      customizationService.setCustomizations(customizations, scope);
+      window.nolexViewportOverlayPending = null;
+      return true;
+    } catch (err) {
+      console.warn('Overlay viewport: impossibile applicare le preferenze', err);
+      return false;
+    }
+  };
+  setTimeout(() => {
+    window.nolexApplyViewportOverlayIfReady?.();
+  }, 0);
+}
+
+const defaultCustomizations = buildViewportOverlayCustomizations();
+
+export { buildViewportOverlayCustomizations };
+export default defaultCustomizations;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
@@ -51,6 +51,154 @@ const shouldHideThumbnail = ds => {
 
 let erroreStudiRemoti = false;
 const mostraPrimoStudioStorico = true;
+const INVALID_STUDY_DESCRIPTION_VALUES = new Set([
+  'no data studio',
+  'no data study',
+  'no data',
+  'n/a',
+  'na',
+  'null',
+  'undefined',
+  '(vuoto)',
+]);
+
+const normalizeStudyInstanceUID = studyInstanceUID => {
+  if (studyInstanceUID === undefined || studyInstanceUID === null) {
+    return studyInstanceUID;
+  }
+
+  const studyUIDAsString = `${studyInstanceUID}`.trim();
+  if (!studyUIDAsString) {
+    return '';
+  }
+
+  const lastPathSegment =
+    studyUIDAsString
+      .replace(/\\/g, '/')
+      .split('/')
+      .filter(Boolean)
+      .pop() || studyUIDAsString;
+
+  return lastPathSegment.split('|')[0];
+};
+
+const normalizeText = value => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  return `${value}`.replace(/\s+/g, ' ').trim();
+};
+
+const normalizeStudyDescription = value => {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return '';
+  }
+
+  if (INVALID_STUDY_DESCRIPTION_VALUES.has(normalized.toLowerCase())) {
+    return '';
+  }
+
+  return normalized;
+};
+
+const getDicomTagValue = (item, tag) => {
+  if (!item || !tag) {
+    return '';
+  }
+
+  const value = item?.[tag]?.Value;
+  if (!Array.isArray(value) || !value.length) {
+    return '';
+  }
+
+  const firstValue = value[0];
+  if (firstValue === undefined || firstValue === null) {
+    return '';
+  }
+
+  if (typeof firstValue === 'object') {
+    return normalizeText(firstValue.Alphabetic || firstValue.Alphanumeric || firstValue.Ideographic);
+  }
+
+  return normalizeText(firstValue);
+};
+
+const getDicomTagValues = (item, tag) => {
+  if (!item || !tag) {
+    return [];
+  }
+
+  const value = item?.[tag]?.Value;
+  if (!Array.isArray(value) || !value.length) {
+    return [];
+  }
+
+  return value
+    .map(v => {
+      if (v === undefined || v === null) {
+        return '';
+      }
+      if (typeof v === 'object') {
+        return normalizeText(v.Alphabetic || v.Alphanumeric || v.Ideographic);
+      }
+      return normalizeText(v);
+    })
+    .filter(Boolean);
+};
+
+const hasValue = value => normalizeText(value) !== '';
+
+const mergeStudyEntries = (existingStudy, incomingStudy) => {
+  const merged = { ...existingStudy };
+
+  if (hasValue(incomingStudy?.date)) {
+    merged.date = incomingStudy.date;
+  }
+
+  if (hasValue(incomingStudy?.description)) {
+    merged.description = incomingStudy.description;
+  }
+
+  if (hasValue(incomingStudy?.modalities)) {
+    merged.modalities = incomingStudy.modalities;
+  }
+
+  const incomingNumInstances = Number(incomingStudy?.numInstances);
+  if (Number.isFinite(incomingNumInstances) && incomingNumInstances > 0) {
+    merged.numInstances = incomingNumInstances;
+  }
+
+  if (hasValue(incomingStudy?.studyInstanceUid)) {
+    merged.studyInstanceUid = incomingStudy.studyInstanceUid;
+  }
+
+  return merged;
+};
+
+const upsertStudies = (existingStudies, incomingStudies) => {
+  const mergedStudies = [...existingStudies];
+
+  incomingStudies.forEach(incomingStudy => {
+    if (!incomingStudy?.studyInstanceUid) {
+      return;
+    }
+
+    const index = mergedStudies.findIndex(
+      existingStudy => existingStudy.studyInstanceUid === incomingStudy.studyInstanceUid
+    );
+
+    if (index === -1) {
+      mergedStudies.push(incomingStudy);
+      return;
+    }
+
+    mergedStudies[index] = mergeStudyEntries(mergedStudies[index], incomingStudy);
+  });
+
+  return mergedStudies;
+};
 
 /**
  *
@@ -87,7 +235,7 @@ export default function PanelStudyBrowserTracking({
 
   const [activeTabName, setActiveTabName] = useState(studyMode);
   const [expandedStudyInstanceUIDs, setExpandedStudyInstanceUIDs] = useState([
-    ...StudyInstanceUIDs,
+    ...(StudyInstanceUIDs || []).map(normalizeStudyInstanceUID).filter(Boolean),
   ]);
   const [studyDisplayList, setStudyDisplayList] = useState([]);
   const [hasLoadedViewports, setHasLoadedViewports] = useState(false);
@@ -95,6 +243,7 @@ export default function PanelStudyBrowserTracking({
   const [displaySetsLoadingState, setDisplaySetsLoadingState] = useState({});
   const [thumbnailImageSrcMap, setThumbnailImageSrcMap] = useState({});
   const [jumpToDisplaySet, setJumpToDisplaySet] = useState(null);
+  const requestedSeriesByStudyUIDRef = useRef(new Set());
 
   const [viewPresets, setViewPresets] = useState(
     customizationService.getCustomization('studyBrowser.viewPresets')
@@ -183,17 +332,19 @@ export default function PanelStudyBrowserTracking({
 
       setTimeout(() => {
         for (const a of response) {
+          const remoteDescription = normalizeStudyDescription(getDicomTagValue(a, '00081030'));
+          const remoteModalities = getDicomTagValues(a, '00080061').join('\\');
           // This is where the push happens after the delay
           qidoStudiesForPatient.push({
-            studyInstanceUid: a['0020000D'].Value[0],
-            date: a['00080020'].Value[0],
-            time: a['00080030'].Value[0],
-            accession: a['00080050'].Value[0],
-            mrn: a['00100020'].Value[0],
-            patientName: a['00100010'].Value[0],
-            instances: a['00201208'].Value[0],
-            description: a['00081030'].Value[0] + ' |Remoto|',
-            modalities: a['00080061'].Value[0],
+            studyInstanceUid: getDicomTagValue(a, '0020000D'),
+            date: getDicomTagValue(a, '00080020'),
+            time: getDicomTagValue(a, '00080030'),
+            accession: getDicomTagValue(a, '00080050'),
+            mrn: getDicomTagValue(a, '00100020'),
+            patientName: getDicomTagValue(a, '00100010'),
+            instances: getDicomTagValue(a, '00201208'),
+            description: `${remoteDescription || ''} |Remoto|`.trim(),
+            modalities: remoteModalities || getDicomTagValue(a, '00080060'),
           });
         }
 
@@ -204,23 +355,15 @@ export default function PanelStudyBrowserTracking({
         const mappedStudies = _mapDataSourceStudies(updatedStudies);
         const actuallyMappedStudies = mappedStudies.map(qidoStudy => {
           return {
-            studyInstanceUid: qidoStudy.StudyInstanceUID,
+            studyInstanceUid: normalizeStudyInstanceUID(qidoStudy.StudyInstanceUID),
             date: formatDate(qidoStudy.StudyDate),
-            description: qidoStudy.StudyDescription,
+            description: normalizeStudyDescription(qidoStudy.StudyDescription),
             modalities: qidoStudy.ModalitiesInStudy,
             numInstances: qidoStudy.NumInstances,
           };
         });
 
-        setStudyDisplayList(prevArray => {
-          const ret = [...prevArray];
-          for (const study of actuallyMappedStudies) {
-            if (!ret.find(it => it.studyInstanceUid === study.studyInstanceUid)) {
-              ret.push(study);
-            }
-          }
-          return ret;
-        });
+        setStudyDisplayList(prevStudies => upsertStudies(prevStudies, actuallyMappedStudies));
       }, 0); // Set timeout only for the push operation
     } catch (err) {
       erroreStudiRemoti = true;
@@ -260,29 +403,24 @@ export default function PanelStudyBrowserTracking({
       const mappedStudies = _mapDataSourceStudies(qidoStudiesForPatient);
       const actuallyMappedStudies = mappedStudies.map(qidoStudy => {
         return {
-          studyInstanceUid: qidoStudy.StudyInstanceUID,
+          studyInstanceUid: normalizeStudyInstanceUID(qidoStudy.StudyInstanceUID),
           date: formatDate(qidoStudy.StudyDate) || t('NoStudyDate'),
-          description: qidoStudy.StudyDescription,
+          description: normalizeStudyDescription(qidoStudy.StudyDescription),
           modalities: qidoStudy.ModalitiesInStudy,
           numInstances: qidoStudy.NumInstances,
         };
       });
 
-      setStudyDisplayList(prevArray => {
-        const ret = [...prevArray];
-        for (const study of actuallyMappedStudies) {
-          if (!prevArray.find(it => it.studyInstanceUid === study.studyInstanceUid)) {
-            ret.push(study);
-          }
-        }
-        return ret;
-      });
+      setStudyDisplayList(prevStudies => upsertStudies(prevStudies, actuallyMappedStudies));
       if (!storicoRemotoControllato && window.storicoRemoto) {
         await storicoRemoto(qidoStudiesForPatient);
       }
     }
 
-    StudyInstanceUIDs.forEach(sid => fetchStudiesForPatient(sid));
+    (StudyInstanceUIDs || [])
+      .map(normalizeStudyInstanceUID)
+      .filter(Boolean)
+      .forEach(sid => fetchStudiesForPatient(sid));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [StudyInstanceUIDs, getStudiesForPatientByMRN]);
 
@@ -373,6 +511,74 @@ export default function PanelStudyBrowserTracking({
     dataSource,
     thumbnailImageSrcMap,
   ]);
+
+  // Fallback: se lo studio attuale non arriva nella study list (es. risposta QIDO assente/in ritardo),
+  // ricostruisco una voce minima dagli stessi display set già caricati così le serie restano visibili.
+  useEffect(() => {
+    const normalizedStudyInstanceUIDs = (StudyInstanceUIDs || [])
+      .map(normalizeStudyInstanceUID)
+      .filter(Boolean);
+
+    if (!normalizedStudyInstanceUIDs.length || !displaySets?.length) {
+      return;
+    }
+
+    const existingStudyIds = new Set(studyDisplayList.map(study => study.studyInstanceUid));
+    const missingStudyIds = normalizedStudyInstanceUIDs.filter(
+      studyId => studyId && !existingStudyIds.has(studyId)
+    );
+
+    if (!missingStudyIds.length) {
+      return;
+    }
+
+    const fallbackStudies = missingStudyIds
+      .map(studyId => {
+        const displaySetsForStudy = displaySets.filter(ds => ds.StudyInstanceUID === studyId);
+        if (!displaySetsForStudy.length) {
+          return null;
+        }
+
+        const modalities = [...new Set(displaySetsForStudy.map(ds => ds.modality).filter(Boolean))];
+        const instancesCount = displaySetsForStudy.reduce((acc, ds) => {
+          const count = Number(ds.numInstances || 0);
+          return acc + (Number.isFinite(count) ? count : 0);
+        }, 0);
+        const studyDescriptionFromDisplaySets = displaySetsForStudy
+          .map(ds =>
+            normalizeStudyDescription(
+              ds.studyDescription || ds.StudyDescription || ds.description
+            )
+          )
+          .find(Boolean);
+        const studyDateFromDisplaySets = displaySetsForStudy
+          .map(ds => normalizeText(ds.studyDate || ds.StudyDate || ds.seriesDate))
+          .find(Boolean);
+
+        return {
+          studyInstanceUid: studyId,
+          date: studyDateFromDisplaySets || t('NoStudyDate'),
+          description: studyDescriptionFromDisplaySets || 'Studio attuale',
+          modalities: modalities.join('\\'),
+          numInstances: instancesCount || displaySetsForStudy.length,
+        };
+      })
+      .filter(Boolean);
+
+    if (!fallbackStudies.length) {
+      return;
+    }
+
+    setStudyDisplayList(prevStudies => {
+      const mergedStudies = [...prevStudies];
+      fallbackStudies.forEach(study => {
+        if (!mergedStudies.find(existing => existing.studyInstanceUid === study.studyInstanceUid)) {
+          mergedStudies.push(study);
+        }
+      });
+      return mergedStudies;
+    });
+  }, [StudyInstanceUIDs, displaySets, studyDisplayList, t]);
 
   // -- displaySetsLoadingState
   useEffect(() => {
@@ -493,7 +699,109 @@ export default function PanelStudyBrowserTracking({
     displaySetService,
   ]);
 
-  const tabs = createStudyBrowserTabs(StudyInstanceUIDs, studyDisplayList, displaySets);
+  const normalizedPrimaryStudyInstanceUIDs = (StudyInstanceUIDs || [])
+    .map(normalizeStudyInstanceUID)
+    .filter(Boolean);
+  const tabs = createStudyBrowserTabs(
+    normalizedPrimaryStudyInstanceUIDs,
+    studyDisplayList,
+    displaySets
+  );
+
+  const hasDisplaySetsForStudy = studyUID => {
+    const normalized = normalizeStudyInstanceUID(studyUID);
+    if (!normalized) {
+      return false;
+    }
+    return displaySets.some(
+      displaySet => normalizeStudyInstanceUID(displaySet.StudyInstanceUID) === normalized
+    );
+  };
+
+  const requestStudySeriesIfNeeded = studyUID => {
+    const normalized = normalizeStudyInstanceUID(studyUID);
+    if (!normalized) {
+      return;
+    }
+
+    if (hasDisplaySetsForStudy(normalized)) {
+      requestedSeriesByStudyUIDRef.current.delete(normalized);
+      return;
+    }
+
+    if (requestedSeriesByStudyUIDRef.current.has(normalized)) {
+      return;
+    }
+
+    requestedSeriesByStudyUIDRef.current.add(normalized);
+    const madeInClient = true;
+    requestDisplaySetCreationForStudy(displaySetService, normalized, madeInClient);
+  };
+
+  useEffect(() => {
+    displaySets.forEach(displaySet => {
+      const normalized = normalizeStudyInstanceUID(displaySet.StudyInstanceUID);
+      if (normalized) {
+        requestedSeriesByStudyUIDRef.current.delete(normalized);
+      }
+    });
+  }, [displaySets]);
+
+  useEffect(() => {
+    if (!tabs?.length) {
+      return;
+    }
+
+    const activeTab = tabs.find(tab => tab.name === activeTabName);
+    if (activeTab?.studies?.length) {
+      return;
+    }
+
+    // Mantieni sempre "Studio attuale" come default: evita switch automatici allo
+    // storico durante i primi render quando i dati della tab primaria non sono
+    // ancora stati popolati.
+    if (activeTabName === 'primary') {
+      return;
+    }
+
+    const primaryTab = tabs.find(tab => tab.name === 'primary' && tab.studies?.length);
+    const fallbackTab = primaryTab || tabs.find(tab => tab.studies?.length);
+    if (fallbackTab && fallbackTab.name !== activeTabName) {
+      setActiveTabName(fallbackTab.name);
+    }
+  }, [tabs, activeTabName]);
+
+  useEffect(() => {
+    if (!tabs?.length) {
+      return;
+    }
+
+    const activeTab = tabs.find(tab => tab.name === activeTabName);
+    if (!activeTab?.studies?.length) {
+      return;
+    }
+
+    const hasExpandedStudy = activeTab.studies.some(study =>
+      expandedStudyInstanceUIDs.includes(study.studyInstanceUid)
+    );
+    if (hasExpandedStudy) {
+      return;
+    }
+
+    const firstStudyInstanceUID = activeTab.studies[0].studyInstanceUid;
+    if (!firstStudyInstanceUID) {
+      return;
+    }
+
+    setExpandedStudyInstanceUIDs(prevState => {
+      if (prevState.includes(firstStudyInstanceUID)) {
+        return prevState;
+      }
+      return [firstStudyInstanceUID, ...prevState];
+    });
+
+    requestStudySeriesIfNeeded(firstStudyInstanceUID);
+  }, [tabs, activeTabName, expandedStudyInstanceUIDs, displaySets]);
 
   // TODO: Should not fire this on "close"
   function _handleStudyClick(StudyInstanceUID) {
@@ -505,8 +813,7 @@ export default function PanelStudyBrowserTracking({
     setExpandedStudyInstanceUIDs(updatedExpandedStudyInstanceUIDs);
 
     if (!shouldCollapseStudy) {
-      const madeInClient = true;
-      requestDisplaySetCreationForStudy(displaySetService, StudyInstanceUID, madeInClient);
+      requestStudySeriesIfNeeded(StudyInstanceUID);
     }
   }
 
@@ -692,17 +999,34 @@ function getImageIdForThumbnail(displaySet: any, imageIds: any) {
  */
 function _mapDataSourceStudies(studies) {
   return studies.map(study => {
+    const modalitiesFromTags =
+      getDicomTagValues(study, '00080061').join('\\') ||
+      getDicomTagValue(study, '00080060') ||
+      '';
+
+    const numInstancesRaw =
+      study.NumInstances ?? study.instances ?? getDicomTagValue(study, '00201208') ?? 0;
+    const normalizedNumInstances = Number(numInstancesRaw);
+
     // TODO: Why does the data source return in this format?
     return {
-      AccessionNumber: study.accession,
-      StudyDate: study.date,
-      StudyDescription: study.description,
-      NumInstances: study.instances,
-      ModalitiesInStudy: study.modalities,
-      PatientID: study.mrn,
-      PatientName: study.patientName,
-      StudyInstanceUID: study.studyInstanceUid,
-      StudyTime: study.time,
+      AccessionNumber:
+        study.AccessionNumber ?? study.accession ?? getDicomTagValue(study, '00080050'),
+      StudyDate: study.StudyDate ?? study.date ?? getDicomTagValue(study, '00080020'),
+      StudyDescription: normalizeStudyDescription(
+        study.StudyDescription ??
+          study.studyDescription ??
+          study.description ??
+          getDicomTagValue(study, '00081030')
+      ),
+      NumInstances: Number.isFinite(normalizedNumInstances) ? normalizedNumInstances : 0,
+      ModalitiesInStudy:
+        normalizeText(study.ModalitiesInStudy ?? study.modalities ?? modalitiesFromTags) || '',
+      PatientID: study.PatientID ?? study.mrn ?? getDicomTagValue(study, '00100020'),
+      PatientName: study.PatientName ?? study.patientName ?? getDicomTagValue(study, '00100010'),
+      StudyInstanceUID:
+        study.StudyInstanceUID ?? study.studyInstanceUid ?? getDicomTagValue(study, '0020000D'),
+      StudyTime: study.StudyTime ?? study.time ?? getDicomTagValue(study, '00080030'),
     };
   });
 }
@@ -721,6 +1045,14 @@ function _mapDisplaySets(
 ) {
   const thumbnailDisplaySets = [];
   const thumbnailNoImageDisplaySets = [];
+  const noImageModalities = ['PR', 'SR', 'SEG', 'SM', 'RTSTRUCT', 'RTPLAN', 'RTDOSE'];
+  const shouldLogStudyBrowser = true;
+  if (shouldLogStudyBrowser) {
+    console.log('[StudyBrowser][DisplaySet][Summary]', {
+      totalDisplaySets: displaySets?.length || 0,
+      visibleDisplaySets: displaySets?.filter(ds => !ds.excludeFromThumbnailBrowser).length || 0,
+    });
+  }
   displaySets
     .filter(ds => !ds.excludeFromThumbnailBrowser)
     .forEach(ds => {
@@ -731,10 +1063,18 @@ function _mapDisplaySets(
         componentType === 'thumbnailTracked' ? thumbnailDisplaySets : thumbnailNoImageDisplaySets;
 
       const loadingProgress = displaySetLoadingState?.[displaySetInstanceUID];
+      const studyDescription = normalizeStudyDescription(
+        ds.StudyDescription ||
+          ds.studyDescription ||
+          ds?.images?.[0]?.StudyDescription ||
+          ds?.instances?.[0]?.StudyDescription
+      );
 
       const thumbnailProps = {
         displaySetInstanceUID,
         description: ds.SeriesDescription,
+        studyDescription,
+        studyDate: formatDate(ds.StudyDate) || formatDate(ds.SeriesDate),
         seriesNumber: ds.SeriesNumber,
         modality: ds.Modality,
         seriesDate: formatDate(ds.SeriesDate),
@@ -753,6 +1093,28 @@ function _mapDisplaySets(
         isTracked: trackedSeriesInstanceUIDs.includes(ds.SeriesInstanceUID),
         isHydratedForDerivedDisplaySet: ds.isHydrated,
       };
+
+        if (shouldLogStudyBrowser) {
+          const modalityUpper = (ds.Modality || '').toString().toUpperCase();
+          const isNoImageSeries =
+            componentType === 'thumbnailNoImage' || noImageModalities.includes(modalityUpper);
+        const payload = {
+          displaySetInstanceUID,
+          studyInstanceUID: ds.StudyInstanceUID,
+          seriesInstanceUID: ds.SeriesInstanceUID,
+          modality: ds.Modality,
+          seriesNumber: ds.SeriesNumber,
+          description: ds.SeriesDescription,
+            studyDescription,
+            numInstances: ds.numImageFrames,
+            componentType,
+            unsupported: ds?.unsupported,
+            excludeFromThumbnailBrowser: ds?.excludeFromThumbnailBrowser,
+            imageSrc: thumbnailProps.imageSrc,
+            isNoImageSeries,
+          };
+          console.log('[StudyBrowser][DisplaySet]', payload);
+        }
 
       array.push(thumbnailProps);
     });

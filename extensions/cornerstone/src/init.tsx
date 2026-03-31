@@ -62,6 +62,23 @@ export default async function init({
     peerImport: appConfig.peerImport,
   });
 
+  // Guard: avoid hard crashes if a stack viewport is destroyed while async tasks still run
+  try {
+    const stackViewport = (cornerstone as any)?.StackViewport;
+    if (stackViewport?.prototype && !(window as any).__nolexStackViewportPatched) {
+      const originalThrow = stackViewport.prototype._throwIfDestroyed;
+      stackViewport.prototype._throwIfDestroyed = function () {
+        if (this?.isDisabled) {
+          return;
+        }
+        return originalThrow ? originalThrow.call(this) : undefined;
+      };
+      (window as any).__nolexStackViewportPatched = true;
+    }
+  } catch (err) {
+    // ignore patch failure
+  }
+
   // For debugging e2e tests that are failing on CI
   cornerstone.setUseCPURendering(Boolean(appConfig.useCPURendering));
 

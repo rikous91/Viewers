@@ -1,4 +1,5 @@
 import { MeasurementService } from '@ohif/core';
+import * as cornerstone from '@cornerstonejs/core';
 import Length from './Length';
 import Bidirectional from './Bidirectional';
 import EllipticalROI from './EllipticalROI';
@@ -13,6 +14,169 @@ import LivewireContour from './LivewireContour';
 import Probe from './Probe';
 import UltrasoundDirectional from './UltrasoundDirectional';
 import SegmentBidirectional from './SegmentBidirectional';
+
+const loggedMeasurementUnits = new Set<string>();
+
+function isPixelUnit(value: unknown) {
+  return typeof value === 'string' && value.toLowerCase().includes('px');
+}
+
+function getStatsSummary(cachedStats) {
+  if (!cachedStats || typeof cachedStats !== 'object') {
+    return [];
+  }
+
+  return Object.entries(cachedStats).map(([targetId, stats]) => {
+    const stat = stats || {};
+
+    return {
+      targetId,
+      unit: stat.unit,
+      areaUnit: stat.areaUnit,
+      units: stat.units,
+      length: stat.length,
+      width: stat.width,
+      area: stat.area,
+      radius: stat.radius,
+      perimeter: stat.perimeter,
+    };
+  });
+}
+
+function hasPixelUnits(statsSummary) {
+  return statsSummary.some(stat => {
+    if (isPixelUnit(stat.unit) || isPixelUnit(stat.areaUnit)) {
+      return true;
+    }
+
+    return Array.isArray(stat.units) && stat.units.some(isPixelUnit);
+  });
+}
+
+function getImageMetadataSummary(referencedImageId) {
+  if (!referencedImageId) {
+    return {};
+  }
+
+  const imagePlaneModule = cornerstone.metaData.get('imagePlaneModule', referencedImageId) || {};
+  const instance = cornerstone.metaData.get('instance', referencedImageId) || {};
+  const calibrationModule = cornerstone.metaData.get('calibrationModule', referencedImageId) || {};
+
+  return {
+    imagePlaneModule: {
+      pixelSpacing: imagePlaneModule.pixelSpacing,
+      rowPixelSpacing: imagePlaneModule.rowPixelSpacing,
+      columnPixelSpacing: imagePlaneModule.columnPixelSpacing,
+      usingDefaultValues: imagePlaneModule.usingDefaultValues,
+    },
+    calibrationModule: {
+      type: calibrationModule.type,
+      sequenceOfUltrasoundRegionsCount: calibrationModule.sequenceOfUltrasoundRegions?.length ?? 0,
+    },
+    instance: {
+      StudyInstanceUID: instance.StudyInstanceUID,
+      SeriesInstanceUID: instance.SeriesInstanceUID,
+      SOPInstanceUID: instance.SOPInstanceUID,
+      PixelSpacing: instance.PixelSpacing,
+      ImagerPixelSpacing: instance.ImagerPixelSpacing,
+      NominalScannedPixelSpacing: instance.NominalScannedPixelSpacing,
+      PixelSpacingCalibrationType: instance.PixelSpacingCalibrationType,
+      PixelSpacingCalibrationDescription: instance.PixelSpacingCalibrationDescription,
+    },
+  };
+}
+
+function getDisplaySetInstanceSummary(displaySetService, mappedMeasurement) {
+  const sopInstanceUID = mappedMeasurement?.SOPInstanceUID;
+  const seriesInstanceUID = mappedMeasurement?.referenceSeriesUID;
+
+  if (!sopInstanceUID || !seriesInstanceUID) {
+    return null;
+  }
+
+  const displaySet = displaySetService.getDisplaySetForSOPInstanceUID(
+    sopInstanceUID,
+    seriesInstanceUID
+  );
+  const instance =
+    displaySet?.instances?.find(item => item.SOPInstanceUID === sopInstanceUID) ??
+    displaySet?.instances?.[0];
+
+  if (!instance) {
+    return null;
+  }
+
+  return {
+    StudyInstanceUID: instance.StudyInstanceUID,
+    SeriesInstanceUID: instance.SeriesInstanceUID,
+    SOPInstanceUID: instance.SOPInstanceUID,
+    PixelSpacing: instance.PixelSpacing,
+    ImagerPixelSpacing: instance.ImagerPixelSpacing,
+    NominalScannedPixelSpacing: instance.NominalScannedPixelSpacing,
+    PixelSpacingCalibrationType: instance.PixelSpacingCalibrationType,
+    PixelSpacingCalibrationDescription: instance.PixelSpacingCalibrationDescription,
+  };
+}
+
+function debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService) {
+  const annotation = csToolsAnnotation?.annotation;
+  const metadata = annotation?.metadata || {};
+  const data = annotation?.data || {};
+  const annotationUID = annotation?.annotationUID;
+
+  const statsSummary = getStatsSummary(data.cachedStats);
+  const debugWindow =
+    typeof window !== 'undefined'
+      ? (window as Window & { __OHIF_DEBUG_MEASUREMENT_UNITS__?: boolean })
+      : undefined;
+  const shouldAlwaysLog = debugWindow?.__OHIF_DEBUG_MEASUREMENT_UNITS__ === true;
+
+  if (!statsSummary.length) {
+    return;
+  }
+
+  const hasPx = hasPixelUnits(statsSummary);
+  if (!shouldAlwaysLog && !hasPx) {
+    return;
+  }
+
+  const statsSignature = statsSummary
+    .map(stat => `${stat.targetId}:${stat.unit ?? ''}:${stat.areaUnit ?? ''}`)
+    .join('|');
+  const logKey = `${annotationUID || 'unknown'}:${statsSignature}`;
+
+  if (loggedMeasurementUnits.has(logKey)) {
+    return;
+  }
+
+  loggedMeasurementUnits.add(logKey);
+
+  const referencedImageId = metadata.referencedImageId;
+  const imageMetadataSummary = getImageMetadataSummary(referencedImageId);
+  const displaySetInstanceSummary = getDisplaySetInstanceSummary(
+    displaySetService,
+    mappedMeasurement
+  );
+
+  console.warn('[OHIF][MeasurementUnitsDebug]', {
+    toolName: metadata.toolName,
+    annotationUID,
+    hasPixelUnits: hasPx,
+    referencedImageId,
+    referencedSeriesInstanceUID: metadata.referencedSeriesInstanceUID,
+    frameOfReferenceUID: metadata.FrameOfReferenceUID,
+    mappedMeasurement: {
+      SOPInstanceUID: mappedMeasurement?.SOPInstanceUID,
+      referenceSeriesUID: mappedMeasurement?.referenceSeriesUID,
+      referenceStudyUID: mappedMeasurement?.referenceStudyUID,
+      frameNumber: mappedMeasurement?.frameNumber,
+      displayText: mappedMeasurement?.displayText,
+    },
+    cachedStats: statsSummary,
+    imageMetadataSummary,
+    displaySetInstanceSummary,
+  });
+}
 
 const measurementServiceMappingsFactory = (
   measurementService: MeasurementService,
@@ -58,14 +222,19 @@ const measurementServiceMappingsFactory = (
   const factories = {
     Length: {
       toAnnotation: Length.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        Length.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = Length.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,
@@ -75,14 +244,19 @@ const measurementServiceMappingsFactory = (
     },
     Bidirectional: {
       toAnnotation: Bidirectional.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        Bidirectional.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = Bidirectional.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         // TODO -> We should eventually do something like shortAxis + longAxis,
         // But its still a little unclear how these automatic interpretations will work.
@@ -98,14 +272,19 @@ const measurementServiceMappingsFactory = (
     },
     SegmentBidirectional: {
       toAnnotation: SegmentBidirectional.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        SegmentBidirectional.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = SegmentBidirectional.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,
@@ -119,14 +298,19 @@ const measurementServiceMappingsFactory = (
     },
     EllipticalROI: {
       toAnnotation: EllipticalROI.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        EllipticalROI.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = EllipticalROI.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.ELLIPSE,
@@ -135,14 +319,19 @@ const measurementServiceMappingsFactory = (
     },
     CircleROI: {
       toAnnotation: CircleROI.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        CircleROI.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = CircleROI.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.CIRCLE,
@@ -151,14 +340,19 @@ const measurementServiceMappingsFactory = (
     },
     RectangleROI: {
       toAnnotation: RectangleROI.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        RectangleROI.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = RectangleROI.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,
@@ -167,14 +361,19 @@ const measurementServiceMappingsFactory = (
     },
     PlanarFreehandROI: {
       toAnnotation: PlanarFreehandROI.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        PlanarFreehandROI.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = PlanarFreehandROI.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,
@@ -183,14 +382,19 @@ const measurementServiceMappingsFactory = (
     },
     SplineROI: {
       toAnnotation: SplineROI.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        SplineROI.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = SplineROI.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,
@@ -199,14 +403,19 @@ const measurementServiceMappingsFactory = (
     },
     LivewireContour: {
       toAnnotation: LivewireContour.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        LivewireContour.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = LivewireContour.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,
@@ -215,14 +424,19 @@ const measurementServiceMappingsFactory = (
     },
     ArrowAnnotate: {
       toAnnotation: ArrowAnnotate.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        ArrowAnnotate.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = ArrowAnnotate.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POINT,
@@ -232,14 +446,19 @@ const measurementServiceMappingsFactory = (
     },
     Probe: {
       toAnnotation: Probe.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        Probe.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = Probe.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POINT,
@@ -249,14 +468,19 @@ const measurementServiceMappingsFactory = (
     },
     CobbAngle: {
       toAnnotation: CobbAngle.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        CobbAngle.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = CobbAngle.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.ANGLE,
@@ -265,14 +489,19 @@ const measurementServiceMappingsFactory = (
     },
     Angle: {
       toAnnotation: Angle.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        Angle.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = Angle.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.ANGLE,
@@ -281,14 +510,19 @@ const measurementServiceMappingsFactory = (
     },
     UltrasoundDirectional: {
       toAnnotation: UltrasoundDirectional.toAnnotation,
-      toMeasurement: csToolsAnnotation =>
-        UltrasoundDirectional.toMeasurement(
+      toMeasurement: csToolsAnnotation => {
+        const mappedMeasurement = UltrasoundDirectional.toMeasurement(
           csToolsAnnotation,
           displaySetService,
           cornerstoneViewportService,
           _getValueTypeFromToolType,
           customizationService
-        ),
+        );
+
+        debugMeasurementUnits(csToolsAnnotation, mappedMeasurement, displaySetService);
+
+        return mappedMeasurement;
+      },
       matchingCriteria: [
         {
           valueType: MeasurementService.VALUE_TYPES.POLYLINE,

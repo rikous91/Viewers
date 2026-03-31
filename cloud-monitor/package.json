@@ -1,0 +1,12 @@
+{
+  "name": "dashboard-viewer-cloud-monitor",
+  "private": true,
+  "version": "1.0.0",
+  "main": "backend_cloud.js",
+  "scripts": {
+    "start": "node ./backend_cloud.js"
+  },
+  "dependencies": {
+    "nodemailer": "^6.10.1"
+  }
+}

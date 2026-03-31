@@ -12,6 +12,50 @@
  * @returns tabs - The prop object expected by the StudyBrowser component
  */
 
+const INVALID_STUDY_DESCRIPTION_VALUES = new Set([
+  'no data studio',
+  'no data study',
+  'no data',
+  'n/a',
+  'na',
+  'null',
+  'undefined',
+  '(vuoto)',
+]);
+
+const normalizeText = value => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return `${value}`.replace(/\s+/g, ' ').trim();
+};
+
+const normalizeStudyDescription = value => {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return '';
+  }
+
+  if (INVALID_STUDY_DESCRIPTION_VALUES.has(normalized.toLowerCase())) {
+    return '';
+  }
+
+  return normalized;
+};
+
+const normalizeStudyDate = value => {
+  const normalized = normalizeText(value);
+  if (!normalized) {
+    return '';
+  }
+
+  if (INVALID_STUDY_DESCRIPTION_VALUES.has(normalized.toLowerCase())) {
+    return '';
+  }
+
+  return normalized;
+};
+
 export function createStudyBrowserTabs(
   primaryStudyInstanceUIDs,
   studyDisplayList,
@@ -26,7 +70,17 @@ export function createStudyBrowserTabs(
     const displaySetsForStudy = displaySets.filter(
       ds => ds.StudyInstanceUID === study.studyInstanceUid
     );
+    const descriptionFromDisplaySets = displaySetsForStudy
+      .map(ds => normalizeStudyDescription(ds?.studyDescription || ds?.StudyDescription))
+      .find(Boolean);
+    const dateFromDisplaySets = displaySetsForStudy
+      .map(ds => normalizeStudyDate(ds?.studyDate || ds?.StudyDate || ds?.seriesDate))
+      .find(Boolean);
+    const normalizedStudyDescription = normalizeStudyDescription(study?.description);
+    const normalizedStudyDate = normalizeStudyDate(study?.date);
     const tabStudy = Object.assign({}, study, {
+      date: normalizedStudyDate || dateFromDisplaySets || '',
+      description: normalizedStudyDescription || descriptionFromDisplaySets || '',
       displaySets: displaySetsForStudy,
     });
 
@@ -38,8 +92,9 @@ export function createStudyBrowserTabs(
   });
 
   allStudies = allStudies.filter(study => {
-    if (study.description.includes('|Remoto|')) {
-      study.description = study.description.replace('|Remoto|', '');
+    const studyDescription = normalizeText(study.description);
+    if (studyDescription.includes('|Remoto|')) {
+      study.description = studyDescription.replace('|Remoto|', '').trim();
       studiRemoti.push(study);
       return false; // Esclude l'elemento da allStudies
     }

@@ -125,16 +125,26 @@ function getReconstructableStackViewports(
   viewports = viewports.filter(viewport => {
     const { displaySetInstanceUIDs } = viewport;
 
+    let hasReconstructable = false;
     for (const displaySetInstanceUID of displaySetInstanceUIDs) {
       const displaySet = displaySetService.getDisplaySetByUID(displaySetInstanceUID);
 
-      // TODO - add a better test than isReconstructable
-      if (displaySet && displaySet.isReconstructable) {
-        return true;
+      if (!displaySet) {
+        continue;
       }
 
-      return false;
+      // Escludi i volumi dinamici dalla slice-sync per evitare salti di istanza
+      if (displaySet.isDynamicVolume) {
+        return false;
+      }
+
+      // TODO - add a better test than isReconstructable
+      if (displaySet.isReconstructable) {
+        hasReconstructable = true;
+      }
     }
+
+    return hasReconstructable;
   });
   return viewports;
 }
