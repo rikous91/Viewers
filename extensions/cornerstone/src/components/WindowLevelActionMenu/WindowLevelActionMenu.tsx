@@ -391,10 +391,14 @@ export function WindowLevelActionMenu({
           verticalDirection={verticalDirection}
           horizontalDirection={horizontalDirection}
           iconClassName={classNames(
-            // Visible on hover and for the active viewport
+            // Visible on hover (sul pane del viewport) e per il viewport attivo.
+            // Usiamo `group-hover/pane:visible` per coerenza con l'icona WW/WL
+            // sopra: il viewport pane ha la classe `group/pane`, mentre
+            // `group-hover:visible` (senza named group) non scatta mai →
+            // l'icona compariva solo dopo il click sul viewport.
             activeViewportId === viewportId
               ? 'visible preferiti-btn'
-              : 'preferiti-btn invisible group-hover:visible',
+              : 'preferiti-btn invisible group-hover/pane:visible',
             'flex shrink-0 cursor-pointer rounded active:text-white text-primary-light',
             isLight ? ' hover:bg-secondary-dark' : 'hover:bg-secondary-light/60'
           )}

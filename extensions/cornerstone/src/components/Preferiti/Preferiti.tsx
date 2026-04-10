@@ -50,6 +50,108 @@ async function captureImageFromImageId(imageId, viewport) {
   return canvas.toDataURL('image/png');
 }
 
+// Cattura il viewport COMPLETO con le annotazioni (misurazioni length/area/...).
+// Cornerstone3D rende il pixel data nel <canvas> e le annotazioni in un <svg>
+// layer separato sopra. Questa funzione compone i due: prima disegna il
+// canvas, poi serializza l'SVG, lo carica come <img> e lo dipinge sopra.
+// Best-effort: ritorna null se qualcosa fallisce, e il chiamante ricade
+// sulla cattura "pulita" come fallback.
+async function captureImageWithAnnotationsFromElement(
+  viewportElement: HTMLElement | null | undefined
+): Promise<string | null> {
+  if (!viewportElement) {
+    return null;
+  }
+  try {
+    // Cerchiamo il canvas dell'immagine. In OHIF/CS3D è ".cornerstone-canvas",
+    // ma teniamo un fallback generico per robustezza.
+    const cornerstoneCanvas =
+      (viewportElement.querySelector('canvas.cornerstone-canvas') as HTMLCanvasElement | null) ||
+      (viewportElement.querySelector('canvas') as HTMLCanvasElement | null);
+    if (!cornerstoneCanvas) {
+      return null;
+    }
+
+    // Tutti gli SVG dentro il viewport: in CS3D le annotazioni sono in
+    // un layer SVG (tipicamente l'unico). Se ne trovassimo più di uno,
+    // proviamo a dipingerli tutti in ordine.
+    const svgs = Array.from(
+      viewportElement.querySelectorAll('svg')
+    ) as SVGSVGElement[];
+
+    // Output canvas alla risoluzione INTRINSECA del cornerstone canvas
+    // (massima qualità, indipendente dal devicePixelRatio).
+    const out = document.createElement('canvas');
+    out.width = cornerstoneCanvas.width;
+    out.height = cornerstoneCanvas.height;
+    const ctx = out.getContext('2d');
+    if (!ctx) {
+      return null;
+    }
+
+    // Sfondo nero (copre eventuale trasparenza del cornerstone canvas)
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, out.width, out.height);
+
+    // Disegna l'immagine 1:1
+    ctx.drawImage(cornerstoneCanvas, 0, 0);
+
+    // Disegna ogni SVG sopra, scalandolo alle dimensioni del canvas
+    for (const svg of svgs) {
+      // Skippa SVG vuoti o nascosti
+      if (!svg.children || svg.children.length === 0) continue;
+      try {
+        const svgClone = svg.cloneNode(true) as SVGSVGElement;
+        // CS3D usa le dimensioni di display del viewport per le coordinate
+        // delle annotazioni. Le dimensioni di display sono clientWidth/Height
+        // del canvas. Forziamo lo SVG ad avere queste dimensioni esplicite
+        // (serve per la conversione a image, che richiede width/height).
+        const dispW = svg.clientWidth || cornerstoneCanvas.clientWidth || out.width;
+        const dispH = svg.clientHeight || cornerstoneCanvas.clientHeight || out.height;
+        svgClone.setAttribute('width', String(dispW));
+        svgClone.setAttribute('height', String(dispH));
+        if (!svgClone.getAttribute('viewBox')) {
+          svgClone.setAttribute('viewBox', `0 0 ${dispW} ${dispH}`);
+        }
+        // Inietta xmlns se mancante (necessario per il blob SVG)
+        if (!svgClone.getAttribute('xmlns')) {
+          svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        }
+
+        const svgString = new XMLSerializer().serializeToString(svgClone);
+        const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const svgUrl = URL.createObjectURL(svgBlob);
+
+        await new Promise<void>(resolve => {
+          const im = new Image();
+          im.onload = () => {
+            try {
+              // Disegna l'SVG scalato alle dimensioni intrinseche del canvas
+              ctx.drawImage(im, 0, 0, out.width, out.height);
+            } catch (e) {
+              console.warn('Preferiti: drawImage(SVG) failed', e);
+            }
+            URL.revokeObjectURL(svgUrl);
+            resolve();
+          };
+          im.onerror = () => {
+            URL.revokeObjectURL(svgUrl);
+            resolve();
+          };
+          im.src = svgUrl;
+        });
+      } catch (e) {
+        console.warn('Preferiti: failed to compose one SVG layer', e);
+      }
+    }
+
+    return out.toDataURL('image/png');
+  } catch (e) {
+    console.warn('Preferiti: failed to capture annotated image', e);
+    return null;
+  }
+}
+
 export function Preferiti({
   viewportId,
   displaySets,
@@ -287,10 +389,22 @@ export function Preferiti({
         if (!imgData) {
           return;
         }
+
+        // Cattura ANCHE una versione con le annotazioni (misurazioni
+        // length/area/...) componendo il canvas + il layer SVG. Best-effort:
+        // se fallisce ricadiamo sul DataUrl pulito così il print builder
+        // continua a funzionare anche senza annotazioni.
+        const viewportInfoForCapture = cornerstoneViewportService.getViewportInfo(viewportId);
+        const viewportElementForCapture =
+          (viewportInfoForCapture?.getElement?.() as HTMLElement | null) ?? null;
+        const imgDataAnnotated =
+          (await captureImageWithAnnotationsFromElement(viewportElementForCapture)) || imgData;
+
         window.preferiti.push({
           SeriesInstanceUID,
           SOPInstanceUID: SOPInstanceUID,
           DataUrl: imgData,
+          DataUrlAnnotated: imgDataAnnotated,
           NumeroSerie: NumeroSerie,
           DescrizioneSerie: DescrizioneSerie,
           NumeroIstanza: NumeroIstanza,

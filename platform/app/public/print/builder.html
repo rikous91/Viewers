@@ -4,13 +4,18 @@
     <meta charset="UTF-8" />
     <title>Layout Preferiti - GRID AUTO</title>
 
-    <!-- Stimulsoft JS PACK -->
+    <!-- Stimulsoft JS PACK
+         Carichiamo SOLO i pack che servono davvero per il modello dati e
+         il designer (anche se nascosto). La pipeline di stampa è
+         interamente canvas-based (vedi printCurrent →
+         renderPageToCompositeImage), quindi NON serve:
+           - reports.export.pack.js  (~206 KB) - HtmlExport/PdfExport
+           - reports.chart.pack.js   (~174 KB) - grafici Stimulsoft
+           - reports.maps.pack.js    (~2.5 MB) - mappe geografiche
+           - reports.import.xlsx.pack.js (~280 KB) - import da Excel
+         Risparmio totale al boot: ~3.2 MB di JavaScript. -->
     <script src="./assets/stimulsoft.reports.pack.js"></script>
     <script src="./assets/stimulsoft.reports.engine.pack.js"></script>
-    <script src="./assets/stimulsoft.reports.import.xlsx.pack.js"></script>
-    <script src="./assets/stimulsoft.reports.export.pack.js"></script>
-    <script src="./assets/stimulsoft.reports.chart.pack.js"></script>
-    <script src="./assets/stimulsoft.reports.maps.pack.js"></script>
     <script src="./assets/stimulsoft.viewer.pack.js"></script>
     <script src="./assets/stimulsoft.designer.pack.js"></script>
 
@@ -62,11 +67,65 @@
         overflow-y: auto;
         border-right: 1px solid #1e293b;
       }
-      #sidebar img {
-        width: 100%;
-        margin-bottom: 10px;
+      #sidebar h3 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #cbd5e1;
+      }
+      .fav-card {
+        position: relative;
+        margin-bottom: 12px;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        overflow: hidden;
+        background: #1e293b;
         cursor: pointer;
-        border: 1px solid #282828;
+        transition: border-color 0.15s, box-shadow 0.15s, transform 0.05s;
+      }
+      .fav-card:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+      }
+      .fav-card:active {
+        transform: scale(0.98);
+      }
+      .fav-card.dragging {
+        opacity: 0.4;
+      }
+      .fav-card img {
+        display: block;
+        width: 100%;
+        height: 120px;
+        object-fit: contain;
+        background: var(--print-black);
+        pointer-events: none;
+      }
+      .fav-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        font-weight: 300;
+        line-height: 1;
+        opacity: 0;
+        transition: opacity 0.15s;
+        pointer-events: none;
+      }
+      .fav-card:hover .fav-overlay {
+        opacity: 1;
+      }
+      .fav-overlay span {
+        background: rgba(59, 130, 246, 0.9);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       #main {
@@ -115,15 +174,133 @@
         box-shadow: 0 0 0 2px #3b82f6 inset;
       }
 
-      #designer-container {
+      /* L'editor REALE che vede l'utente.
+         All'interno c'è un overlay solido (#editor-loading-overlay) con
+         uno spinner che COPRE tutto finché .ready non viene aggiunto.
+         Solo quando il primo addGrid è completo E il wrapper ha
+         dimensioni reali (= modale effettivamente aperta), maybeRevealEditor
+         aggiunge .ready e lo spinner sfuma rivelando l'editor finito. */
+      #nolex-editor {
         flex: 1;
         position: relative;
-        background: var(--print-black) !important;
+        background: #1a1a1a;
+        overflow: hidden;
+        min-height: 0;
       }
-      #designer {
+      #editor-loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: #1a1a1a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 220ms ease-out;
+      }
+      #nolex-editor.ready #editor-loading-overlay {
+        opacity: 0;
+      }
+      .editor-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #ffffff;
+        border-radius: 50%;
+        animation: editor-spin 0.7s linear infinite;
+      }
+      @keyframes editor-spin {
+        to { transform: rotate(360deg); }
+      }
+      #editor-canvas-wrapper {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+      #editor-page {
+        position: relative;
+        background: var(--print-black);
+        box-shadow: 0 0 0 1px #333, 0 8px 24px rgba(0, 0, 0, 0.6);
+        flex-shrink: 0;
+      }
+      .editor-cell {
+        position: absolute;
+        background: var(--print-black);
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      .editor-cell.empty {
+        outline: 1px dashed rgba(120, 120, 120, 0.5);
+        outline-offset: -1px;
+      }
+      .editor-cell img {
+        display: block;
         width: 100%;
         height: 100%;
-        background: var(--print-black) !important;
+        user-select: none;
+        -webkit-user-drag: none;
+        pointer-events: none;
+      }
+      .editor-cell.tool-pan {
+        cursor: grab;
+      }
+      .editor-cell.tool-pan.dragging {
+        cursor: grabbing;
+      }
+      .editor-cell.tool-zoom {
+        cursor: zoom-in;
+      }
+      .editor-cell.drop-target {
+        outline: 2px solid #3b82f6;
+        outline-offset: -2px;
+      }
+      .cell-reset-btn {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(220, 38, 38, 0.92);
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 5;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        transition: transform 0.1s, background 0.15s;
+      }
+      .cell-reset-btn:hover {
+        transform: scale(1.12);
+        background: rgba(220, 38, 38, 1);
+      }
+
+      /* Designer Stimulsoft NASCOSTO ma vivo:
+         lo manteniamo a 1x1 px fuori vista così Stimulsoft può ancora
+         renderizzare le sue strutture dati, ma l'utente non lo vede. */
+      #designer-container {
+        position: absolute !important;
+        left: -99999px !important;
+        top: 0 !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+      }
+      #designer {
+        width: 1px;
+        height: 1px;
       }
 
       #toolbar button {
@@ -138,14 +315,85 @@
         background: #4b5563;
         border-color: #fff;
       }
-      #reset {
-        background: #b71c1c !important;
+      #toolbar-tools-stack {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+      }
+      #toolbar-tools-stack button {
+        text-align: center;
       }
 
-      #reset:hover {
-        background: #dd1c1c !important;
+      /* Select formato pagina */
+      #formatSelect {
+        background: #161616;
+        color: #e5e7eb;
+        border: 1px solid #4b5563;
+        padding: 4px 10px;
+        font-size: 13px;
+        cursor: pointer;
+        border-radius: 2px;
+        appearance: auto;
+      }
+      #formatSelect:hover {
+        border-color: #6b7280;
+      }
+      #formatSelect option {
+        background: #161616;
+        color: #e5e7eb;
       }
 
+      /* Checkbox info esame + checkbox annotazioni: stesso look */
+      #infoEsameToggle,
+      #annotazioniToggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #e5e7eb;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+      }
+      #infoEsameToggle input[type='checkbox'],
+      #annotazioniToggle input[type='checkbox'] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: #3b82f6;
+      }
+      /* Select dimensione info esame: stesso look del select formato.
+         Visibile SOLO quando la checkbox è ON (gestito via JS:
+         #infoSizeSelect.hidden { display:none } controllato dal change). */
+      #infoSizeSelect {
+        background: #161616;
+        color: #e5e7eb;
+        border: 1px solid #4b5563;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        border-radius: 2px;
+        appearance: auto;
+      }
+      #infoSizeSelect:hover {
+        border-color: #6b7280;
+      }
+      #infoSizeSelect option {
+        background: #161616;
+        color: #e5e7eb;
+      }
+      #infoSizeSelect.hidden {
+        display: none;
+      }
+      #toolbar-builder-zoom {
+        display: flex;
+        gap: 4px;
+      }
+      #toolbar-builder-zoom button {
+        width: 32px;
+        text-align: center;
+        font-size: 16px;
+        padding: 4px 0;
+      }
       #printBar {
         right: 20px;
         position: absolute;
@@ -319,43 +567,97 @@
         </div>
 
         <strong style="margin-left: 20px">Formato:</strong>
-        <button
-          id="A4P"
-          onclick="selectFormat('A4','portrait')"
+        <select
+          id="formatSelect"
+          onchange="onFormatSelectChange(this.value)"
         >
-          A4 Portrait
-        </button>
-        <button
-          id="A4L"
-          onclick="selectFormat('A4','landscape')"
+          <option value="A4|portrait">A4 Portrait</option>
+          <option value="A4|landscape">A4 Landscape</option>
+          <option value="A3|portrait">A3 Portrait</option>
+          <option value="A3|landscape">A3 Landscape</option>
+          <option value="SRA3|portrait">SRA3 Portrait</option>
+          <option value="SRA3|landscape">SRA3 Landscape</option>
+        </select>
+
+        <strong style="margin-left: 20px">Info esame:</strong>
+        <label
+          id="infoEsameToggle"
+          title="Mostra/nascondi le info paziente sovraimpresse alle immagini"
         >
-          A4 Landscape
-        </button>
-        <button
-          id="A3P"
-          onclick="selectFormat('A3','portrait')"
+          <input
+            type="checkbox"
+            id="infoEsameCheckbox"
+            onchange="onShowPatientInfoChange(this.checked)"
+          />
+          <span>Mostra</span>
+        </label>
+        <select
+          id="infoSizeSelect"
+          onchange="onInfoSizeChange(this.value)"
+          title="Dimensione del testo info esame"
         >
-          A3 Portrait
-        </button>
-        <button
-          id="A3L"
-          onclick="selectFormat('A3','landscape')"
+          <option value="0.7">Piccolo</option>
+          <!-- value="1" e NON "1.0": String(1.0) in JS ritorna "1",
+               serve match esatto col value della option per riselezionarla
+               correttamente al boot da localStorage. -->
+          <option value="1" selected>Medio</option>
+          <option value="1.4">Grande</option>
+          <option value="1.8">Extra grande</option>
+        </select>
+
+        <strong style="margin-left: 20px">Annotazioni:</strong>
+        <label
+          id="annotazioniToggle"
+          title="Mostra/nascondi le misurazioni (length, area, ...) sovraimpresse alle immagini"
         >
-          A3 Landscape
-        </button>
-        <strong style="margin-left: 20px">Extra:</strong>
-        <button
-          id="reset"
-          onclick="addGrid(currentGridType);"
-          ;
-        >
-          Reset
-        </button>
+          <input
+            type="checkbox"
+            id="annotazioniCheckbox"
+            onchange="onShowAnnotationsChange(this.checked)"
+          />
+          <span>Mostra</span>
+        </label>
+
+        <strong style="margin-left: 20px">Strumenti:</strong>
+        <div id="toolbar-tools-stack">
+          <button
+            id="tool-pan"
+            onclick="setActiveTool('pan')"
+            title="Sposta l'immagine dentro la sua cella (drag col mouse)"
+          >
+            ✋ Sposta
+          </button>
+          <button
+            id="tool-zoom"
+            onclick="setActiveTool('zoom')"
+            title="Zoom dell'immagine dentro la sua cella (rotella mouse o drag verticale)"
+          >
+            🔍 Zoom
+          </button>
+        </div>
         <div id="printBar">
           <button onclick="printCurrent()">🖨️ Stampa</button>
         </div>
       </div>
 
+      <!-- Editor canvas: la nostra vista pagina (sostituisce visivamente
+           il designer Stimulsoft, che resta in vita ma fuori vista per
+           popolare il modello dati usato dalla stampa). -->
+      <div id="nolex-editor">
+        <div id="editor-canvas-wrapper">
+          <div id="editor-page"></div>
+        </div>
+        <!-- Overlay di caricamento: copre l'editor finché maybeRevealEditor
+             non aggiunge .ready a #nolex-editor (= primo refresh dei
+             preferiti completo + wrapper con dimensioni reali). -->
+        <div id="editor-loading-overlay">
+          <div class="editor-spinner"></div>
+        </div>
+      </div>
+
+      <!-- Designer Stimulsoft fuori vista: necessario per popolare il
+           modello dei componenti (page.components), usato dalla stampa
+           via printCurrent → renderPageToCompositeImage. -->
       <div id="designer-container">
         <div id="designer"></div>
       </div>
@@ -373,15 +675,187 @@
         'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC';
       const STUDY_TITLE_HEIGHT_CM = 1.2;
       const SHOW_STUDY_TITLE = false;
-      const PRINT_OFFSET_A4_X_CM = 0.07;
-      const PRINT_OFFSET_A4_Y_CM = 0.07;
-      const PRINT_OFFSET_A3_X_CM = 0.1;
-      const PRINT_OFFSET_A3_Y_CM = 0.1;
+      // Offset di stampa: tenuti a 0 per evitare bordi bianchi asimmetrici nel
+      // print preview del browser. Lo shift dei componenti faceva uscire il
+      // contenuto dal bordo destro/basso della pagina, lasciando bianco su uno
+      // dei due lati. Lasciamo 0: la pagina è già edge-to-edge, qualunque
+      // residua asimmetria è dovuta all'area non stampabile dell'hardware.
+      const PRINT_OFFSET_A4_X_CM = 0;
+      const PRINT_OFFSET_A4_Y_CM = 0;
+      const PRINT_OFFSET_A3_X_CM = 0;
+      const PRINT_OFFSET_A3_Y_CM = 0;
+      const PRINT_OFFSET_SRA3_X_CM = 0;
+      const PRINT_OFFSET_SRA3_Y_CM = 0;
       let PRINT_OFFSET_X_CM = PRINT_OFFSET_A4_X_CM;
       let PRINT_OFFSET_Y_CM = PRINT_OFFSET_A4_Y_CM;
       let designer, report, page;
       let currentGridType = null;
       let selectedGridCell = null;
+
+      // ======================================================
+      // STAMPA — pipeline custom (bypass HTML export di Stimulsoft)
+      // ------------------------------------------------------
+      // Stimulsoft, nel suo DIV-mode HTML export per la stampa, genera CSS
+      // tipo `.pagemargins<n> { padding: <top> <right> <bottom/2> <left>; }`
+      // (notare il bottom diviso a metà), oltre a inserire wrapper di pagina
+      // che non rispettano edge-to-edge in modo consistente fra browser.
+      // Per gli X-ray vogliamo invece pixel-perfect, niente bordi bianchi e
+      // nessun offset manuale. La soluzione è bypassare completamente la
+      // pipeline di stampa di Stimulsoft: renderizziamo tutti i componenti
+      // immagine della pagina su un canvas alla dimensione esatta, lo
+      // serializziamo come PNG e lo stampiamo dentro un iframe nostro con
+      // CSS @page sotto il nostro controllo (`size: WxH; margin: 0`).
+      // ======================================================
+      async function renderPageToCompositeImage() {
+        if (!page) return null;
+
+        const W = page.pageWidth;
+        const H = page.pageHeight;
+        const PX = 96 / 2.54;
+        const wPx = Math.max(1, Math.round(W * PX));
+        const hPx = Math.max(1, Math.round(H * PX));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = wPx;
+        canvas.height = hPx;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // Sfondo nero pieno: copre eventuali sub-pixel gap di rounding tra celle
+        ctx.fillStyle = PRINT_BLACK;
+        ctx.fillRect(0, 0, wPx, hPx);
+
+        // Raccogliamo tutti i componenti con un imageURL nell'ordine in cui
+        // sono nella pagina (così rispettiamo lo z-order di Stimulsoft).
+        const items = [];
+        for (let i = 0; i < page.components.count; i++) {
+          const c = page.components.getByIndex(i);
+          if (!c) continue;
+          if (typeof c.imageURL !== 'string' || !c.imageURL) continue;
+          if (typeof c.left !== 'number' || typeof c.top !== 'number') continue;
+          if (typeof c.width !== 'number' || typeof c.height !== 'number') continue;
+          if (c.width <= 0 || c.height <= 0) continue;
+          items.push({
+            url: c.imageURL,
+            x: c.left,
+            y: c.top,
+            w: c.width,
+            h: c.height,
+          });
+        }
+
+        await Promise.all(
+          items.map(
+            it =>
+              new Promise(res => {
+                const img = new Image();
+                img.onload = () => {
+                  const x = Math.round(it.x * PX);
+                  const y = Math.round(it.y * PX);
+                  // Calcoliamo le coordinate del bordo destro/basso a partire
+                  // dal valore arrotondato di (x + w) cm, in modo che le celle
+                  // adiacenti siano sempre perfettamente contigue (niente gap
+                  // di 1 pixel da rounding indipendente di x e w).
+                  const xRight = Math.round((it.x + it.w) * PX);
+                  const yBottom = Math.round((it.y + it.h) * PX);
+                  const w = Math.max(1, xRight - x);
+                  const h = Math.max(1, yBottom - y);
+                  ctx.drawImage(img, x, y, w, h);
+                  res();
+                };
+                img.onerror = () => res();
+                img.src = it.url;
+              })
+          )
+        );
+
+        return { dataUrl: canvas.toDataURL('image/png'), wCm: W, hCm: H };
+      }
+
+      function openPrintIframeWithImage(dataUrl, wCm, hCm) {
+        // Dimensioni in mm con 2 decimali per @page size (es. SRA3 = 320.00 x 450.00 mm)
+        const wMm = (wCm * 10).toFixed(2);
+        const hMm = (hCm * 10).toFixed(2);
+
+        // STRATEGIA: bleed di 2px su ogni lato.
+        // Anche usando 100vw/100vh il browser fa rounding interno mm→CSS px
+        // (1mm = 96/25.4 ≈ 3.7795 px), e per pagine grandi e non-standard
+        // come SRA3 (450mm = 1700.787 px) lascia una strip residua di
+        // ~0.787 px sulla destra. Soluzione robusta: posizioniamo l'img
+        // 2 px oltre ogni bordo della pagina (top/left/right/bottom = -2px,
+        // width = calc(100% + 4px)) e usiamo overflow:hidden sul body così
+        // il browser ritaglia il bleed esattamente al bordo @page. In questo
+        // modo qualsiasi residuo sub-pixel viene mangiato dal bleed e la
+        // copertura è davvero edge-to-edge su qualunque formato.
+        const html =
+          '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Stampa</title>' +
+          '<style>' +
+          '@page { size: ' + wMm + 'mm ' + hMm + 'mm; margin: 0; }' +
+          '* { box-sizing: border-box; }' +
+          'html, body {' +
+          '  margin: 0 !important; padding: 0 !important; border: 0 !important;' +
+          '  background: #000;' +
+          '  width: 100%; height: 100%;' +
+          '  overflow: hidden;' +
+          '}' +
+          'html { width: 100vw; height: 100vh; }' +
+          'body { position: relative; width: 100vw; height: 100vh; }' +
+          'img#nolexPage {' +
+          '  display: block;' +
+          '  position: absolute;' +
+          '  top: -2px; left: -2px;' +
+          '  width: calc(100% + 4px);' +
+          '  height: calc(100% + 4px);' +
+          '  max-width: none; max-height: none;' +
+          '  margin: 0; padding: 0; border: 0;' +
+          '  object-fit: fill;' +
+          '}' +
+          '</style></head><body><img id="nolexPage" src="' + dataUrl + '"></body></html>';
+
+        let printFrame = document.getElementById('nolexPrintFrame');
+        if (printFrame && printFrame.parentNode) {
+          printFrame.parentNode.removeChild(printFrame);
+        }
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'nolexPrintFrame';
+        printFrame.setAttribute('aria-hidden', 'true');
+        printFrame.style.cssText =
+          'position:fixed;left:-10000px;top:-10000px;width:1px;height:1px;border:0;visibility:hidden;';
+        document.body.appendChild(printFrame);
+
+        const fwin = printFrame.contentWindow;
+        const fdoc = fwin.document;
+        fdoc.open();
+        fdoc.write(html);
+        fdoc.close();
+
+        const triggerPrint = () => {
+          try {
+            fwin.focus();
+            fwin.print();
+          } catch (e) {
+            console.error('Errore print iframe:', e);
+          }
+        };
+
+        const img = fdoc.getElementById('nolexPage');
+        if (img && img.complete && img.naturalWidth > 0) {
+          setTimeout(triggerPrint, 50);
+        } else if (img) {
+          img.addEventListener('load', () => setTimeout(triggerPrint, 50));
+          img.addEventListener('error', () => setTimeout(triggerPrint, 50));
+        } else {
+          setTimeout(triggerPrint, 200);
+        }
+
+        // Cleanup dopo 60s (più che sufficiente per il dialog di stampa)
+        setTimeout(() => {
+          if (printFrame && printFrame.parentNode) {
+            printFrame.parentNode.removeChild(printFrame);
+          }
+        }, 60000);
+      }
 
       async function printCurrent() {
         if (!designer || !designer.report) {
@@ -389,59 +863,171 @@
           return;
         }
 
-        let restoreAfterPrint = () => {};
-        let printCleanup = () => {};
+        // Nascondi gli overlay UI (pulsanti reset celle, drop highlight, ecc.)
+        // durante la stampa: non vengono inclusi nel canvas (sono DOM esterni
+        // all'iframe di stampa) ma evitiamo che restino visibili sopra al
+        // print dialog del browser.
+        const resetLayer = document.getElementById('cell-reset-layer');
+        const dropLayer = document.getElementById('drop-highlight-layer');
+        const cellLayer = document.getElementById('cell-overlay-layer');
+        if (resetLayer) resetLayer.style.display = 'none';
+        if (dropLayer) dropLayer.style.display = 'none';
+        if (cellLayer) cellLayer.style.display = 'none';
+        const restoreOverlays = () => {
+          if (resetLayer) resetLayer.style.display = '';
+          if (dropLayer) dropLayer.style.display = '';
+          if (cellLayer) cellLayer.style.display = '';
+          updateCellOverlayLayer();
+          updateCellResetOverlays();
+        };
+        // Ripristina dopo che il dialog di stampa è chiuso
+        const onAfterPrint = () => {
+          restoreOverlays();
+          window.removeEventListener('afterprint', onAfterPrint);
+        };
+        window.addEventListener('afterprint', onAfterPrint);
+        setTimeout(restoreOverlays, 5000); // safety net
 
         try {
-          const rpt = designer.report;
-          restoreAfterPrint = await prepareImagesForPrint();
-          printCleanup = preparePrintComposite();
-          applyGlobalOffset(PRINT_OFFSET_X_CM, PRINT_OFFSET_Y_CM);
-          designer.renderHtml('designer');
-
-          let restored = false;
-          const finalize = () => {
-            if (restored) return;
-            restored = true;
-            printCleanup();
-            restoreAfterPrint();
-            applyGlobalOffset(0, 0);
+          // IMPORTANTE: durante le interazioni utente abbiamo skippato
+          // designer.renderHtml per velocità (vedi addGrid/clearGrid/...).
+          // Stimulsoft ha però uno stato interno che viene aggiornato solo
+          // durante il render, e che è necessario perché page.components
+          // sia letto correttamente dalla pipeline di stampa
+          // (renderPageToCompositeImage). Quindi PRIMA della stampa
+          // facciamo UN render di sincronizzazione: rallenta il primo
+          // click di stampa di ~200ms ma è l'unico costo.
+          try {
             designer.renderHtml('designer');
-            window.removeEventListener('afterprint', finalize);
-            window.removeEventListener('focus', onFocus);
-          };
+          } catch (_) { /* non bloccare la stampa per questo */ }
 
-          const onFocus = () => {
-            setTimeout(finalize, 50);
-          };
+          // Le immagini delle celle vengono ricomposte alla risoluzione
+          // corrente (96 dpi per cella) per riflettere eventuali resize
+          // fatti dall'utente nel designer prima di stampare.
+          await recompositeImageComponents();
 
-          window.addEventListener('afterprint', finalize);
-          window.addEventListener('focus', onFocus);
-
-          rpt.renderAsync(function () {
-            try {
-              rpt.print();
-              setTimeout(finalize, 1200);
-            } catch (err2) {
-              console.error('Errore durante report.print():', err2);
-              finalize();
-            }
-          });
+          const result = await renderPageToCompositeImage();
+          if (!result || !result.dataUrl) {
+            console.error('Composito vuoto: niente da stampare');
+            return;
+          }
+          openPrintIframeWithImage(result.dataUrl, result.wCm, result.hCm);
         } catch (err) {
           console.error('Errore durante la stampa:', err);
-          printCleanup();
-          restoreAfterPrint();
-          applyGlobalOffset(0, 0);
-          designer.renderHtml('designer');
         }
       }
 
       function loadPreferiti() {
+        // L'iframe è same-origin con il viewer: leggiamo direttamente da window.parent
+        // per evitare la quota di localStorage (i DataUrl base64 sono molto pesanti).
+        try {
+          const pref = window.parent && window.parent.preferiti;
+          if (Array.isArray(pref)) return pref;
+        } catch (_) { /* cross-origin fallback */ }
         try {
           return JSON.parse(localStorage.getItem('nolex-preferiti-layout') || '[]');
         } catch {
           return [];
         }
+      }
+
+      /* --- AUTO LAYOUT IN BASE AL NUMERO DI PREFERITI --- */
+      // Mappa N → "RxC". L'utente preferisce layout "orizzontali" e poco vuoti:
+      //  1 → 1x1, 2 → 1x2, 3 → 1x3, 4 → 2x2, 5–6 → 2x3, 7–8 → 2x4,
+      //  9 → 3x3, 10–12 → 3x4, 13–16 → 4x4. Massimo 16 (4x4).
+      function pickAutoLayout(n) {
+        if (n <= 1) return '1x1';
+        if (n === 2) return '1x2';
+        if (n === 3) return '1x3';
+        if (n === 4) return '2x2';
+        if (n <= 6) return '2x3';
+        if (n <= 8) return '2x4';
+        if (n === 9) return '3x3';
+        if (n <= 12) return '3x4';
+        return '4x4';
+      }
+
+      // Flag che diventa true non appena l'utente sceglie a mano un layout
+      // dalla mega-grid: dopo non sovrascriviamo più con l'auto-pick.
+      let userSelectedGridManually = false;
+
+      // ============================================================
+      // ZOOM / PAN PER CELLA
+      // ------------------------------------------------------------
+      // Stato per ogni cella (chiave "row_col") che descrive la trasformazione
+      // applicata all'immagine al suo interno:
+      //  - zoom:  moltiplicatore dello scale (1 = fit, 2 = doppio, …)
+      //  - panX:  offset orizzontale in cm (page units, indipendenti dalla
+      //           risoluzione di compose)
+      //  - panY:  offset verticale in cm
+      // Il transform è SEMPRE associato alla coppia (cella, immagine corrente
+      // in quella cella): se l'utente cambia immagine in una cella o cambia
+      // formato pagina, lo stato resta "agganciato" alla cella per indice
+      // (row, col) — l'utente può sempre fare reset.
+      // ============================================================
+      const imageTransforms = new Map(); // "row_col" -> {zoom, panX, panY}
+      const TRANSFORM_DEFAULT = Object.freeze({ zoom: 1, panX: 0, panY: 0 });
+      // ZOOM_MIN < 1 → l'utente può rimpicciolire l'immagine sotto il fit
+      // (lasciando sfondo nero attorno). Il reset torna sempre a zoom 1
+      // (= il fit originale, calcolato sul bordo interno della cella).
+      const ZOOM_MIN = 0.1;
+      const ZOOM_MAX = 8;
+
+      function transformKey(row, col) {
+        return row + '_' + col;
+      }
+      function getTransform(row, col) {
+        return imageTransforms.get(transformKey(row, col)) || TRANSFORM_DEFAULT;
+      }
+      function setTransform(row, col, t) {
+        imageTransforms.set(transformKey(row, col), t);
+      }
+      function clearTransform(row, col) {
+        imageTransforms.delete(transformKey(row, col));
+      }
+      function isTransformed(row, col) {
+        const t = imageTransforms.get(transformKey(row, col));
+        if (!t) return false;
+        return t.zoom !== 1 || t.panX !== 0 || t.panY !== 0;
+      }
+
+      // Tool attivo nella toolbar: 'pan' | 'zoom' | null
+      let activeTool = null;
+
+      // Stato di "primo render completo": l'editor parte invisibile e viene
+      // rivelato solo quando entrambi sono veri:
+      //  - il primo refreshPreferiti ha completato addGrid (auto-grid applicato)
+      //  - il wrapper ha dimensioni reali (cioè la modale è davvero aperta)
+      // Una sola volta per sessione: dopo la prima reveal resta sempre visibile.
+      let firstRefreshDone = false;
+      let editorRevealed = false;
+      function maybeRevealEditor() {
+        if (editorRevealed) return;
+        if (!firstRefreshDone) return;
+        const wrapper = document.getElementById('editor-canvas-wrapper');
+        if (!wrapper) return;
+        if (wrapper.clientWidth < 100 || wrapper.clientHeight < 100) return;
+        editorRevealed = true;
+        const ed = document.getElementById('nolex-editor');
+        if (ed) {
+          // Doppio rAF: un frame per applicare il render finale, l'altro
+          // per far partire la transizione di opacity dopo il paint.
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              ed.classList.add('ready');
+            });
+          });
+        }
+      }
+
+      function setActiveTool(name) {
+        activeTool = activeTool === name ? null : name;
+        const panBtn = document.getElementById('tool-pan');
+        const zoomBtn = document.getElementById('tool-zoom');
+        if (panBtn) panBtn.classList.toggle('selected', activeTool === 'pan');
+        if (zoomBtn) zoomBtn.classList.toggle('selected', activeTool === 'zoom');
+        // Aggiorna i cursori sulle celle dell'editor view
+        refreshEditorCellCursors();
       }
 
       /* --- DRAG & DROP CON OVERLAY --- */
@@ -586,46 +1172,613 @@
         }
       }
 
+      // Quando un mouse event arriva da DENTRO l'iframe Stimulsoft,
+      // clientX/Y sono relativi al viewport dell'iframe, non al window
+      // principale. Questa funzione normalizza in coordinate window:
+      // se l'evento proviene dall'iframe, somma l'offset dell'iframe.
+      function eventClientToParentWindow(e) {
+        let x = e.clientX;
+        let y = e.clientY;
+        try {
+          const target = e.target;
+          const ownerDoc = target && target.ownerDocument;
+          if (ownerDoc && ownerDoc !== document) {
+            // Trova l'iframe che ospita questo document
+            const iframes = document.querySelectorAll('iframe');
+            for (let i = 0; i < iframes.length; i++) {
+              const f = iframes[i];
+              try {
+                if (f.contentDocument === ownerDoc) {
+                  const fr = f.getBoundingClientRect();
+                  x += fr.left;
+                  y += fr.top;
+                  break;
+                }
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
+        return { x, y };
+      }
+
+      // Converte un evento mouse nella cella della griglia su cui si trova,
+      // gestendo correttamente eventi che arrivano da dentro l'iframe.
+      function eventToCell(e) {
+        const rect = getDesignerPageRectGlobal();
+        if (!rect) return null;
+        const { x, y } = eventClientToParentWindow(e);
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+          return null;
+        }
+        const cmX = ((x - rect.left) / rect.width) * page.pageWidth;
+        const cmY = ((y - rect.top) / rect.height) * page.pageHeight;
+        return findCellAtPosition(cmX, cmY);
+      }
+
       function setupCellSelectionHandlers() {
         const handleClick = e => {
-          const rect = getDesignerPageRectGlobal();
-          if (!rect) return;
-          if (
-            e.clientX < rect.left ||
-            e.clientX > rect.right ||
-            e.clientY < rect.top ||
-            e.clientY > rect.bottom
-          ) {
-            return;
-          }
-
-          const cmX = ((e.clientX - rect.left) / rect.width) * page.pageWidth;
-          const cmY = ((e.clientY - rect.top) / rect.height) * page.pageHeight;
-          const targetCell = findCellAtPosition(cmX, cmY);
+          const targetCell = eventToCell(e);
           if (targetCell) {
             selectGridCell(targetCell.row, targetCell.col);
-            showMessage(`Cella selezionata [${targetCell.row},${targetCell.col}]`, 'info');
           }
+        };
+
+        // ---------- DRAG & DROP DA SIDEBAR VERSO UNA CELLA ----------
+        // Stimulsoft renderizza la pagina dentro un iframe same-origin: per
+        // intercettare il drop dobbiamo agganciarci sia al container esterno
+        // sia al document interno dell'iframe. Su entrambi devono essere
+        // gestiti dragenter/dragover/drop.
+        const handleDragOver = e => {
+          // Controlliamo se è un drag "nostro" (immagine dalla sidebar)
+          const types = e.dataTransfer && e.dataTransfer.types;
+          if (!types) return;
+          // Su molti browser durante dragover non si può leggere il payload,
+          // ma possiamo controllare i types.
+          const hasOurType =
+            types.contains
+              ? types.contains('text/x-nolex-image-url') || types.contains('text/plain')
+              : Array.prototype.indexOf.call(types, 'text/x-nolex-image-url') >= 0 ||
+                Array.prototype.indexOf.call(types, 'text/plain') >= 0;
+          if (!hasOurType) return;
+
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+
+          const targetCell = eventToCell(e);
+          highlightDropCell(targetCell);
+        };
+
+        const handleDragLeave = e => {
+          // Verifica che stiamo davvero uscendo dall'area: se c'è un'altra
+          // cella valida sotto il cursore, non resettare l'highlight.
+          if (!eventToCell(e)) {
+            highlightDropCell(null);
+          }
+        };
+
+        const handleDrop = async e => {
+          e.preventDefault();
+          highlightDropCell(null);
+          let url = '';
+          try {
+            url =
+              e.dataTransfer.getData('text/x-nolex-image-url') ||
+              e.dataTransfer.getData('text/plain') ||
+              '';
+          } catch (_) { /* ignora */ }
+          if (!url) return;
+          const targetCell = eventToCell(e);
+          if (!targetCell) return;
+          await addImageToCell(url, targetCell.row, targetCell.col);
+          showMessage('Immagine inserita nella cella', 'success');
+        };
+
+        const attachAll = doc => {
+          if (!doc) return;
+          doc.addEventListener('click', handleClick, true);
+          doc.addEventListener('dragover', handleDragOver, true);
+          doc.addEventListener('dragenter', handleDragOver, true);
+          doc.addEventListener('dragleave', handleDragLeave, true);
+          doc.addEventListener('drop', handleDrop, true);
         };
 
         const designerContainer = document.getElementById('designer-container');
         if (designerContainer) {
           designerContainer.addEventListener('click', handleClick);
+          designerContainer.addEventListener('dragover', handleDragOver);
+          designerContainer.addEventListener('dragenter', handleDragOver);
+          designerContainer.addEventListener('dragleave', handleDragLeave);
+          designerContainer.addEventListener('drop', handleDrop);
         }
 
-        const designerFrame = document.querySelector('#designer-container iframe');
-        if (designerFrame) {
-          if (designerFrame.contentDocument) {
-            designerFrame.contentDocument.addEventListener('click', handleClick, true);
-          } else {
-            designerFrame.addEventListener('load', () => {
-              try {
-                designerFrame.contentDocument.addEventListener('click', handleClick, true);
-              } catch {}
-            });
+        // L'iframe di Stimulsoft può essere creato/ricreato dinamicamente:
+        // facciamo polling iniziale e ri-attacchiamo se cambia.
+        const tryAttachIframe = () => {
+          const designerFrame = document.querySelector('#designer-container iframe');
+          if (!designerFrame) return false;
+          const doc = designerFrame.contentDocument;
+          if (!doc) {
+            designerFrame.addEventListener(
+              'load',
+              () => {
+                try {
+                  attachAll(designerFrame.contentDocument);
+                } catch (_) {}
+              },
+              { once: true }
+            );
+            return true;
+          }
+          attachAll(doc);
+          return true;
+        };
+        tryAttachIframe();
+
+        // Re-tentativi in caso di iframe ricreato
+        let retries = 0;
+        const interval = setInterval(() => {
+          retries++;
+          tryAttachIframe();
+          if (retries > 20) clearInterval(interval);
+        }, 500);
+      }
+
+      // ============================================================
+      // PAN / ZOOM PER CELLA — gestione mouse
+      // ------------------------------------------------------------
+      // Quando un tool (pan/zoom) è attivo, i mouse event sull'area pagina
+      // del designer vengono dirottati: aggiornano il transform della cella
+      // sotto il cursore e ricompongono "in-place" la sola immagine di quella
+      // cella per dare feedback rapido (senza re-renderizzare tutto il
+      // designer Stimulsoft, che sarebbe lento).
+      // ============================================================
+      let activeDrag = null; // {row, col, startCmX, startCmY, baseTransform, sourceUrl}
+
+      function getStiImageInCell(row, col) {
+        if (!page) return null;
+        const prefix = 'Image_' + row + '_' + col + '_';
+        for (let i = 0; i < page.components.count; i++) {
+          const c = page.components.getByIndex(i);
+          if (c && c.name && c.name.startsWith(prefix)) return c;
+        }
+        return null;
+      }
+
+      // Pre-carica un'immagine sorgente e la cacha per evitare round-trip
+      // ad ogni mousemove del drag.
+      const _sourceImageCache = new Map(); // url -> HTMLImageElement
+      function loadSourceImageCached(url) {
+        const cached = _sourceImageCache.get(url);
+        if (cached) return Promise.resolve(cached);
+        return new Promise(res => {
+          const i = new Image();
+          i.onload = () => {
+            _sourceImageCache.set(url, i);
+            res(i);
+          };
+          i.onerror = () => res(null);
+          i.src = url;
+        });
+      }
+
+      // Trova il <img> DOM dentro l'iframe Stimulsoft che corrisponde alla
+      // cella (row, col). Match per centro geometrico nell'area pagina del
+      // designer. Usato UNA SOLA VOLTA all'avvio del drag — poi durante il
+      // mousemove si aggiorna direttamente quel ref.
+      function findCellDomImage(row, col) {
+        try {
+          const frame = document.querySelector('#designer-container iframe');
+          const doc = frame && frame.contentDocument;
+          if (!doc) return null;
+          const rect = getDesignerPageRectGlobal();
+          if (!rect || !currentGridType) return null;
+
+          const [rows, cols] = currentGridType.split('x').map(Number);
+          const cellPxW = rect.width / cols;
+          const cellPxH = rect.height / rows;
+          // Centro della cella in coordinate window principale
+          const targetCx = rect.left + (col + 0.5) * cellPxW;
+          const targetCy = rect.top + (row + 0.5) * cellPxH;
+
+          // Le getBoundingClientRect dei nodi dentro l'iframe sono RELATIVE
+          // al viewport DELL'IFRAME. Per confrontarle col target in coord
+          // window, sommiamo l'offset dell'iframe.
+          const fr = frame.getBoundingClientRect();
+
+          const imgs = doc.querySelectorAll('img');
+          let bestImg = null;
+          let bestDist = Infinity;
+          imgs.forEach(im2 => {
+            const r2 = im2.getBoundingClientRect();
+            // Ignora <img> chiaramente più piccoli di una cella (icone)
+            if (r2.width < cellPxW * 0.4 || r2.height < cellPxH * 0.4) return;
+            const cx = fr.left + r2.left + r2.width / 2;
+            const cy = fr.top + r2.top + r2.height / 2;
+            const d = Math.hypot(cx - targetCx, cy - targetCy);
+            if (d < bestDist) {
+              bestDist = d;
+              bestImg = im2;
+            }
+          });
+          return bestImg;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      // Compone (sincrono, usando l'immagine già in cache) e ritorna il
+      // dataURL — niente touch dello stato Stimulsoft, solo pixel.
+      function composeCellSync(row, col) {
+        const stiImg = getStiImageInCell(row, col);
+        if (!stiImg) return null;
+        const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
+        if (!sourceUrl) return null;
+        const im = _sourceImageCache.get(sourceUrl);
+        if (!im) return null;
+        const PX = 96 / 2.54;
+        const wpx = Math.max(1, Math.round(stiImg.width * PX));
+        const hpx = Math.max(1, Math.round(stiImg.height * PX));
+        const transform = getTransform(row, col);
+        return composeImageOnBlack(
+          im,
+          wpx,
+          hpx,
+          wpx / im.width,
+          hpx / im.height,
+          transform
+        );
+      }
+
+      // ============================================================
+      // EDITOR VIEW (la nostra) — costruzione DOM da page.components
+      // ------------------------------------------------------------
+      // Legge il modello Stimulsoft (page + page.components) e costruisce
+      // i div delle celle con dentro l'<img> composto. Calcola anche il
+      // fit zoom per far entrare la pagina nell'area visibile.
+      // ============================================================
+      function renderEditorView() {
+        const pageEl = document.getElementById('editor-page');
+        const wrapper = document.getElementById('editor-canvas-wrapper');
+        if (!pageEl || !wrapper || !page || !currentGridType) return;
+
+        // Calcolo fit zoom: la pagina deve entrare interamente nella
+        // wrapper area (al netto del padding di 16px su ogni lato).
+        const PX_PER_CM = 96 / 2.54;
+        const naturalW = page.pageWidth * PX_PER_CM;
+        const naturalH = page.pageHeight * PX_PER_CM;
+        const availW = Math.max(100, wrapper.clientWidth - 32);
+        const availH = Math.max(100, wrapper.clientHeight - 32);
+        const fitFactor = Math.min(availW / naturalW, availH / naturalH);
+        const factor = Math.max(0.05, Math.min(2.5, fitFactor));
+
+        const pageW = Math.max(1, Math.round(naturalW * factor));
+        const pageH = Math.max(1, Math.round(naturalH * factor));
+
+        pageEl.style.width = pageW + 'px';
+        pageEl.style.height = pageH + 'px';
+        pageEl.innerHTML = '';
+
+        const [rows, cols] = currentGridType.split('x').map(Number);
+        const cellW = pageW / cols;
+        const cellH = pageH / rows;
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'editor-cell';
+            cell.dataset.row = String(r);
+            cell.dataset.col = String(c);
+            cell.style.left = c * cellW + 'px';
+            cell.style.top = r * cellH + 'px';
+            cell.style.width = cellW + 'px';
+            cell.style.height = cellH + 'px';
+
+            const stiImg = getStiImageInCell(r, c);
+            if (stiImg && stiImg.imageURL) {
+              const img = document.createElement('img');
+              img.src = stiImg.imageURL;
+              img.draggable = false;
+              cell.appendChild(img);
+            } else {
+              cell.classList.add('empty');
+            }
+
+            // Cursor in base al tool attivo
+            if (activeTool === 'pan') cell.classList.add('tool-pan');
+            else if (activeTool === 'zoom') cell.classList.add('tool-zoom');
+
+            // Reset overlay button se la cella è trasformata
+            if (stiImg && isTransformed(r, c)) {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'cell-reset-btn';
+              btn.textContent = '↺';
+              btn.title = 'Reset zoom/pan di questa cella';
+              const rr = r,
+                cc = c;
+              btn.addEventListener('click', ev => {
+                ev.stopPropagation();
+                ev.preventDefault();
+                clearTransform(rr, cc);
+                commitCellTransform(rr, cc).then(() => renderEditorView());
+              });
+              cell.appendChild(btn);
+            }
+
+            pageEl.appendChild(cell);
           }
         }
       }
+
+      // Aggiorna solo i cursori delle celle (chiamato quando si attiva
+      // un tool) senza rifare tutto il DOM
+      function refreshEditorCellCursors() {
+        const cells = document.querySelectorAll('.editor-cell');
+        cells.forEach(cell => {
+          cell.classList.remove('tool-pan', 'tool-zoom');
+          if (activeTool === 'pan') cell.classList.add('tool-pan');
+          else if (activeTool === 'zoom') cell.classList.add('tool-zoom');
+        });
+      }
+
+      // Commit finale del transform sulla cella: aggiorna lo stato
+      // Stimulsoft (imageURL) e fa renderHtml per allineare il designer.
+      async function commitCellTransform(row, col) {
+        const stiImg = getStiImageInCell(row, col);
+        if (!stiImg) return;
+        const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
+        if (!sourceUrl) return;
+        const im = await loadSourceImageCached(sourceUrl);
+        if (!im) return;
+        const PX = 96 / 2.54;
+        const wpx = Math.max(1, Math.round(stiImg.width * PX));
+        const hpx = Math.max(1, Math.round(stiImg.height * PX));
+        const transform = getTransform(row, col);
+        const composed = composeImageOnBlack(
+          im,
+          wpx,
+          hpx,
+          wpx / im.width,
+          hpx / im.height,
+          transform
+        );
+        stiImg.imageURL = composed;
+        stiImg._nolexComposeKey =
+          getComposeKey(wpx, hpx) +
+          '|' +
+          transform.zoom +
+          '|' +
+          transform.panX +
+          '|' +
+          transform.panY;
+        // NON chiamiamo designer.renderHtml: il designer è nascosto e ci serve
+        // solo come modello dati. Lo stato Stimulsoft è già aggiornato (l'array
+        // page.components contiene gli StiImage con la nuova imageURL), pronto
+        // per la stampa via printCurrent → renderPageToCompositeImage.
+      }
+
+      // Wrapper retro-compat (alcune chiamate esterne lo invocano)
+      async function recomposeCellInPlace(row, col) {
+        return commitCellTransform(row, col);
+      }
+
+      // ============================================================
+      // EDITOR HANDLERS — pan/zoom + drag&drop sui div .editor-cell
+      // ------------------------------------------------------------
+      // Lavoriamo su elementi DOM nostri (creati da renderEditorView)
+      // dentro #editor-page. Niente iframe, niente coordinate weird:
+      // gli eventi mouse arrivano col target esatto.
+      // ============================================================
+      function setupEditorHandlers() {
+        const pageEl = document.getElementById('editor-page');
+        if (!pageEl) return;
+        let pendingFrame = null;
+        let wheelCommitTimer = null;
+
+        // mousedown su cella → inizia drag pan/zoom
+        pageEl.addEventListener('mousedown', async e => {
+          if (activeTool !== 'pan' && activeTool !== 'zoom') return;
+          if (e.button !== 0) return;
+          const cellEl = e.target.closest && e.target.closest('.editor-cell');
+          if (!cellEl) return;
+          const row = parseInt(cellEl.dataset.row, 10);
+          const col = parseInt(cellEl.dataset.col, 10);
+          const stiImg = getStiImageInCell(row, col);
+          if (!stiImg) return;
+
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Conversione px → cm: la pagina nell'editor ha pageEl.clientWidth
+          // CSS pixel = page.pageWidth cm.
+          const pageRect = pageEl.getBoundingClientRect();
+          const cmPerPxX = page.pageWidth / pageRect.width;
+          const cmPerPxY = page.pageHeight / pageRect.height;
+
+          // Pre-carica il sorgente nella cache (la usiamo a ogni mousemove)
+          const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
+          if (sourceUrl && !_sourceImageCache.has(sourceUrl)) {
+            await loadSourceImageCached(sourceUrl);
+          }
+
+          // Riferimento DIRETTO al DOM <img> della cella: aggiorneremo il
+          // suo .src ad ogni rAF durante il drag. Niente Stimulsoft di mezzo.
+          const domImg = cellEl.querySelector('img');
+
+          activeDrag = {
+            row,
+            col,
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            cmPerPxX,
+            cmPerPxY,
+            base: { ...getTransform(row, col) },
+            tool: activeTool,
+            moved: false,
+            domImg,
+            sourceUrl,
+          };
+
+          if (activeTool === 'pan') cellEl.classList.add('dragging');
+        });
+
+        // mousemove e mouseup vivono sul document così il drag continua
+        // anche se il mouse esce dalla cella.
+        document.addEventListener('mousemove', e => {
+          if (!activeDrag) return;
+          e.preventDefault();
+          activeDrag.moved = true;
+
+          const dx = e.clientX - activeDrag.startClientX;
+          const dy = e.clientY - activeDrag.startClientY;
+
+          let next;
+          if (activeDrag.tool === 'pan') {
+            next = {
+              ...activeDrag.base,
+              panX: activeDrag.base.panX + dx * activeDrag.cmPerPxX,
+              panY: activeDrag.base.panY + dy * activeDrag.cmPerPxY,
+            };
+          } else {
+            // Zoom drag verticale: drag in alto = zoom in
+            const factor = Math.pow(1.005, -dy);
+            const newZoom = Math.max(
+              ZOOM_MIN,
+              Math.min(ZOOM_MAX, activeDrag.base.zoom * factor)
+            );
+            next = { ...activeDrag.base, zoom: newZoom };
+          }
+
+          setTransform(activeDrag.row, activeDrag.col, next);
+
+          // Throttle via rAF: aggiorniamo SOLO il src dell'img della cella
+          // (composto sincrono dalla cache). Niente Stimulsoft di mezzo →
+          // movimento istantaneo.
+          if (pendingFrame) return;
+          pendingFrame = requestAnimationFrame(() => {
+            pendingFrame = null;
+            if (!activeDrag) return;
+            const composed = composeCellSync(activeDrag.row, activeDrag.col);
+            if (composed && activeDrag.domImg) {
+              activeDrag.domImg.src = composed;
+            }
+          });
+        });
+
+        document.addEventListener('mouseup', () => {
+          if (!activeDrag) return;
+          const wasMoved = activeDrag.moved;
+          const row = activeDrag.row;
+          const col = activeDrag.col;
+          // Rimuovi classe dragging
+          const draggingCell = pageEl.querySelector('.editor-cell.dragging');
+          if (draggingCell) draggingCell.classList.remove('dragging');
+          activeDrag = null;
+
+          if (wasMoved) {
+            // Commit finale al modello Stimulsoft (per la stampa) e
+            // re-render dell'editor view (per mostrare il pulsante reset).
+            commitCellTransform(row, col).then(() => renderEditorView());
+          }
+        });
+
+        // Wheel su cella in modalità zoom
+        pageEl.addEventListener(
+          'wheel',
+          async e => {
+            if (activeTool !== 'zoom') return;
+            const cellEl = e.target.closest && e.target.closest('.editor-cell');
+            if (!cellEl) return;
+            const row = parseInt(cellEl.dataset.row, 10);
+            const col = parseInt(cellEl.dataset.col, 10);
+            const stiImg = getStiImageInCell(row, col);
+            if (!stiImg) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const current = getTransform(row, col);
+            const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+            const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current.zoom * factor));
+            setTransform(row, col, { ...current, zoom: newZoom });
+
+            const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
+            if (sourceUrl && !_sourceImageCache.has(sourceUrl)) {
+              await loadSourceImageCached(sourceUrl);
+            }
+            const composed = composeCellSync(row, col);
+            const domImg = cellEl.querySelector('img');
+            if (composed && domImg) domImg.src = composed;
+
+            if (wheelCommitTimer) clearTimeout(wheelCommitTimer);
+            wheelCommitTimer = setTimeout(() => {
+              commitCellTransform(row, col).then(() => renderEditorView());
+            }, 250);
+          },
+          { passive: false }
+        );
+
+        // ---------- DRAG & DROP da sidebar verso una cella ----------
+        pageEl.addEventListener('dragover', e => {
+          const types = e.dataTransfer && e.dataTransfer.types;
+          if (!types) return;
+          const hasOurType =
+            types.contains
+              ? types.contains('text/x-nolex-image-url') || types.contains('text/plain')
+              : Array.prototype.indexOf.call(types, 'text/x-nolex-image-url') >= 0 ||
+                Array.prototype.indexOf.call(types, 'text/plain') >= 0;
+          if (!hasOurType) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+          // Highlight della cella sotto il cursore
+          const cellEl = e.target.closest && e.target.closest('.editor-cell');
+          pageEl
+            .querySelectorAll('.editor-cell.drop-target')
+            .forEach(c => c.classList.remove('drop-target'));
+          if (cellEl) cellEl.classList.add('drop-target');
+        });
+
+        pageEl.addEventListener('dragleave', e => {
+          // Se siamo usciti completamente dalla page-area, togli highlight
+          if (!e.relatedTarget || !pageEl.contains(e.relatedTarget)) {
+            pageEl
+              .querySelectorAll('.editor-cell.drop-target')
+              .forEach(c => c.classList.remove('drop-target'));
+          }
+        });
+
+        pageEl.addEventListener('drop', async e => {
+          e.preventDefault();
+          pageEl
+            .querySelectorAll('.editor-cell.drop-target')
+            .forEach(c => c.classList.remove('drop-target'));
+          let url = '';
+          try {
+            url =
+              e.dataTransfer.getData('text/x-nolex-image-url') ||
+              e.dataTransfer.getData('text/plain') ||
+              '';
+          } catch (_) {}
+          if (!url) return;
+          const cellEl = e.target.closest && e.target.closest('.editor-cell');
+          if (!cellEl) return;
+          const row = parseInt(cellEl.dataset.row, 10);
+          const col = parseInt(cellEl.dataset.col, 10);
+          await addImageToCell(url, row, col);
+          showMessage('Immagine inserita nella cella', 'success');
+        });
+
+        // Click su cella vuota = nessuna azione speciale; click su cella
+        // piena = nulla (i tool gestiscono i drag).
+      }
+
+      // Stub di compatibilità: alcune chiamate vecchie ancora invocavano
+      // updateCellOverlayLayer/updateCellResetOverlays — ora il rendering
+      // dell'editor è centralizzato in renderEditorView, queste chiamate
+      // diventano no-op redirezionate.
+      function updateCellOverlayLayer() { renderEditorView(); }
+      function updateCellResetOverlays() { /* gestito da renderEditorView */ }
+      function highlightDropCell() { /* obsoleto: ora la classe drop-target è sulle .editor-cell */ }
       async function addImageToCell(imageUrl, row, col) {
         if (!currentGridType) {
           console.error('Nessun layout selezionato');
@@ -654,32 +1807,37 @@
 
         ensureCellBackground(row, col, cellW, cellH, gridTop);
 
-        // Carica l'immagine per ottenere dimensioni
-        const img = await new Promise(res => {
-          const image = new Image();
-          image.onload = () => res(image);
-          image.onerror = () => {
-            console.error("Errore nel caricamento dell'immagine:", imageUrl);
-            res(null);
-          };
-          image.src = imageUrl;
-        });
+        // Lookup del preferito per recuperare ENTRAMBE le versioni
+        // (clean + annotated). imageUrl arriva dal click/drag della sidebar
+        // ed è la versione "clean". Se troviamo il preferito corrispondente,
+        // usiamo anche la sua versione annotata; altrimenti fallback su clean.
+        const preferitiList = loadPreferiti();
+        const preferitoMatch = (preferitiList || []).find(p => p.DataUrl === imageUrl);
+        const cleanUrl = imageUrl;
+        const annotatedUrl =
+          (preferitoMatch && preferitoMatch.DataUrlAnnotated) || imageUrl;
+        const activeUrl = showAnnotations ? annotatedUrl : cleanUrl;
+
+        // Carica l'immagine attiva (cache hit istantaneo se già nota)
+        const img = await loadSourceImageCached(activeUrl);
 
         if (!img) {
           console.error("Impossibile caricare l'immagine");
           return;
         }
 
-        // Componi immagine full-cell con sfondo nero
+        // Componi immagine full-cell con sfondo nero (rispetta zoom/pan se presenti)
         const PX = 96 / 2.54;
         const cellWpx = Math.max(1, Math.round(cellW * PX));
         const cellHpx = Math.max(1, Math.round(cellH * PX));
+        const transform = getTransform(row, col);
         const composedUrl = composeImageOnBlack(
           img,
           cellWpx,
           cellHpx,
           cellWpx / img.width,
-          cellHpx / img.height
+          cellHpx / img.height,
+          transform
         );
 
         const left = col * cellW;
@@ -708,24 +1866,29 @@
         stiImg.allowResize = false;
         stiImg.allowMove = false;
         stiImg.name = `Image_${row}_${col}_${Date.now()}`;
-        stiImg.tag = imageUrl;
-        const composeKey = getComposeKey(cellWpx, cellHpx);
+        stiImg.tag = activeUrl;
+        // Memorizza ENTRAMBE le versioni per il toggle annotazioni
+        stiImg._nolexCleanUrl = cleanUrl;
+        stiImg._nolexAnnotatedUrl = annotatedUrl;
+        const composeKey =
+          getComposeKey(cellWpx, cellHpx) +
+          '|' +
+          transform.zoom +
+          '|' +
+          transform.panX +
+          '|' +
+          transform.panY +
+          '|' +
+          (showPatientInfo ? '1' : '0') +
+          '|' +
+          (showAnnotations ? '1' : '0');
         stiImg._nolexComposeKey = composeKey;
 
         page.components.add(stiImg);
 
-        const scrollState = getDesignerScrollState();
         ensureEmptyCellBorders(rows, cols, cellW, cellH, gridTop);
-        designer.renderHtml('designer');
-        let tries = 0;
-        const restore = () => {
-          restoreDesignerScrollState(scrollState);
-          tries += 1;
-          if (tries < 6) {
-            setTimeout(restore, 100);
-          }
-        };
-        setTimeout(restore, 0);
+        // Skip designer.renderHtml: il designer è nascosto, basta il modello.
+        renderEditorView();
         console.log(`Immagine aggiunta alla cella [${row},${col}]`);
 
         return stiImg;
@@ -895,11 +2058,11 @@
       }
 
       /* --- MODIFICA refreshPreferiti PER AGGIUNGERE PULSANTI DI AZIONE --- */
-      function refreshPreferiti() {
+      async function refreshPreferiti() {
         console.log('⟳ Refresh preferiti da postMessage');
 
-        // 1) Ricarico dal localStorage
-        const newPref = JSON.parse(localStorage.getItem('nolex-preferiti-layout') || '[]');
+        // 1) Ricarico dai preferiti del viewer (same-origin, niente quota)
+        const newPref = loadPreferiti();
 
         // 2) Aggiorno la sidebar
         const favList = document.getElementById('fav-list');
@@ -908,66 +2071,67 @@
         newPref.forEach((p, index) => {
           if (!p?.DataUrl) return;
 
+          // Card cliccabile: l'intera anteprima è cliccabile (niente più "+").
+          // All'hover compare un overlay centrale con icona "+" come hint.
           const container = document.createElement('div');
-          container.style.cssText = `
-            margin-bottom: 12px;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            overflow: hidden;
-            background: #1e293b;
-        `;
+          container.className = 'fav-card';
+          container.dataset.url = p.DataUrl;
+          container.draggable = true;
+          container.title = 'Clicca o trascina su una cella per aggiungere';
 
-          // Immagine
           const img = document.createElement('img');
           img.src = p.DataUrl;
-          img.style.cssText = `
-            width: 100%;
-            height: 120px;
-            object-fit: contain;
-            background: ${PRINT_BLACK};
-            cursor: pointer;
-            display: block;
-        `;
-          img.title = 'Clicca per selezionare, poi clicca sulla griglia';
+          img.draggable = false; // il drag lo gestisce il container
+          container.appendChild(img);
 
-          // Barra inferiore con pulsanti
-          const buttonBar = document.createElement('div');
-          buttonBar.style.cssText = `
-            display: flex;
-            padding: 6px;
-            background: #1e293b;
-            gap: 4px;
-        `;
+          const overlay = document.createElement('div');
+          overlay.className = 'fav-overlay';
+          overlay.innerHTML = '<span>+</span>';
+          container.appendChild(overlay);
 
-          // Pulsante "Aggiungi alla prima cella vuota"
-          const addButton = document.createElement('button');
-          addButton.textContent = '+';
-          addButton.title = 'Aggiungi alla prima cella vuota';
-          addButton.style.cssText = `
-            flex: 1;
-            padding: 6px;
-            background: #101010;
-            border: none;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        `;
-          addButton.addEventListener('click', async () => {
+          // Click sull'anteprima → aggiungi alla prima cella vuota o
+          // chiedi quale cella se non c'è auto-target.
+          container.addEventListener('click', async () => {
             await handleAddToGrid(p.DataUrl);
           });
 
-          buttonBar.appendChild(addButton);
-          container.appendChild(img);
-          container.appendChild(buttonBar);
+          // Drag & drop verso una cella della griglia.
+          container.addEventListener('dragstart', e => {
+            try {
+              e.dataTransfer.setData('text/x-nolex-image-url', p.DataUrl);
+              e.dataTransfer.setData('text/plain', p.DataUrl);
+              e.dataTransfer.effectAllowed = 'copy';
+            } catch (_) { /* ignora */ }
+            container.classList.add('dragging');
+          });
+          container.addEventListener('dragend', () => {
+            container.classList.remove('dragging');
+          });
+
           favList.appendChild(container);
         });
 
-        // 3) Aggiorna la griglia
+        // 3) Auto-grid in base al numero di preferiti se l'utente non ha
+        //    già scelto un layout a mano.
+        if (!userSelectedGridManually) {
+          const autoLayout = pickAutoLayout(newPref.length);
+          currentGridType = autoLayout;
+          highlightMegaGridLayout(autoLayout);
+        }
+
+        // 4) Rigenera la griglia (async — aspettiamo che le immagini siano
+        //    caricate e composte prima di considerare l'editor "pronto").
         if (currentGridType) {
           console.log('↻ Rigenero griglia:', currentGridType);
-          addGrid(currentGridType);
+          await addGrid(currentGridType);
         }
+
+        // 5) Marca il "primo refresh completato" e tenta la rivelazione.
+        //    maybeRevealEditor è no-op se il wrapper non ha ancora dimensioni
+        //    reali (cioè la modale non è ancora stata aperta) — in quel caso
+        //    sarà il ResizeObserver a chiamarlo quando il wrapper crescerà.
+        firstRefreshDone = true;
+        maybeRevealEditor();
       }
 
       /* --- GESTISCI AGGIUNTA ALLA GRIGLIA --- */
@@ -977,15 +2141,16 @@
           return;
         }
 
+        // Mostra SEMPRE il picker della cella: l'utente vuole sempre
+        // decidere a mano in quale cella mettere l'immagine. Per
+        // l'inserimento "diretto e veloce" c'è il drag&drop sulla cella.
         const targetCell = await promptCellSelection();
         if (!targetCell) {
-          showMessage('Selezione cella annullata', 'warning');
-          return;
+          return; // annullato dall'utente
         }
 
         await addImageToCell(imageUrl, targetCell.row, targetCell.col);
-        // showMessage(`Immagine aggiunta alla cella [${targetCell.row},${targetCell.col}]`, 'success');
-        showMessage(`Immagine aggiunta alla cella`, 'success');
+        showMessage('Immagine aggiunta alla cella', 'success');
       }
 
       function promptCellSelection() {
@@ -1038,7 +2203,7 @@
           toRemove.push(i);
         }
         toRemove.reverse().forEach(i => page.components.removeAt(i));
-        designer.renderHtml('designer');
+        // Skip designer.renderHtml: il designer è nascosto, basta il modello.
       }
 
       /* ---------- OHIF GRID LOGIC ---------- */
@@ -1065,16 +2230,34 @@
           cell.addEventListener('click', () => {
             cells.forEach(c2 => c2.classList.remove('selected'));
             cell.classList.add('selected');
+            // Click esplicito dell'utente: blocca l'auto-pick.
+            userSelectedGridManually = true;
             selectGrid(cell.dataset.layout);
           });
         });
       }
 
+      // Aggiorna lo stato visivo del megaGrid in modo che il layout passato
+      // (es. dall'auto-pick) appaia "selected" nel pannello.
+      function highlightMegaGridLayout(layoutType) {
+        const cells = document.querySelectorAll('#megaGrid .mega-cell');
+        cells.forEach(c => {
+          c.classList.toggle('selected', c.dataset.layout === layoutType);
+        });
+      }
+
       /* ------------ GRID APPLY ------------ */
       async function selectGrid(type) {
+        // Cambio griglia → le coordinate (row,col) cambiano di significato,
+        // i transform per cella vanno azzerati così le nuove celle partono
+        // dal default "fit alla cella".
+        if (currentGridType !== type) {
+          imageTransforms.clear();
+        }
         currentGridType = type;
         addGrid(type);
       }
+
 
       async function addGrid(type) {
         clearGrid();
@@ -1111,7 +2294,8 @@
 
         if (!preferiti.length) {
           ensureEmptyCellBorders(rows, cols, cellW, cellH, gridTop);
-          designer.renderHtml('designer');
+          // Skip designer.renderHtml.
+          renderEditorView();
           return;
         }
 
@@ -1143,71 +2327,108 @@
         //   }
         // }
 
-        /* --- LOAD IMAGES --- */
-        const loadImage = src =>
-          new Promise(res => {
-            const im = new Image();
-            im.onload = () => res(im);
-            im.src = src;
+        /* --- LOAD IMAGES (parallelo + cache) ---
+           Costruiamo prima la lista dei "slot" cella → preferito, poi
+           carichiamo TUTTE le immagini in parallelo via loadSourceImageCached.
+           Le immagini cachate (es. cambio formato) ritornano sincronicamente
+           senza I/O. Compose e add sono sincroni → niente await sequenziali. */
+        const totalCells = rows * cols;
+        const limit = Math.min(totalCells, preferiti.length);
+        const cellSlots = [];
+        for (let i = 0; i < limit; i++) {
+          const r = Math.floor(i / cols);
+          const c = i % cols;
+          const p = preferiti[i];
+          cellSlots.push({
+            r,
+            c,
+            cleanUrl: p.DataUrl,
+            // Fallback al pulito se il preferito non ha la versione annotata
+            // (preferito vecchio o cattura SVG fallita)
+            annotatedUrl: p.DataUrlAnnotated || p.DataUrl,
           });
+        }
 
-        let idx = 0;
+        // Sceglie l'URL "attivo" in base alla checkbox annotazioni
+        const sourceFor = slot =>
+          showAnnotations ? slot.annotatedUrl : slot.cleanUrl;
 
-        for (let r = 0; r < rows; r++) {
-          for (let c = 0; c < cols; c++) {
-            if (idx >= preferiti.length) break;
+        const loadedImgs = await Promise.all(
+          cellSlots.map(s => loadSourceImageCached(sourceFor(s)))
+        );
 
-            const data = preferiti[idx].DataUrl;
-            const img = await loadImage(data);
+        const PX = 96 / 2.54;
+        const cellWpx = Math.max(1, Math.round(cellW * PX));
+        const cellHpx = Math.max(1, Math.round(cellH * PX));
 
-            const PX = 96 / 2.54;
-            const cellWpx = Math.max(1, Math.round(cellW * PX));
-            const cellHpx = Math.max(1, Math.round(cellH * PX));
-            const composedUrl = composeImageOnBlack(
-              img,
-              cellWpx,
-              cellHpx,
-              cellWpx / img.width,
-              cellHpx / img.height
-            );
+        for (let i = 0; i < cellSlots.length; i++) {
+          const slot = cellSlots[i];
+          const img = loadedImgs[i];
+          if (!img) continue;
 
-            const left = c * cellW;
-            const top = gridTop + r * cellH;
+          const cellTransform = getTransform(slot.r, slot.c);
+          const composedUrl = composeImageOnBlack(
+            img,
+            cellWpx,
+            cellHpx,
+            cellWpx / img.width,
+            cellHpx / img.height,
+            cellTransform
+          );
 
-            const stiImg = new Stimulsoft.Report.Components.StiImage();
-            stiImg.left = left;
-            stiImg.top = top;
-            stiImg.width = cellW;
-            stiImg.height = cellH;
-            stiImg.imageURL = composedUrl;
-            stiImg.imageAsBase64 = true;
-            stiImg.backColor = PRINT_BLACK;
-            stiImg.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
-              createColor(0, 0, 0, 255, 'PrintBlack')
-            );
-            stiImg.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
-            stiImg.stretch = true;
-            stiImg.aspectRatio = false;
-            stiImg.keepAspectRatio = false;
-            stiImg.locked = true;
-            stiImg.enabled = true;
-            stiImg.allowResize = false;
-            stiImg.allowMove = false;
-            stiImg.tag = data;
-            const composeKey = getComposeKey(cellWpx, cellHpx);
-            stiImg._nolexComposeKey = composeKey;
-            stiImg.name = `Image_${r}_${c}_${Date.now()}`;
+          const left = slot.c * cellW;
+          const top = gridTop + slot.r * cellH;
 
-            page.components.add(stiImg);
+          const stiImg = new Stimulsoft.Report.Components.StiImage();
+          stiImg.left = left;
+          stiImg.top = top;
+          stiImg.width = cellW;
+          stiImg.height = cellH;
+          stiImg.imageURL = composedUrl;
+          stiImg.imageAsBase64 = true;
+          stiImg.backColor = PRINT_BLACK;
+          stiImg.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
+            createColor(0, 0, 0, 255, 'PrintBlack')
+          );
+          stiImg.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+          stiImg.stretch = true;
+          stiImg.aspectRatio = false;
+          stiImg.keepAspectRatio = false;
+          stiImg.locked = true;
+          stiImg.enabled = true;
+          stiImg.allowResize = false;
+          stiImg.allowMove = false;
+          stiImg.tag = sourceFor(slot);
+          // Memorizza ENTRAMBI gli URL sul componente: recomposeAllCells e
+          // recompositeImageComponents leggeranno quello giusto in base
+          // allo stato corrente di showAnnotations (via getEffectiveSourceUrl).
+          stiImg._nolexCleanUrl = slot.cleanUrl;
+          stiImg._nolexAnnotatedUrl = slot.annotatedUrl;
+          const composeKey =
+            getComposeKey(cellWpx, cellHpx) +
+            '|' +
+            cellTransform.zoom +
+            '|' +
+            cellTransform.panX +
+            '|' +
+            cellTransform.panY +
+            '|' +
+            (showPatientInfo ? '1' : '0') +
+            '|' +
+            (showAnnotations ? '1' : '0');
+          stiImg._nolexComposeKey = composeKey;
+          stiImg.name = `Image_${slot.r}_${slot.c}_${Date.now()}`;
 
-            idx++;
-          }
+          page.components.add(stiImg);
         }
 
         // Ridisegna le linee griglia sopra gli elementi per stamparle
         ensureEmptyCellBorders(rows, cols, cellW, cellH, gridTop);
 
-        designer.renderHtml('designer');
+        // NIENTE designer.renderHtml: il designer è nascosto fuori vista,
+        // i suoi pixel non li guarda nessuno. Il modello (page.components)
+        // è già aggiornato e basta a printCurrent + renderEditorView.
+        renderEditorView();
       }
 
       function createColor(r, g, b, a = 255, name = 'CustomColor') {
@@ -1407,6 +2628,17 @@
         return () => {};
       }
 
+      // Estrae (row, col) dal nome di un componente Image_ — null se non valido
+      function parseImageCellName(name) {
+        if (!name || typeof name !== 'string' || !name.startsWith('Image_')) return null;
+        const parts = name.split('_');
+        if (parts.length < 3) return null;
+        const r = parseInt(parts[1]);
+        const c = parseInt(parts[2]);
+        if (isNaN(r) || isNaN(c)) return null;
+        return { row: r, col: c };
+      }
+
       async function recompositeImageComponents() {
         if (!page) return;
         const PX = 96 / 2.54;
@@ -1421,16 +2653,35 @@
             continue;
           }
 
-          const sourceUrl = typeof panel.tag === 'string' && panel.tag ? panel.tag : null;
+          // Sceglie pulito o annotato in base allo stato corrente di
+          // showAnnotations (con fallback su tag per backward-compat)
+          const sourceUrl = getEffectiveSourceUrl(panel);
           if (!sourceUrl) {
             continue;
           }
 
           const child = panel;
+          const cellInfo = parseImageCellName(panel.name);
+          const transform = cellInfo
+            ? getTransform(cellInfo.row, cellInfo.col)
+            : TRANSFORM_DEFAULT;
 
           const wpx = Math.max(1, Math.round(panel.width * PX));
           const hpx = Math.max(1, Math.round(panel.height * PX));
-          const composeKey = getComposeKey(wpx, hpx);
+          // La compose key include zoom/pan/showInfo/showAnnotations così
+          // se uno qualsiasi di questi cambia, ricomponiamo.
+          const composeKey =
+            getComposeKey(wpx, hpx) +
+            '|' +
+            (transform.zoom || 1) +
+            '|' +
+            (transform.panX || 0) +
+            '|' +
+            (transform.panY || 0) +
+            '|' +
+            (showPatientInfo ? '1' : '0') +
+            '|' +
+            (showAnnotations ? '1' : '0');
           if (child._nolexComposeKey === composeKey) {
             continue;
           }
@@ -1444,7 +2695,8 @@
                   wpx,
                   hpx,
                   wpx / im.width,
-                  hpx / im.height
+                  hpx / im.height,
+                  transform
                 );
                 child.imageURL = composedUrl;
                 child.imageAsBase64 = true;
@@ -1467,7 +2719,8 @@
 
         if (tasks.length) {
           await Promise.all(tasks);
-          designer.renderHtml('designer');
+          // Skip designer.renderHtml: la stampa legge direttamente da
+          // page.components, non dal DOM del designer (che è nascosto).
         }
       }
 
@@ -1488,12 +2741,193 @@
         container.addEventListener('mouseleave', schedule);
       }
 
-      /* ---------- FORMAT ---------- */
+      /* ---------- FORMAT + SETTINGS PERSISTENTI ---------- */
+      // Chiave localStorage in cui memorizziamo SOLO il formato corrente
+      // (es. "A4|portrait" o "SRA3|landscape"). Persistente tra sessioni
+      // così l'utente ritrova l'ultimo formato usato. NON memorizziamo
+      // griglia, zoom, disposizione o altro: solo il formato pagina.
+      const FORMAT_STORAGE_KEY = 'nolex-print-format';
+
+      // Mostra/nascondi le info paziente sovraimpresse alle immagini.
+      // Stato globale; viene letto da drawPatientInfoOnCanvas. Persistiamo
+      // la scelta dell'utente (default: true = mostrate).
+      const SHOW_INFO_STORAGE_KEY = 'nolex-print-show-patient-info';
+      let showPatientInfo = true;
+      try {
+        // Default true: solo se l'utente ha esplicitamente messo '0'
+        // (= ha disattivato in passato) lo lasciamo a false.
+        const stored = localStorage.getItem(SHOW_INFO_STORAGE_KEY);
+        showPatientInfo = stored !== '0';
+      } catch (_) { /* ignora */ }
+
+      // Moltiplicatore della dimensione del testo info paziente.
+      // 1.0 = comportamento di default (medio). Valori validi:
+      //   0.7 = piccolo, 1.0 = medio, 1.4 = grande, 1.8 = extra grande
+      // Persistito in localStorage. La posizione LEFT del testo (paddingX)
+      // resta invariata: cambia solo la fontSize.
+      const INFO_SIZE_STORAGE_KEY = 'nolex-print-info-size';
+      let infoSizeMultiplier = 1.0;
+      try {
+        const stored = localStorage.getItem(INFO_SIZE_STORAGE_KEY);
+        const parsed = parseFloat(stored);
+        if (Number.isFinite(parsed) && parsed >= 0.5 && parsed <= 3.0) {
+          infoSizeMultiplier = parsed;
+        }
+      } catch (_) {}
+
+      // Handler della checkbox "Info esame" in toolbar
+      async function onShowPatientInfoChange(checked) {
+        showPatientInfo = !!checked;
+        try {
+          localStorage.setItem(SHOW_INFO_STORAGE_KEY, showPatientInfo ? '1' : '0');
+        } catch (_) {}
+        // Mostra/nascondi anche il select della dimensione: ha senso solo
+        // quando le info sono visibili.
+        const sizeSel = document.getElementById('infoSizeSelect');
+        if (sizeSel) sizeSel.classList.toggle('hidden', !showPatientInfo);
+        // Path veloce: invece di rifare addGrid (che ricrea tutti i
+        // componenti Stimulsoft), aggiorniamo SOLO l'imageURL delle celle
+        // esistenti via recomposeAllCells. Niente clear, niente add,
+        // niente nuovi StiImage. Decine di volte più veloce.
+        await recomposeAllCells();
+      }
+
+      // Handler del select "Dimensione info esame"
+      async function onInfoSizeChange(value) {
+        const parsed = parseFloat(value);
+        if (!Number.isFinite(parsed) || parsed < 0.5 || parsed > 3.0) return;
+        infoSizeMultiplier = parsed;
+        try {
+          localStorage.setItem(INFO_SIZE_STORAGE_KEY, String(infoSizeMultiplier));
+        } catch (_) {}
+        // Stesso path veloce: aggiorna solo l'imageURL delle celle esistenti
+        await recomposeAllCells();
+      }
+
+      // Mostra/nascondi le ANNOTAZIONI (misurazioni, length, area, ecc.)
+      // sovraimpresse alle immagini. A "favorito-add" tempo, Preferiti.tsx
+      // cattura DUE versioni: DataUrl (pulita) e DataUrlAnnotated (con
+      // annotazioni). Lo stato qui sceglie quale URL caricare per ogni cella.
+      // Default: false (= immagini pulite, comportamento backward-compatible).
+      const SHOW_ANNOTATIONS_STORAGE_KEY = 'nolex-print-show-annotations';
+      let showAnnotations = false;
+      try {
+        showAnnotations = localStorage.getItem(SHOW_ANNOTATIONS_STORAGE_KEY) === '1';
+      } catch (_) {}
+
+      // Handler della checkbox "Annotazioni" in toolbar
+      async function onShowAnnotationsChange(checked) {
+        showAnnotations = !!checked;
+        try {
+          localStorage.setItem(SHOW_ANNOTATIONS_STORAGE_KEY, showAnnotations ? '1' : '0');
+        } catch (_) {}
+        // Stesso path veloce della checkbox info esame
+        await recomposeAllCells();
+      }
+
+      // Helper centrale per scegliere il source URL effettivo di una cella
+      // in base allo stato corrente della checkbox annotazioni. Usato da
+      // addGrid, addImageToCell, recomposeAllCells e recompositeImageComponents.
+      // Fallback: se non ci sono i due URL custom (es. preferito vecchio
+      // senza DataUrlAnnotated), usa stiImg.tag come prima.
+      function getEffectiveSourceUrl(stiImg) {
+        if (!stiImg) return null;
+        if (showAnnotations && typeof stiImg._nolexAnnotatedUrl === 'string') {
+          return stiImg._nolexAnnotatedUrl;
+        }
+        if (typeof stiImg._nolexCleanUrl === 'string') {
+          return stiImg._nolexCleanUrl;
+        }
+        return typeof stiImg.tag === 'string' ? stiImg.tag : null;
+      }
+
+      // Ricompone tutte le celle con immagine usando il transform corrente
+      // e il flag showPatientInfo. Aggiorna stiImg.imageURL in place senza
+      // modificare la struttura di page.components. Usato per i cambi di
+      // stato che NON cambiano la geometria delle celle (es. toggle info).
+      async function recomposeAllCells() {
+        if (!page) return;
+
+        // Raccogli tutte le cells "Image_..." esistenti
+        const cells = [];
+        for (let i = 0; i < page.components.count; i++) {
+          const c = page.components.getByIndex(i);
+          if (!c || !c.name || !c.name.startsWith('Image_')) continue;
+          const info = parseImageCellName(c.name);
+          if (!info) continue;
+          // Sceglie pulito o annotato in base allo stato corrente di
+          // showAnnotations (con fallback su tag per backward-compat)
+          const sourceUrl = getEffectiveSourceUrl(c);
+          if (!sourceUrl) continue;
+          cells.push({ stiImg: c, row: info.row, col: info.col, sourceUrl });
+        }
+        if (!cells.length) {
+          renderEditorView();
+          return;
+        }
+
+        // Pre-carica tutti i sorgenti in parallelo (cache hit istantanei)
+        const imgs = await Promise.all(
+          cells.map(c => loadSourceImageCached(c.sourceUrl))
+        );
+
+        const PX = 96 / 2.54;
+        for (let i = 0; i < cells.length; i++) {
+          const c = cells[i];
+          const im = imgs[i];
+          if (!im) continue;
+          const wpx = Math.max(1, Math.round(c.stiImg.width * PX));
+          const hpx = Math.max(1, Math.round(c.stiImg.height * PX));
+          const transform = getTransform(c.row, c.col);
+          const composed = composeImageOnBlack(
+            im,
+            wpx,
+            hpx,
+            wpx / im.width,
+            hpx / im.height,
+            transform
+          );
+          c.stiImg.imageURL = composed;
+          // Aggiorna anche il tag con l'URL attivo (utile per backward-compat
+          // con codice che legge stiImg.tag)
+          c.stiImg.tag = c.sourceUrl;
+          c.stiImg._nolexComposeKey =
+            getComposeKey(wpx, hpx) +
+            '|' +
+            transform.zoom +
+            '|' +
+            transform.panX +
+            '|' +
+            transform.panY +
+            '|' +
+            (showPatientInfo ? '1' : '0') +
+            '|' +
+            (showAnnotations ? '1' : '0');
+        }
+
+        renderEditorView();
+      }
+
+      // Handler invocato dal <select> formato in toolbar
+      function onFormatSelectChange(value) {
+        if (typeof value !== 'string' || value.indexOf('|') < 0) return;
+        const [fmt, orient] = value.split('|');
+        selectFormat(fmt, orient);
+      }
+
       function selectFormat(fmt, orient) {
-        document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('selected'));
-        document
-          .getElementById(fmt + (orient === 'portrait' ? 'P' : 'L'))
-          .classList.add('selected');
+        // Sincronizza il <select> formato (utile quando selectFormat è
+        // chiamato da init() con valore caricato da localStorage)
+        const selectEl = document.getElementById('formatSelect');
+        if (selectEl) {
+          const wanted = fmt + '|' + orient;
+          if (selectEl.value !== wanted) selectEl.value = wanted;
+        }
+
+        // Persisti il formato scelto (vedi FORMAT_STORAGE_KEY).
+        try {
+          localStorage.setItem(FORMAT_STORAGE_KEY, fmt + '|' + orient);
+        } catch (_) { /* quota / private mode: ignora */ }
 
         let w, h;
         if (fmt === 'A4') {
@@ -1508,17 +2942,42 @@
           PRINT_OFFSET_X_CM = PRINT_OFFSET_A3_X_CM;
           PRINT_OFFSET_Y_CM = PRINT_OFFSET_A3_Y_CM;
         }
+        if (fmt === 'SRA3') {
+          // SRA3 standard ISO 217: 320 x 450 mm esatti (super A3).
+          // IMPORTANTE: usare i valori esatti, non 319.8 x 449.8: il driver
+          // di stampa riconosce 320x450 come preset, e con valori più piccoli
+          // farebbe snap al preset lasciando un sottile bordo non stampato
+          // sul lato destro/basso.
+          w = 32.0;
+          h = 45.0;
+          PRINT_OFFSET_X_CM = PRINT_OFFSET_SRA3_X_CM;
+          PRINT_OFFSET_Y_CM = PRINT_OFFSET_SRA3_Y_CM;
+        }
         if (orient === 'landscape') [w, h] = [h, w];
 
         page.pageWidth = w;
         page.pageHeight = h;
         page.backColor = PRINT_BLACK;
 
-        designer.renderHtml('designer');
+        // Cambio formato → le celle hanno dimensioni completamente diverse,
+        // i transform per cella perdono senso. Reset totale così l'utente
+        // riparte sempre con il default "fit alla cella".
+        imageTransforms.clear();
+
+        // Skip designer.renderHtml: il designer è nascosto.
         if (currentGridType) addGrid(currentGridType);
+        // addGrid già chiama renderEditorView, che ricalcola il fit della
+        // pagina nello spazio disponibile.
       }
 
+      // (rimosse le helper Stimulsoft-zoom: ora il fit della pagina è
+      // gestito direttamente da renderEditorView sul nostro #editor-page)
+
       function getPatientInfo() {
+        try {
+          const info = window.parent && window.parent.nolexPatientInfo;
+          if (info && typeof info === 'object') return info;
+        } catch (_) { /* cross-origin fallback */ }
         try {
           return JSON.parse(localStorage.getItem('nolex-patient-info') || '{}');
         } catch {
@@ -1527,6 +2986,10 @@
       }
 
       function getStudyInfo() {
+        try {
+          const info = window.parent && window.parent.nolexStudyInfo;
+          if (info && typeof info === 'object') return info;
+        } catch (_) { /* cross-origin fallback */ }
         try {
           return JSON.parse(localStorage.getItem('nolex-study-info') || '{}');
         } catch {
@@ -1688,15 +3151,21 @@
       }
 
       function drawPatientInfoOnCanvas(ctx, targetWpx, targetHpx) {
+        // Disegna le info paziente solo se l'utente l'ha richiesto
+        // dalla checkbox "Info esame" in toolbar.
+        if (!showPatientInfo) return;
         const patient = getPatientInfo();
         if (!patient || !patient.PatientID) return;
         const study = getStudyInfo();
         const lines = buildPatientInfoLines(patient, study);
         if (!lines.length) return;
 
+        // paddingX (= posizione LEFT) NON dipende dal moltiplicatore:
+        // resta sempre alla stessa distanza dal bordo. Solo la fontSize
+        // (e di conseguenza il lineHeight) viene scalata.
         const paddingX = Math.round(targetWpx * 0.03);
         const paddingY = Math.round(targetHpx * 0.03);
-        const fontSize = Math.max(4, Math.round(targetHpx * 0.02));
+        const fontSize = Math.max(4, Math.round(targetHpx * 0.02 * infoSizeMultiplier));
         const lineHeight = Math.round(fontSize * 1.08);
         const fontNormal = `${fontSize}px sans-serif`;
         const fontBold = `bold ${fontSize}px sans-serif`;
@@ -1712,12 +3181,40 @@
         }
       }
 
-      function composeImageOnBlack(img, targetWpx, targetHpx, scaleW, scaleH) {
-        const scale = Math.min(scaleW, scaleH);
+      // transform: { zoom, panX, panY } in unità: zoom = moltiplicatore,
+      // panX/panY in CM (page units). Default: nessuna trasformazione.
+      function composeImageOnBlack(img, targetWpx, targetHpx, scaleW, scaleH, transform) {
+        const t = transform || TRANSFORM_DEFAULT;
+
+        // Bordi bianchi della griglia (vedi sotto): l'immagine deve fittarsi
+        // nell'AREA INTERNA della cella, lasciando i bordi visibili. La
+        // scala "fit" viene quindi calcolata sull'inner box (innerW × innerH),
+        // non sull'intera cella.
+        const linePx = 2;
+        const innerW = Math.max(1, targetWpx - 2 * linePx);
+        const innerH = Math.max(1, targetHpx - 2 * linePx);
+
+        // I parametri scaleW/scaleH passati dai chiamanti sono "ingenui"
+        // (basati su targetWpx/targetHpx). Li ricalcoliamo qui sull'inner
+        // box, ignorando quelli passati, così il fit di default lascia
+        // sempre visibili i bordi bianchi.
+        const scaleW_eff = innerW / img.width;
+        const scaleH_eff = innerH / img.height;
+        const baseScale = Math.min(scaleW_eff, scaleH_eff);
+        const scale = baseScale * (t.zoom || 1);
         const drawW = img.width * scale;
         const drawH = img.height * scale;
-        const drawX = Math.round((targetWpx - drawW) / 2);
-        const drawY = Math.round((targetHpx - drawH) / 2);
+
+        // Conversione cm → px nello stesso DPI di compose (96 dpi).
+        // I pan sono in cm in modo che restino consistenti se la cella
+        // viene ricomposta a una risoluzione diversa.
+        const PX_PER_CM = 96 / 2.54;
+        const panXpx = (t.panX || 0) * PX_PER_CM;
+        const panYpx = (t.panY || 0) * PX_PER_CM;
+
+        // Centriamo nell'INNER box (centro cella + offset pan).
+        const drawX = Math.round((targetWpx - drawW) / 2 + panXpx);
+        const drawY = Math.round((targetHpx - drawH) / 2 + panYpx);
 
         const canvas = document.createElement('canvas');
         canvas.width = targetWpx;
@@ -1725,11 +3222,21 @@
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = PRINT_BLACK;
         ctx.fillRect(0, 0, targetWpx, targetHpx);
+        // Clipping all'AREA INTERNA della cella (non l'intera cella):
+        // così l'immagine pannata/zoomata non solo non sborda nelle celle
+        // adiacenti, ma non copre nemmeno i bordi bianchi della griglia
+        // attorno alla cella.
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(linePx, linePx, innerW, innerH);
+        ctx.clip();
         ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        ctx.restore();
 
         drawPatientInfoOnCanvas(ctx, targetWpx, targetHpx);
 
-        const linePx = 2;
+        // Bordi bianchi della griglia (disegnati dopo l'immagine così
+        // sono sempre visibili in primo piano)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, targetWpx, linePx);
         ctx.fillRect(0, targetHpx - linePx, targetWpx, linePx);
@@ -2176,16 +3683,112 @@
         }, 400);
 
         setupMegaGrid();
-        setupCellSelectionHandlers();
-        setupImageRecomposeListeners();
+        setupEditorHandlers();
 
-        /* DEFAULT: A4 + 1x1 */
-        selectFormat('A4', 'portrait');
+        /* DEFAULT: A4 + 1x1, OPPURE l'ultimo formato salvato in localStorage */
+        let initFmt = 'A4';
+        let initOrient = 'portrait';
+        try {
+          const saved = localStorage.getItem(FORMAT_STORAGE_KEY);
+          if (saved && typeof saved === 'string') {
+            const [f, o] = saved.split('|');
+            const validFmt = f === 'A4' || f === 'A3' || f === 'SRA3';
+            const validOrient = o === 'portrait' || o === 'landscape';
+            if (validFmt && validOrient) {
+              initFmt = f;
+              initOrient = o;
+            }
+          }
+        } catch (_) { /* ignora */ }
+        selectFormat(initFmt, initOrient);
 
-        const first = document.querySelector('#megaGrid .mega-cell');
-        if (first) first.classList.add('selected');
+        // Sincronizza la checkbox "Info esame" con lo stato persistito
+        // (showPatientInfo è stato letto da localStorage al top del file).
+        const infoCheckbox = document.getElementById('infoEsameCheckbox');
+        if (infoCheckbox) infoCheckbox.checked = showPatientInfo;
+        // Sincronizza il select dimensione e nascondilo se le info sono OFF
+        const infoSizeSel = document.getElementById('infoSizeSelect');
+        if (infoSizeSel) {
+          infoSizeSel.value = String(infoSizeMultiplier);
+          infoSizeSel.classList.toggle('hidden', !showPatientInfo);
+        }
+        // Sincronizza la checkbox "Annotazioni" con lo stato persistito
+        const annotCheckbox = document.getElementById('annotazioniCheckbox');
+        if (annotCheckbox) annotCheckbox.checked = showAnnotations;
 
+        // L'auto-grid sceglierà a refreshPreferiti il layout in base al numero
+        // di immagini; per ora partiamo con 1x1 (default vuoto).
         selectGrid('1x1');
+        highlightMegaGridLayout('1x1');
+        renderEditorView();
+
+        // Auto-init: facciamo SUBITO un refresh dei preferiti dal parent.
+        // Così quando il browser sarà idle e l'iframe sarà precaricato in
+        // background, l'auto-grid sarà già applicato anche se la modale
+        // è ancora display:none. firstRefreshDone diventerà true e
+        // maybeRevealEditor partirà non appena la modale verrà aperta
+        // (ResizeObserver fires → wrapper acquisisce dimensioni → reveal).
+        refreshPreferiti();
+
+        // ResizeObserver sul wrapper dell'editor: ricalcola il fit ogni volta
+        // che il wrapper riceve dimensioni nuove.
+        //
+        // PERCHÉ SERVE: l'iframe è precaricato in background dentro una modale
+        // `display:none`, quindi al primo init() il wrapper ha clientWidth = 0
+        // e renderEditorView calcola un fit minimo (~10%) → la pagina si vede
+        // piccola. Alla prima apertura della modale (display:flex) il wrapper
+        // ottiene le sue dimensioni reali e ResizeObserver fa rientrare
+        // automaticamente renderEditorView con le dimensioni corrette,
+        // PRIMA del prossimo paint → niente flash visivo.
+        const wrapper = document.getElementById('editor-canvas-wrapper');
+        if (wrapper && 'ResizeObserver' in window) {
+          let lastW = -1;
+          let lastH = -1;
+          const ro = new ResizeObserver(entries => {
+            const entry = entries[0];
+            if (!entry) return;
+            const cr = entry.contentRect;
+            const newW = Math.round(cr.width);
+            const newH = Math.round(cr.height);
+            // Filtro micro-variazioni (sub-pixel rounding)
+            if (Math.abs(newW - lastW) < 2 && Math.abs(newH - lastH) < 2) return;
+            lastW = newW;
+            lastH = newH;
+            renderEditorView();
+            // Se questo è il primo resize "vero" (modale appena aperta) e
+            // il primo refresh dei preferiti è già completo, è il momento
+            // giusto per rivelare l'editor: il render è appena stato fatto
+            // alla dimensione finale e l'auto-grid è già applicato.
+            maybeRevealEditor();
+          });
+          ro.observe(wrapper);
+        }
+
+        // Su resize della finestra (parent), ricomputiamo il fit anche
+        // tramite il listener tradizionale (fallback per browser senza
+        // ResizeObserver e per cambi di window che non triggerano l'osservatore
+        // sull'iframe).
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            renderEditorView();
+          }, 80);
+        });
+
+        // SAFETY NET: se per qualche motivo lo spinner non viene mai
+        // rimosso (es. wrapper sempre 0×0 perché la modale non viene mai
+        // aperta — improbabile, oppure un edge case che ci sfugge),
+        // forziamo la rimozione dopo 8 secondi dall'init. Niente di
+        // visibile per l'utente perché lo spinner sta dentro la modale
+        // che è ancora display:none, ma garantisce che alla prima
+        // apertura della modale l'editor sia comunque visibile.
+        setTimeout(() => {
+          if (editorRevealed) return;
+          editorRevealed = true;
+          const ed = document.getElementById('nolex-editor');
+          if (ed) ed.classList.add('ready');
+        }, 8000);
       }
 
       window.onload = init;

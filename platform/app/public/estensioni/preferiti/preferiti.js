@@ -165,9 +165,50 @@ function createStimulsoftModalAtStartup() {
   document.head.appendChild(style);
 }
 
-// ESEGUE ALL’AVVIO
+// ============================================================
+// PRELOAD INTELLIGENTE DELLA MODALE STIMULSOFT
+// ------------------------------------------------------------
+// `builder.html` carica ~12 MB di JavaScript Stimulsoft. Per evitare
+// di rallentare l'esperienza utente nei primi secondi dopo il boot
+// (quando il radiologo sta navigando le immagini DICOM), facciamo:
+//
+// 1) NIENTE eager load a window.load
+// 2) Idle preload: aspettiamo che il browser sia idle (CPU+rete libere)
+//    e che siano passati almeno 4 secondi dal load → solo allora
+//    creiamo l'iframe e iniziamo il download dei pack
+// 3) Lazy fallback: se l'utente clicca "Apri Editor di Stampa" PRIMA
+//    che l'idle preload sia partito, lo creiamo on-demand al click
+//
+// Risultato: il time-to-interactive di OHIF è preservato, e nella
+// stragrande maggioranza dei casi (quando il radiologo apre l'editor
+// dopo qualche secondo di navigazione) l'iframe è già pronto e il
+// click è istantaneo.
+// ============================================================
+function schedulePreloadStimulsoftModal() {
+  if (!isPrintBuilderEnabled) return;
+  if (stimulsoftModal) return; // già creato
+
+  const start = () => {
+    if (stimulsoftModal) return;
+    createStimulsoftModalAtStartup();
+  };
+
+  // Aspetta 4 secondi dal load per dare priorità a OHIF
+  setTimeout(() => {
+    if ('requestIdleCallback' in window) {
+      // Carica solo quando il browser è davvero idle, con timeout
+      // di 15s come safety net (se l'utente sta usando l'app
+      // intensamente, alla fine carichiamo comunque)
+      window.requestIdleCallback(start, { timeout: 15000 });
+    } else {
+      // Safari/old browsers: fallback su un semplice timeout differito
+      setTimeout(start, 1000);
+    }
+  }, 4000);
+}
+
 if (isPrintBuilderEnabled) {
-  window.addEventListener("load", createStimulsoftModalAtStartup);
+  window.addEventListener('load', schedulePreloadStimulsoftModal);
 }
 
 /*
@@ -180,20 +221,30 @@ const openStimulsoftDesigner = () => {
     console.warn('Stampa disabilitata: apertura editor annullata');
     return;
   }
-  try {
-    window.localStorage.setItem('nolex-preferiti-layout', JSON.stringify(window.preferiti || []));
-    window.localStorage.setItem('nolex-patient-info', JSON.stringify(window.nolexPatientInfo || {}));
-    window.localStorage.setItem('nolex-study-info', JSON.stringify(window.nolexStudyInfo || {}));
-  } catch (err) {
-    console.error("Errore nel salvare i dati per Stimulsoft", err);
+
+  // LAZY FALLBACK: se l'idle preload non è ancora partito (l'utente
+  // ha cliccato troppo in fretta), creiamo la modale on-demand qui.
+  // Lo spinner della modale rimarrà visibile finché l'iframe finisce
+  // di caricare i pack Stimulsoft.
+  if (!stimulsoftModal) {
+    createStimulsoftModalAtStartup();
   }
+  if (!stimulsoftModal) {
+    console.error('Impossibile creare la modale di stampa');
+    return;
+  }
+
+  // I dati (in particolare 'preferiti' con DataUrl base64) possono superare la quota
+  // di localStorage (~5MB). L'iframe è same-origin, quindi il builder può leggere
+  // direttamente da window.parent.preferiti / nolexPatientInfo / nolexStudyInfo.
+  // Niente serializzazione, niente quota.
 
   if (stimulsoftLoaded) {
     stimulsoftIframe.contentWindow.postMessage({ type: "refresh-preferiti" }, "*");
   }
 
   stimulsoftModal.style.display = "flex";
-  requestAnimationFrame(() => stimulsoftModal.style.opacity = 1);
+  requestAnimationFrame(() => (stimulsoftModal.style.opacity = 1));
 };
 
 /*
@@ -207,7 +258,7 @@ window.addEventListener('message', e => {
     if (!favList) return;
 
     favList.innerHTML = '';
-    const pref = JSON.parse(localStorage.getItem('nolex-preferiti-layout') || '[]');
+    const pref = Array.isArray(window.preferiti) ? window.preferiti : [];
 
     pref.forEach(p => {
       const img = document.createElement('img');
