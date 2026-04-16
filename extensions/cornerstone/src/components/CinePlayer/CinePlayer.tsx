@@ -18,6 +18,11 @@ function WrappedCinePlayer({
   const [appConfig] = useAppConfig();
   const isMountedRef = useRef(null);
 
+  // The MIP viewport in the PT/CT fusion hanging protocol is a static
+  // sagittal MIP, not a stack/time series. Cine doesn't apply there, so
+  // skip mounting any cine controls or playback for it.
+  const isMipViewport = viewportId === 'mipSagittal';
+
   const cineHandler = () => {
     if (!cines?.[viewportId] || !enabledVPElement) {
       return;
@@ -132,6 +137,10 @@ function WrappedCinePlayer({
       cineService.stopClip(enabledVPElement, { viewportId });
     };
   }, [cines, viewportId, cineService, enabledVPElement, cineHandler]);
+
+  if (isMipViewport) {
+    return null;
+  }
 
   if (!isCineEnabled) {
     return dynamicInfo ? (

@@ -61,8 +61,9 @@ function getPanelModule({ commandsManager, extensionManager, servicesManager }) 
     },
     {
       name: 'tmtv',
-      iconName: 'tab-segmentation',
-      iconLabel: 'Segmentation',
+      iconName: 'tab-roi-threshold',
+      iconLabel: 'TMTV',
+      label: 'Segmentazione TMTV',
       component: wrappedPanelTMTV,
     },
     {

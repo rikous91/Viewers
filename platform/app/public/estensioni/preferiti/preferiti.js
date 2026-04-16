@@ -166,23 +166,29 @@ function createStimulsoftModalAtStartup() {
 }
 
 // ============================================================
-// PRELOAD INTELLIGENTE DELLA MODALE STIMULSOFT
+// PRELOAD "SU USO" DELLA MODALE STIMULSOFT
 // ------------------------------------------------------------
 // `builder.html` carica ~12 MB di JavaScript Stimulsoft. Per evitare
-// di rallentare l'esperienza utente nei primi secondi dopo il boot
-// (quando il radiologo sta navigando le immagini DICOM), facciamo:
+// del tutto di rallentare l'esperienza utente durante la normale
+// navigazione DICOM, NON precarichiamo Stimulsoft a window.load.
+// Aspettiamo invece il SEGNALE CONCRETO che l'utente sta per usare
+// la stampa: il PRIMO salvataggio di un preferito. Solo a quel punto
+// schedule del preload con idle callback.
 //
-// 1) NIENTE eager load a window.load
-// 2) Idle preload: aspettiamo che il browser sia idle (CPU+rete libere)
-//    e che siano passati almeno 4 secondi dal load → solo allora
-//    creiamo l'iframe e iniziamo il download dei pack
-// 3) Lazy fallback: se l'utente clicca "Apri Editor di Stampa" PRIMA
-//    che l'idle preload sia partito, lo creiamo on-demand al click
+// Flow:
+//  1) Default.js: enablePrintBuilder=false → NIENTE viene mai caricato
+//  2) Default.js: enablePrintBuilder=true + utente non salva preferiti
+//     → NIENTE Stimulsoft viene caricato (zero overhead)
+//  3) Utente clicca stellina per salvare il primo preferito
+//     → scatta l'evento nolex-preferiti-updated con lista non vuota
+//     → partiamo con idle preload (se il browser è idle) o 1s fallback
+//  4) Utente clicca "Apri Editor di Stampa" PRIMA che il preload finisca
+//     → lazy fallback in openStimulsoftDesigner lo crea on-demand
 //
-// Risultato: il time-to-interactive di OHIF è preservato, e nella
-// stragrande maggioranza dei casi (quando il radiologo apre l'editor
-// dopo qualche secondo di navigazione) l'iframe è già pronto e il
-// click è istantaneo.
+// Il bottone "Apri Editor di Stampa" nella sidebar compare solo se
+// hasPreferiti, quindi il flusso "salva → apri editor" è naturalmente
+// ordinato: quando cliccano "Apri Editor", il preload è già partito
+// dal save del preferito.
 // ============================================================
 function schedulePreloadStimulsoftModal() {
   if (!isPrintBuilderEnabled) return;
@@ -193,22 +199,61 @@ function schedulePreloadStimulsoftModal() {
     createStimulsoftModalAtStartup();
   };
 
-  // Aspetta 4 secondi dal load per dare priorità a OHIF
-  setTimeout(() => {
-    if ('requestIdleCallback' in window) {
-      // Carica solo quando il browser è davvero idle, con timeout
-      // di 15s come safety net (se l'utente sta usando l'app
-      // intensamente, alla fine carichiamo comunque)
-      window.requestIdleCallback(start, { timeout: 15000 });
-    } else {
-      // Safari/old browsers: fallback su un semplice timeout differito
-      setTimeout(start, 1000);
-    }
-  }, 4000);
+  if ('requestIdleCallback' in window) {
+    // Carica solo quando il browser è davvero idle, con timeout
+    // di 15s come safety net (se l'utente sta usando l'app
+    // intensamente, alla fine carichiamo comunque)
+    window.requestIdleCallback(start, { timeout: 15000 });
+  } else {
+    // Safari/old browsers: fallback su un piccolo delay
+    setTimeout(start, 1000);
+  }
 }
 
+// Trigger: il PRIMO nolex-preferiti-updated che porta la lista a >= 1
+// preferito. Dopo il primo trigger, rimuoviamo il listener: il preload
+// parte una sola volta per sessione.
 if (isPrintBuilderEnabled) {
-  window.addEventListener('load', schedulePreloadStimulsoftModal);
+  const onFirstPreferitoSet = () => {
+    const list = window.preferiti;
+    if (!Array.isArray(list) || list.length === 0) {
+      // Evento arrivato ma la lista è vuota (es. rimozione): aspettiamo
+      // il prossimo add.
+      return;
+    }
+    window.removeEventListener('nolex-preferiti-updated', onFirstPreferitoSet);
+    schedulePreloadStimulsoftModal();
+  };
+  window.addEventListener('nolex-preferiti-updated', onFirstPreferitoSet);
+}
+
+// ============================================================
+// BRIDGE: nolex-preferiti-updated → refresh-preferiti sull'iframe
+// ------------------------------------------------------------
+// Quando `window.preferiti` cambia (aggiunta/rimozione preferito, OPPURE
+// ri-cattura automatica a seguito di modifiche alle annotazioni), vogliamo
+// che l'editor di stampa (se aperto) ricomponga subito le celle con i
+// nuovi PNG. Il builder ascolta solo `postMessage({type:"refresh-preferiti"})`
+// dall'iframe, quindi facciamo noi da bridge: catturiamo l'evento globale
+// `nolex-preferiti-updated` e lo inoltriamo all'iframe.
+//
+// Debounce 300ms: un burst di eventi (es. molti ANNOTATION_MODIFIED durante
+// un drag) genera un solo refresh al termine.
+if (isPrintBuilderEnabled) {
+  let bridgeTimer = null;
+  window.addEventListener('nolex-preferiti-updated', () => {
+    if (!stimulsoftLoaded || !stimulsoftIframe || !stimulsoftIframe.contentWindow) {
+      return;
+    }
+    if (bridgeTimer) clearTimeout(bridgeTimer);
+    bridgeTimer = setTimeout(() => {
+      try {
+        stimulsoftIframe.contentWindow.postMessage({ type: 'refresh-preferiti' }, '*');
+      } catch (_) {
+        /* iframe non pronto o distrutto: ignora */
+      }
+    }, 300);
+  });
 }
 
 /*

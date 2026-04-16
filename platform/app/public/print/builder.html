@@ -219,7 +219,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: auto;
+        /* overflow: hidden invece di auto:
+           renderEditorView fitta la pagina nello spazio disponibile, quindi
+           lo scroll non serve mai. Auto invece può causare un loop oscillante:
+           se per arrotondamento la pagina è 1px più grande del wrapper, la
+           scrollbar appare → clientWidth si riduce → ResizeObserver scatta →
+           rerender con pagina più piccola → scrollbar scompare → ... e ad ogni
+           passaggio per la mega-grid il fit "perde" qualche pixel cumulando. */
+        overflow: hidden;
         padding: 16px;
         box-sizing: border-box;
       }
@@ -691,6 +698,53 @@
       let designer, report, page;
       let currentGridType = null;
       let selectedGridCell = null;
+      const DEBUG_STORAGE_KEY = 'nolex-debug-print';
+      let gridBuildChain = Promise.resolve();
+      let gridBuildSeq = 0;
+
+      function isPrintDebugEnabled() {
+        try {
+          return (
+            (window.__NOLEX_PRINT_DEBUG__ === true) ||
+            localStorage.getItem(DEBUG_STORAGE_KEY) === '1'
+          );
+        } catch (_) {
+          return window.__NOLEX_PRINT_DEBUG__ === true;
+        }
+      }
+
+      function logPrintDebug(...args) {
+        if (!isPrintDebugEnabled()) return;
+        console.log('[PrintBuilder]', ...args);
+      }
+
+      window.nolexSetPrintDebug = function(enabled) {
+        const on = !!enabled;
+        try {
+          localStorage.setItem(DEBUG_STORAGE_KEY, on ? '1' : '0');
+        } catch (_) {}
+        window.__NOLEX_PRINT_DEBUG__ = on;
+        console.log('[PrintBuilder] debug', on ? 'ENABLED' : 'DISABLED');
+      };
+
+      function queueGridBuild(type, reason = 'unknown') {
+        if (!type) return gridBuildChain;
+        const buildId = ++gridBuildSeq;
+        gridBuildChain = gridBuildChain
+          .catch(() => {})
+          .then(async () => {
+            logPrintDebug('grid-build-start', { buildId, type, reason });
+            await addGrid(type);
+            logPrintDebug('grid-build-end', { buildId, type, reason });
+          });
+        return gridBuildChain;
+      }
+
+      async function waitForGridBuildCompletion(reason = 'unknown') {
+        logPrintDebug('grid-build-wait', { reason });
+        await gridBuildChain.catch(() => {});
+        logPrintDebug('grid-build-ready', { reason });
+      }
 
       // ======================================================
       // STAMPA — pipeline custom (bypass HTML export di Stimulsoft)
@@ -745,30 +799,54 @@
           });
         }
 
-        await Promise.all(
+        let loadedCount = 0;
+        let errorCount = 0;
+        const loadedItems = await Promise.all(
           items.map(
             it =>
-              new Promise(res => {
+              new Promise(resolve => {
                 const img = new Image();
-                img.onload = () => {
-                  const x = Math.round(it.x * PX);
-                  const y = Math.round(it.y * PX);
-                  // Calcoliamo le coordinate del bordo destro/basso a partire
-                  // dal valore arrotondato di (x + w) cm, in modo che le celle
-                  // adiacenti siano sempre perfettamente contigue (niente gap
-                  // di 1 pixel da rounding indipendente di x e w).
-                  const xRight = Math.round((it.x + it.w) * PX);
-                  const yBottom = Math.round((it.y + it.h) * PX);
-                  const w = Math.max(1, xRight - x);
-                  const h = Math.max(1, yBottom - y);
-                  ctx.drawImage(img, x, y, w, h);
-                  res();
-                };
-                img.onerror = () => res();
+                img.onload = () => resolve({ it, img, ok: true });
+                img.onerror = () => resolve({ it, img: null, ok: false });
                 img.src = it.url;
               })
           )
         );
+
+        // IMPORTANTISSIMO: disegniamo SEMPRE in ordine items (z-order pagina).
+        // Prima usavamo draw dentro ogni onload -> ordine non deterministico:
+        // in alcuni casi i layer neri venivano disegnati dopo l'immagine e la
+        // prima stampa risultava tutta nera.
+        for (const entry of loadedItems) {
+          if (!entry.ok || !entry.img) {
+            errorCount++;
+            continue;
+          }
+          const it = entry.it;
+          const img = entry.img;
+          const x = Math.round(it.x * PX);
+          const y = Math.round(it.y * PX);
+          // Calcoliamo le coordinate del bordo destro/basso a partire
+          // dal valore arrotondato di (x + w) cm, in modo che le celle
+          // adiacenti siano sempre perfettamente contigue (niente gap
+          // di 1 pixel da rounding indipendente di x e w).
+          const xRight = Math.round((it.x + it.w) * PX);
+          const yBottom = Math.round((it.y + it.h) * PX);
+          const w = Math.max(1, xRight - x);
+          const h = Math.max(1, yBottom - y);
+          ctx.drawImage(img, x, y, w, h);
+          loadedCount++;
+        }
+
+        logPrintDebug('renderPageToCompositeImage', {
+          items: items.length,
+          loadedCount,
+          errorCount,
+          wPx,
+          hPx,
+          pageWcm: W,
+          pageHcm: H,
+        });
 
         return { dataUrl: canvas.toDataURL('image/png'), wCm: W, hCm: H };
       }
@@ -829,6 +907,11 @@
         fdoc.open();
         fdoc.write(html);
         fdoc.close();
+        logPrintDebug('openPrintIframeWithImage', {
+          wCm,
+          hCm,
+          dataUrlLength: typeof dataUrl === 'string' ? dataUrl.length : 0,
+        });
 
         const triggerPrint = () => {
           try {
@@ -889,6 +972,10 @@
         setTimeout(restoreOverlays, 5000); // safety net
 
         try {
+          // Se è in corso una rigenerazione griglia (es. subito dopo cambio layout),
+          // aspettiamo che finisca prima di stampare per evitare una prima stampa nera.
+          await waitForGridBuildCompletion('printCurrent');
+
           // IMPORTANTE: durante le interazioni utente abbiamo skippato
           // designer.renderHtml per velocità (vedi addGrid/clearGrid/...).
           // Stimulsoft ha però uno stato interno che viene aggiornato solo
@@ -904,7 +991,7 @@
           // Le immagini delle celle vengono ricomposte alla risoluzione
           // corrente (96 dpi per cella) per riflettere eventuali resize
           // fatti dall'utente nel designer prima di stampare.
-          await recompositeImageComponents();
+          await recompositeImageComponents({ force: true, reason: 'printCurrent' });
 
           const result = await renderPageToCompositeImage();
           if (!result || !result.dataUrl) {
@@ -1411,10 +1498,11 @@
       function composeCellSync(row, col) {
         const stiImg = getStiImageInCell(row, col);
         if (!stiImg) return null;
-        const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
-        if (!sourceUrl) return null;
-        const im = _sourceImageCache.get(sourceUrl);
+        const sources = resolveCellSources(stiImg);
+        if (!sources.baseUrl) return null;
+        const im = _sourceImageCache.get(sources.baseUrl);
         if (!im) return null;
+        const overlayIm = sources.overlayUrl ? _sourceImageCache.get(sources.overlayUrl) : null;
         const PX = 96 / 2.54;
         const wpx = Math.max(1, Math.round(stiImg.width * PX));
         const hpx = Math.max(1, Math.round(stiImg.height * PX));
@@ -1425,7 +1513,8 @@
           hpx,
           wpx / im.width,
           hpx / im.height,
-          transform
+          transform,
+          overlayIm
         );
       }
 
@@ -1451,8 +1540,15 @@
         const fitFactor = Math.min(availW / naturalW, availH / naturalH);
         const factor = Math.max(0.05, Math.min(2.5, fitFactor));
 
-        const pageW = Math.max(1, Math.round(naturalW * factor));
-        const pageH = Math.max(1, Math.round(naturalH * factor));
+        // Valori FLOAT (niente Math.round/floor): il CSS supporta
+        // dimensioni sub-pixel e cellW/cellH = pageW/cols restano esatti.
+        // Niente perdita di pixel quando si cambia layout (1x1↔2x2↔...).
+        // Niente rischio di loop scrollbar perché il wrapper ha overflow:hidden,
+        // quindi anche se per arrotondamento sub-pixel la pagina fosse 0.x px
+        // più grande del wrapper, il pixel "in più" viene semplicemente
+        // nascosto senza scrollbar.
+        const pageW = Math.max(1, naturalW * factor);
+        const pageH = Math.max(1, naturalH * factor);
 
         pageEl.style.width = pageW + 'px';
         pageEl.style.height = pageH + 'px';
@@ -1526,10 +1622,13 @@
       async function commitCellTransform(row, col) {
         const stiImg = getStiImageInCell(row, col);
         if (!stiImg) return;
-        const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
-        if (!sourceUrl) return;
-        const im = await loadSourceImageCached(sourceUrl);
+        const sources = resolveCellSources(stiImg);
+        if (!sources.baseUrl) return;
+        const im = await loadSourceImageCached(sources.baseUrl);
         if (!im) return;
+        const overlayIm = sources.overlayUrl
+          ? await loadSourceImageCached(sources.overlayUrl)
+          : null;
         const PX = 96 / 2.54;
         const wpx = Math.max(1, Math.round(stiImg.width * PX));
         const hpx = Math.max(1, Math.round(stiImg.height * PX));
@@ -1540,9 +1639,11 @@
           hpx,
           wpx / im.width,
           hpx / im.height,
-          transform
+          transform,
+          overlayIm
         );
         stiImg.imageURL = composed;
+        stiImg.tag = sources.baseUrl;
         stiImg._nolexComposeKey =
           getComposeKey(wpx, hpx) +
           '|' +
@@ -1550,7 +1651,11 @@
           '|' +
           transform.panX +
           '|' +
-          transform.panY;
+          transform.panY +
+          '|' +
+          (showPatientInfo ? '1' : '0') +
+          '|' +
+          (showAnnotations ? '1' : '0');
         // NON chiamiamo designer.renderHtml: il designer è nascosto e ci serve
         // solo come modello dati. Lo stato Stimulsoft è già aggiornato (l'array
         // page.components contiene gli StiImage con la nuova imageURL), pronto
@@ -1595,10 +1700,15 @@
           const cmPerPxX = page.pageWidth / pageRect.width;
           const cmPerPxY = page.pageHeight / pageRect.height;
 
-          // Pre-carica il sorgente nella cache (la usiamo a ogni mousemove)
-          const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
+          // Pre-carica il sorgente base (+ eventuale overlay) nella cache
+          // per la composizione durante il drag.
+          const sources = resolveCellSources(stiImg);
+          const sourceUrl = sources.baseUrl;
           if (sourceUrl && !_sourceImageCache.has(sourceUrl)) {
             await loadSourceImageCached(sourceUrl);
+          }
+          if (sources.overlayUrl && !_sourceImageCache.has(sources.overlayUrl)) {
+            await loadSourceImageCached(sources.overlayUrl);
           }
 
           // Riferimento DIRETTO al DOM <img> della cella: aggiorneremo il
@@ -1617,6 +1727,7 @@
             moved: false,
             domImg,
             sourceUrl,
+            overlayUrl: sources.overlayUrl,
           };
 
           if (activeTool === 'pan') cellEl.classList.add('dragging');
@@ -1702,9 +1813,12 @@
             const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, current.zoom * factor));
             setTransform(row, col, { ...current, zoom: newZoom });
 
-            const sourceUrl = typeof stiImg.tag === 'string' ? stiImg.tag : null;
-            if (sourceUrl && !_sourceImageCache.has(sourceUrl)) {
-              await loadSourceImageCached(sourceUrl);
+            const sources = resolveCellSources(stiImg);
+            if (sources.baseUrl && !_sourceImageCache.has(sources.baseUrl)) {
+              await loadSourceImageCached(sources.baseUrl);
+            }
+            if (sources.overlayUrl && !_sourceImageCache.has(sources.overlayUrl)) {
+              await loadSourceImageCached(sources.overlayUrl);
             }
             const composed = composeCellSync(row, col);
             const domImg = cellEl.querySelector('img');
@@ -1800,30 +1914,97 @@
           : '';
         const gridTop = titleText ? STUDY_TITLE_HEIGHT_CM : 0;
         const gridH = H - gridTop;
-        const isA4Portrait = Math.abs(W - 21) < 0.01 && Math.abs(H - 29.7) < 0.01;
-        const infoYOffset = isA4Portrait ? Math.round(((gridH * 96) / 2.54) * 0.01) : 0;
         const cellW = W / cols;
         const cellH = gridH / rows;
 
         ensureCellBackground(row, col, cellW, cellH, gridTop);
 
-        // Lookup del preferito per recuperare ENTRAMBE le versioni
-        // (clean + annotated). imageUrl arriva dal click/drag della sidebar
-        // ed è la versione "clean". Se troviamo il preferito corrispondente,
-        // usiamo anche la sua versione annotata; altrimenti fallback su clean.
+        // Lookup del preferito per recuperare i sorgenti di composizione:
+        // base clean (croppata al rect immagine) + overlay annotazioni +
+        // fallback legacy annotato.
         const preferitiList = loadPreferiti();
-        const preferitoMatch = (preferitiList || []).find(p => p.DataUrl === imageUrl);
-        const cleanUrl = imageUrl;
-        const annotatedUrl =
-          (preferitoMatch && preferitoMatch.DataUrlAnnotated) || imageUrl;
-        const activeUrl = showAnnotations ? annotatedUrl : cleanUrl;
+        const preferitoMatch = (preferitiList || []).find(
+          p => p.DataUrl === imageUrl || p.DataUrlPrintBase === imageUrl
+        );
+        // CLEAN selection (vedi commenti in addGrid):
+        //  - Annotazioni OFF → DataUrl (pixel grid, fitta meglio nelle celle)
+        //  - Annotazioni ON  → DataUrlPrintBase (necessario per allineare l'overlay)
+        const cleanUrlNoAnnot = preferitoMatch
+          ? preferitoMatch.DataUrl || preferitoMatch.DataUrlPrintBase
+          : imageUrl;
+        const cleanUrlForAnnot = preferitoMatch
+          ? preferitoMatch.DataUrlPrintBase || preferitoMatch.DataUrl
+          : imageUrl;
+        const cleanUrl = showAnnotations ? cleanUrlForAnnot : cleanUrlNoAnnot;
+        const annotationOverlayUrl =
+          (preferitoMatch && preferitoMatch.DataUrlAnnotationOverlay) || null;
+        const legacyAnnotatedUrl =
+          (preferitoMatch && preferitoMatch.DataUrlAnnotated) || null;
 
-        // Carica l'immagine attiva (cache hit istantaneo se già nota)
-        const img = await loadSourceImageCached(activeUrl);
-
-        if (!img) {
+        // Base: sempre clean.
+        const cleanImg = await loadSourceImageCached(cleanUrl);
+        if (!cleanImg) {
           console.error("Impossibile caricare l'immagine");
           return;
+        }
+
+        let baseImg = cleanImg;
+        let overlayImg = null;
+        let canUseAnnotationOverlay = false;
+        let canUseLegacyAnnotatedBase = false;
+
+        // Overlay separato (modello nuovo), usabile solo se la geometria
+        // coincide esattamente con la base.
+        if (annotationOverlayUrl) {
+          const overlayCandidate = await loadSourceImageCached(annotationOverlayUrl);
+          if (
+            overlayCandidate &&
+            overlayCandidate.width === cleanImg.width &&
+            overlayCandidate.height === cleanImg.height
+          ) {
+            canUseAnnotationOverlay = true;
+            if (showAnnotations) {
+              overlayImg = overlayCandidate;
+            }
+          } else if (overlayCandidate) {
+            logPrintDebug('annotation-overlay-disabled', {
+              reason: 'dimension-mismatch',
+              row,
+              col,
+              cleanW: cleanImg.width,
+              cleanH: cleanImg.height,
+              overlayW: overlayCandidate.width,
+              overlayH: overlayCandidate.height,
+            });
+          }
+        }
+
+        // Fallback legacy SOLO se l'annotata ha stessa identica geometria
+        // della clean; altrimenti introdurrebbe stretch/shift.
+        if (!canUseAnnotationOverlay && legacyAnnotatedUrl && legacyAnnotatedUrl !== cleanUrl) {
+          const legacyImg = await loadSourceImageCached(legacyAnnotatedUrl);
+          if (
+            legacyImg &&
+            legacyImg.width === cleanImg.width &&
+            legacyImg.height === cleanImg.height
+          ) {
+            canUseLegacyAnnotatedBase = true;
+            if (showAnnotations) {
+              baseImg = legacyImg;
+            }
+          } else {
+            logPrintDebug('legacy-annotated-base-disabled', {
+              reason: 'dimension-mismatch',
+              row,
+              col,
+              cleanUrlLength: cleanUrl ? cleanUrl.length : 0,
+              annotatedUrlLength: legacyAnnotatedUrl ? legacyAnnotatedUrl.length : 0,
+              cleanW: cleanImg.width,
+              cleanH: cleanImg.height,
+              annotatedW: legacyImg ? legacyImg.width : null,
+              annotatedH: legacyImg ? legacyImg.height : null,
+            });
+          }
         }
 
         // Componi immagine full-cell con sfondo nero (rispetta zoom/pan se presenti)
@@ -1831,13 +2012,15 @@
         const cellWpx = Math.max(1, Math.round(cellW * PX));
         const cellHpx = Math.max(1, Math.round(cellH * PX));
         const transform = getTransform(row, col);
+
         const composedUrl = composeImageOnBlack(
-          img,
+          baseImg,
           cellWpx,
           cellHpx,
-          cellWpx / img.width,
-          cellHpx / img.height,
-          transform
+          cellWpx / baseImg.width,
+          cellHpx / baseImg.height,
+          transform,
+          overlayImg
         );
 
         const left = col * cellW;
@@ -1866,10 +2049,17 @@
         stiImg.allowResize = false;
         stiImg.allowMove = false;
         stiImg.name = `Image_${row}_${col}_${Date.now()}`;
-        stiImg.tag = activeUrl;
-        // Memorizza ENTRAMBE le versioni per il toggle annotazioni
+        stiImg.tag = cleanUrl;
+        // Nuovo modello: base clean + overlay annotazioni separato.
+        // Memorizziamo ENTRAMBE le clean per il toggle veloce delle annotazioni.
         stiImg._nolexCleanUrl = cleanUrl;
-        stiImg._nolexAnnotatedUrl = annotatedUrl;
+        stiImg._nolexCleanUrlNoAnnot = cleanUrlNoAnnot;
+        stiImg._nolexCleanUrlForAnnot = cleanUrlForAnnot;
+        stiImg._nolexAnnotationOverlayUrl = annotationOverlayUrl;
+        stiImg._nolexCanUseAnnotationOverlay = canUseAnnotationOverlay ? 1 : 0;
+        // Legacy fallback per preferiti vecchi.
+        stiImg._nolexAnnotatedUrl = legacyAnnotatedUrl;
+        stiImg._nolexCanUseLegacyAnnotatedBase = canUseLegacyAnnotatedBase ? 1 : 0;
         const composeKey =
           getComposeKey(cellWpx, cellHpx) +
           '|' +
@@ -1887,7 +2077,7 @@
         page.components.add(stiImg);
 
         ensureEmptyCellBorders(rows, cols, cellW, cellH, gridTop);
-        // Skip designer.renderHtml: il designer è nascosto, basta il modello.
+        // Skip designer.renderHtml: il designer ?? nascosto, basta il modello.
         renderEditorView();
         console.log(`Immagine aggiunta alla cella [${row},${col}]`);
 
@@ -2123,7 +2313,7 @@
         //    caricate e composte prima di considerare l'editor "pronto").
         if (currentGridType) {
           console.log('↻ Rigenero griglia:', currentGridType);
-          await addGrid(currentGridType);
+          await queueGridBuild(currentGridType, 'refreshPreferiti');
         }
 
         // 5) Marca il "primo refresh completato" e tenta la rivelazione.
@@ -2255,7 +2445,7 @@
           imageTransforms.clear();
         }
         currentGridType = type;
-        addGrid(type);
+        await queueGridBuild(type, 'selectGrid');
       }
 
 
@@ -2342,19 +2532,91 @@
           cellSlots.push({
             r,
             c,
-            cleanUrl: p.DataUrl,
-            // Fallback al pulito se il preferito non ha la versione annotata
-            // (preferito vecchio o cattura SVG fallita)
-            annotatedUrl: p.DataUrlAnnotated || p.DataUrl,
+            // Memorizziamo ENTRAMBE le versioni "clean":
+            //  - cleanUrlNoAnnot = DataUrl (pixel grid DICOM nativo). Usata
+            //    quando "Mostra annotazioni" è OFF: aspect ratio del pixel
+            //    grid che fitta meglio nella cella (es. A4 portrait alta vs
+            //    US "quadrato" sul pixel grid).
+            //  - cleanUrlForAnnot = DataUrlPrintBase (canvas viewport croppato
+            //    al rect fisico, aspect "fisicamente corretto"). Usata quando
+            //    "Mostra annotazioni" è ON: NECESSARIO perché l'overlay SVG
+            //    è croppato allo stesso rect e va sovrapposto 1:1.
+            // resolveCellSources sceglie quale usare in base allo stato
+            // corrente di showAnnotations, così il toggle è veloce e
+            // visivamente coerente.
+            cleanUrlNoAnnot: p.DataUrl || p.DataUrlPrintBase,
+            cleanUrlForAnnot: p.DataUrlPrintBase || p.DataUrl,
+            // Effettiva da usare in questa addGrid (per evitare 2 cache miss
+            // separati per la stessa immagine quando lo stato è già noto).
+            cleanUrl: showAnnotations
+              ? p.DataUrlPrintBase || p.DataUrl
+              : p.DataUrl || p.DataUrlPrintBase,
+            // OVERLAY: disegnato sopra la base con le stesse proporzioni.
+            // Allineato 1:1 con DataUrlPrintBase.
+            annotationOverlayUrl: p.DataUrlAnnotationOverlay || null,
+            // Fallback legacy per preferiti vecchi senza overlay separato.
+            annotatedUrl: p.DataUrlAnnotated || null,
           });
         }
 
-        // Sceglie l'URL "attivo" in base alla checkbox annotazioni
-        const sourceFor = slot =>
-          showAnnotations ? slot.annotatedUrl : slot.cleanUrl;
+        const loadedCells = await Promise.all(
+          cellSlots.map(async slot => {
+            const cleanImage = await loadSourceImageCached(slot.cleanUrl);
+            if (!cleanImage) {
+              return {
+                baseImage: null,
+                overlayImage: null,
+                canUseAnnotationOverlay: false,
+                canUseLegacyAnnotatedBase: false,
+              };
+            }
 
-        const loadedImgs = await Promise.all(
-          cellSlots.map(s => loadSourceImageCached(sourceFor(s)))
+            let canUseAnnotationOverlay = false;
+            let overlayImage = null;
+            if (slot.annotationOverlayUrl) {
+              const overlayCandidate = await loadSourceImageCached(slot.annotationOverlayUrl);
+              if (
+                overlayCandidate &&
+                overlayCandidate.width === cleanImage.width &&
+                overlayCandidate.height === cleanImage.height
+              ) {
+                canUseAnnotationOverlay = true;
+                if (showAnnotations) {
+                  overlayImage = overlayCandidate;
+                }
+              } else if (overlayCandidate) {
+                logPrintDebug('annotation-overlay-disabled', {
+                  reason: 'dimension-mismatch',
+                  row: slot.r,
+                  col: slot.c,
+                  cleanW: cleanImage.width,
+                  cleanH: cleanImage.height,
+                  overlayW: overlayCandidate.width,
+                  overlayH: overlayCandidate.height,
+                });
+              }
+            }
+
+            let canUseLegacyAnnotatedBase = false;
+            let legacyImage = null;
+            if (!canUseAnnotationOverlay && slot.annotatedUrl && slot.annotatedUrl !== slot.cleanUrl) {
+              legacyImage = await loadSourceImageCached(slot.annotatedUrl);
+              canUseLegacyAnnotatedBase =
+                !!legacyImage &&
+                legacyImage.width === cleanImage.width &&
+                legacyImage.height === cleanImage.height;
+            }
+
+            const baseImage =
+              showAnnotations && !overlayImage && canUseLegacyAnnotatedBase ? legacyImage : cleanImage;
+
+            return {
+              baseImage,
+              overlayImage,
+              canUseAnnotationOverlay,
+              canUseLegacyAnnotatedBase,
+            };
+          })
         );
 
         const PX = 96 / 2.54;
@@ -2363,7 +2625,9 @@
 
         for (let i = 0; i < cellSlots.length; i++) {
           const slot = cellSlots[i];
-          const img = loadedImgs[i];
+          const loadedCell = loadedCells[i];
+          const img = loadedCell && loadedCell.baseImage;
+          const overlayImg = loadedCell && loadedCell.overlayImage;
           if (!img) continue;
 
           const cellTransform = getTransform(slot.r, slot.c);
@@ -2373,7 +2637,8 @@
             cellHpx,
             cellWpx / img.width,
             cellHpx / img.height,
-            cellTransform
+            cellTransform,
+            overlayImg
           );
 
           const left = slot.c * cellW;
@@ -2398,12 +2663,21 @@
           stiImg.enabled = true;
           stiImg.allowResize = false;
           stiImg.allowMove = false;
-          stiImg.tag = sourceFor(slot);
-          // Memorizza ENTRAMBI gli URL sul componente: recomposeAllCells e
-          // recompositeImageComponents leggeranno quello giusto in base
-          // allo stato corrente di showAnnotations (via getEffectiveSourceUrl).
+          stiImg.tag = slot.cleanUrl;
+          // Nuovo modello: base clean + overlay annotazioni separato.
+          // Memorizziamo ENTRAMBE le clean così resolveCellSources può
+          // sceglierle al volo quando l'utente toggla "Mostra annotazioni"
+          // senza dover rigenerare il modello dei page.components.
           stiImg._nolexCleanUrl = slot.cleanUrl;
+          stiImg._nolexCleanUrlNoAnnot = slot.cleanUrlNoAnnot;
+          stiImg._nolexCleanUrlForAnnot = slot.cleanUrlForAnnot;
+          stiImg._nolexAnnotationOverlayUrl = slot.annotationOverlayUrl;
+          stiImg._nolexCanUseAnnotationOverlay =
+            loadedCell && loadedCell.canUseAnnotationOverlay ? 1 : 0;
+          // Legacy fallback per preferiti vecchi.
           stiImg._nolexAnnotatedUrl = slot.annotatedUrl;
+          stiImg._nolexCanUseLegacyAnnotatedBase =
+            loadedCell && loadedCell.canUseLegacyAnnotatedBase ? 1 : 0;
           const composeKey =
             getComposeKey(cellWpx, cellHpx) +
             '|' +
@@ -2639,10 +2913,17 @@
         return { row: r, col: c };
       }
 
-      async function recompositeImageComponents() {
+      async function recompositeImageComponents(options = {}) {
         if (!page) return;
+        const force = !!options.force;
+        const reason = options.reason || 'unknown';
         const PX = 96 / 2.54;
         const tasks = [];
+        let scannedPanels = 0;
+        let skippedByCache = 0;
+        let missingSource = 0;
+        let composedCount = 0;
+        let loadFailures = 0;
 
         for (let i = 0; i < page.components.count; i++) {
           const panel = page.components.getByIndex(i);
@@ -2652,11 +2933,11 @@
           if (!panel.name.startsWith('Image_')) {
             continue;
           }
+          scannedPanels++;
 
-          // Sceglie pulito o annotato in base allo stato corrente di
-          // showAnnotations (con fallback su tag per backward-compat)
-          const sourceUrl = getEffectiveSourceUrl(panel);
-          if (!sourceUrl) {
+          const sources = resolveCellSources(panel);
+          if (!sources.baseUrl) {
+            missingSource++;
             continue;
           }
 
@@ -2682,38 +2963,45 @@
             (showPatientInfo ? '1' : '0') +
             '|' +
             (showAnnotations ? '1' : '0');
-          if (child._nolexComposeKey === composeKey) {
+          if (!force && child._nolexComposeKey === composeKey) {
+            skippedByCache++;
             continue;
           }
 
           tasks.push(
-            new Promise(res => {
-              const im = new Image();
-              im.onload = () => {
-                const composedUrl = composeImageOnBlack(
-                  im,
-                  wpx,
-                  hpx,
-                  wpx / im.width,
-                  hpx / im.height,
-                  transform
-                );
-                child.imageURL = composedUrl;
-                child.imageAsBase64 = true;
-                child.stretch = true;
-                child.aspectRatio = false;
-                child.keepAspectRatio = false;
-                child.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
-                child.backColor = PRINT_BLACK;
-                child.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
-                  createColor(0, 0, 0, 255, 'PrintBlack')
-                );
-                child._nolexComposeKey = composeKey;
-                res();
-              };
-              im.onerror = () => res();
-              im.src = sourceUrl;
-            })
+            (async () => {
+              const im = await loadSourceImageCached(sources.baseUrl);
+              if (!im) {
+                loadFailures++;
+                return;
+              }
+              const overlayIm = sources.overlayUrl
+                ? await loadSourceImageCached(sources.overlayUrl)
+                : null;
+
+              const composedUrl = composeImageOnBlack(
+                im,
+                wpx,
+                hpx,
+                wpx / im.width,
+                hpx / im.height,
+                transform,
+                overlayIm
+              );
+              child.imageURL = composedUrl;
+              child.tag = sources.baseUrl;
+              child.imageAsBase64 = true;
+              child.stretch = true;
+              child.aspectRatio = false;
+              child.keepAspectRatio = false;
+              child.margins = new Stimulsoft.Report.Components.StiMargins(0, 0, 0, 0);
+              child.backColor = PRINT_BLACK;
+              child.brush = new Stimulsoft.Base.Drawing.StiSolidBrush(
+                createColor(0, 0, 0, 255, 'PrintBlack')
+              );
+              child._nolexComposeKey = composeKey;
+              composedCount++;
+            })()
           );
         }
 
@@ -2722,6 +3010,19 @@
           // Skip designer.renderHtml: la stampa legge direttamente da
           // page.components, non dal DOM del designer (che è nascosto).
         }
+
+        logPrintDebug('recompositeImageComponents', {
+          reason,
+          force,
+          scannedPanels,
+          queuedTasks: tasks.length,
+          skippedByCache,
+          missingSource,
+          composedCount,
+          loadFailures,
+          showAnnotations,
+          showPatientInfo,
+        });
       }
 
       function setupImageRecomposeListeners() {
@@ -2806,8 +3107,8 @@
 
       // Mostra/nascondi le ANNOTAZIONI (misurazioni, length, area, ecc.)
       // sovraimpresse alle immagini. A "favorito-add" tempo, Preferiti.tsx
-      // cattura DUE versioni: DataUrl (pulita) e DataUrlAnnotated (con
-      // annotazioni). Lo stato qui sceglie quale URL caricare per ogni cella.
+      // salva base clean + overlay annotazioni separato (e un fallback legacy).
+      // Lo stato qui decide solo se applicare o meno l'overlay.
       // Default: false (= immagini pulite, comportamento backward-compatible).
       const SHOW_ANNOTATIONS_STORAGE_KEY = 'nolex-print-show-annotations';
       let showAnnotations = false;
@@ -2821,24 +3122,78 @@
         try {
           localStorage.setItem(SHOW_ANNOTATIONS_STORAGE_KEY, showAnnotations ? '1' : '0');
         } catch (_) {}
+        logPrintDebug('onShowAnnotationsChange', { showAnnotations });
         // Stesso path veloce della checkbox info esame
         await recomposeAllCells();
       }
 
-      // Helper centrale per scegliere il source URL effettivo di una cella
-      // in base allo stato corrente della checkbox annotazioni. Usato da
-      // addGrid, addImageToCell, recomposeAllCells e recompositeImageComponents.
-      // Fallback: se non ci sono i due URL custom (es. preferito vecchio
-      // senza DataUrlAnnotated), usa stiImg.tag come prima.
-      function getEffectiveSourceUrl(stiImg) {
-        if (!stiImg) return null;
-        if (showAnnotations && typeof stiImg._nolexAnnotatedUrl === 'string') {
-          return stiImg._nolexAnnotatedUrl;
+
+      // Ritorna la sorgente base e l'eventuale overlay annotazioni per una cella.
+      // Nuovo modello:
+      // - base = sempre immagine clean
+      // - overlay = png trasparente delle annotazioni (se disponibile)
+      // Legacy fallback:
+      // - se manca overlay e c'è _nolexAnnotatedUrl, usiamo quello come base
+      //   quando showAnnotations è ON.
+      function resolveCellSources(stiImg) {
+        if (!stiImg) {
+          return { baseUrl: null, overlayUrl: null, usesLegacyAnnotatedBase: false };
         }
-        if (typeof stiImg._nolexCleanUrl === 'string') {
-          return stiImg._nolexCleanUrl;
+
+        // Sceglie la clean giusta in base allo stato CORRENTE di showAnnotations:
+        //  - OFF → cleanUrlNoAnnot (DataUrl, pixel grid, fitta meglio nelle celle)
+        //  - ON  → cleanUrlForAnnot (DataUrlPrintBase, allineato all'overlay SVG)
+        // Fallback su _nolexCleanUrl (vecchio campo) per backward compat con
+        // preferiti aggiunti prima del refactor dual-clean.
+        const cleanForCurrentMode = showAnnotations
+          ? (typeof stiImg._nolexCleanUrlForAnnot === 'string' && stiImg._nolexCleanUrlForAnnot) ||
+            (typeof stiImg._nolexCleanUrl === 'string' && stiImg._nolexCleanUrl)
+          : (typeof stiImg._nolexCleanUrlNoAnnot === 'string' && stiImg._nolexCleanUrlNoAnnot) ||
+            (typeof stiImg._nolexCleanUrl === 'string' && stiImg._nolexCleanUrl);
+        const cleanUrl =
+          cleanForCurrentMode ||
+          (typeof stiImg.tag === 'string' ? stiImg.tag : null);
+        const overlayUrl =
+          (typeof stiImg._nolexAnnotationOverlayUrl === 'string' &&
+            stiImg._nolexAnnotationOverlayUrl) ||
+          null;
+        const canUseAnnotationOverlay =
+          stiImg._nolexCanUseAnnotationOverlay === true ||
+          stiImg._nolexCanUseAnnotationOverlay === 1 ||
+          stiImg._nolexCanUseAnnotationOverlay === '1';
+        const annotatedUrl =
+          (typeof stiImg._nolexAnnotatedUrl === 'string' && stiImg._nolexAnnotatedUrl) || null;
+        const canUseLegacyAnnotatedBase =
+          stiImg._nolexCanUseLegacyAnnotatedBase === true ||
+          stiImg._nolexCanUseLegacyAnnotatedBase === 1 ||
+          stiImg._nolexCanUseLegacyAnnotatedBase === '1';
+
+        if (showAnnotations && canUseAnnotationOverlay && cleanUrl && overlayUrl) {
+          return {
+            baseUrl: cleanUrl,
+            overlayUrl,
+            usesLegacyAnnotatedBase: false,
+          };
         }
-        return typeof stiImg.tag === 'string' ? stiImg.tag : null;
+
+        if (
+          showAnnotations &&
+          canUseLegacyAnnotatedBase &&
+          annotatedUrl &&
+          (!cleanUrl || annotatedUrl !== cleanUrl)
+        ) {
+          return {
+            baseUrl: annotatedUrl,
+            overlayUrl: null,
+            usesLegacyAnnotatedBase: true,
+          };
+        }
+
+        return {
+          baseUrl: cleanUrl,
+          overlayUrl: null,
+          usesLegacyAnnotatedBase: false,
+        };
       }
 
       // Ricompone tutte le celle con immagine usando il transform corrente
@@ -2850,32 +3205,52 @@
 
         // Raccogli tutte le cells "Image_..." esistenti
         const cells = [];
+        let missingSource = 0;
         for (let i = 0; i < page.components.count; i++) {
           const c = page.components.getByIndex(i);
           if (!c || !c.name || !c.name.startsWith('Image_')) continue;
           const info = parseImageCellName(c.name);
           if (!info) continue;
-          // Sceglie pulito o annotato in base allo stato corrente di
-          // showAnnotations (con fallback su tag per backward-compat)
-          const sourceUrl = getEffectiveSourceUrl(c);
-          if (!sourceUrl) continue;
-          cells.push({ stiImg: c, row: info.row, col: info.col, sourceUrl });
+          const sources = resolveCellSources(c);
+          if (!sources.baseUrl) {
+            missingSource++;
+            continue;
+          }
+          cells.push({
+            stiImg: c,
+            row: info.row,
+            col: info.col,
+            baseUrl: sources.baseUrl,
+            overlayUrl: sources.overlayUrl,
+          });
         }
         if (!cells.length) {
+          logPrintDebug('recomposeAllCells-empty', { missingSource, showAnnotations, showPatientInfo });
           renderEditorView();
           return;
         }
 
         // Pre-carica tutti i sorgenti in parallelo (cache hit istantanei)
-        const imgs = await Promise.all(
-          cells.map(c => loadSourceImageCached(c.sourceUrl))
+        const sourcesLoaded = await Promise.all(
+          cells.map(async c => {
+            const baseImage = await loadSourceImageCached(c.baseUrl);
+            const overlayImage = c.overlayUrl ? await loadSourceImageCached(c.overlayUrl) : null;
+            return { baseImage, overlayImage };
+          })
         );
 
         const PX = 96 / 2.54;
+        let composedCount = 0;
+        let loadFailures = 0;
         for (let i = 0; i < cells.length; i++) {
           const c = cells[i];
-          const im = imgs[i];
-          if (!im) continue;
+          const source = sourcesLoaded[i];
+          const im = source && source.baseImage;
+          const overlayIm = source && source.overlayImage;
+          if (!im) {
+            loadFailures++;
+            continue;
+          }
           const wpx = Math.max(1, Math.round(c.stiImg.width * PX));
           const hpx = Math.max(1, Math.round(c.stiImg.height * PX));
           const transform = getTransform(c.row, c.col);
@@ -2885,12 +3260,13 @@
             hpx,
             wpx / im.width,
             hpx / im.height,
-            transform
+            transform,
+            overlayIm
           );
           c.stiImg.imageURL = composed;
           // Aggiorna anche il tag con l'URL attivo (utile per backward-compat
           // con codice che legge stiImg.tag)
-          c.stiImg.tag = c.sourceUrl;
+          c.stiImg.tag = c.baseUrl;
           c.stiImg._nolexComposeKey =
             getComposeKey(wpx, hpx) +
             '|' +
@@ -2903,8 +3279,17 @@
             (showPatientInfo ? '1' : '0') +
             '|' +
             (showAnnotations ? '1' : '0');
+          composedCount++;
         }
 
+        logPrintDebug('recomposeAllCells', {
+          cells: cells.length,
+          missingSource,
+          composedCount,
+          loadFailures,
+          showAnnotations,
+          showPatientInfo,
+        });
         renderEditorView();
       }
 
@@ -2965,7 +3350,9 @@
         imageTransforms.clear();
 
         // Skip designer.renderHtml: il designer è nascosto.
-        if (currentGridType) addGrid(currentGridType);
+        if (currentGridType) {
+          void queueGridBuild(currentGridType, 'selectFormat');
+        }
         // addGrid già chiama renderEditorView, che ricalcola il fit della
         // pagina nello spazio disponibile.
       }
@@ -3183,7 +3570,15 @@
 
       // transform: { zoom, panX, panY } in unità: zoom = moltiplicatore,
       // panX/panY in CM (page units). Default: nessuna trasformazione.
-      function composeImageOnBlack(img, targetWpx, targetHpx, scaleW, scaleH, transform) {
+      function composeImageOnBlack(
+        img,
+        targetWpx,
+        targetHpx,
+        scaleW,
+        scaleH,
+        transform,
+        overlayImg = null
+      ) {
         const t = transform || TRANSFORM_DEFAULT;
 
         // Bordi bianchi della griglia (vedi sotto): l'immagine deve fittarsi
@@ -3200,6 +3595,11 @@
         // sempre visibili i bordi bianchi.
         const scaleW_eff = innerW / img.width;
         const scaleH_eff = innerH / img.height;
+        // CONTAIN (Math.min): l'immagine viene fittata SENZA mai croppare,
+        // preservando tutto il contenuto. Se l'aspect ratio del PNG non
+        // combacia con quello della cella, ci sarà letterbox (bande nere
+        // sopra/sotto o ai lati). L'utente può sempre fare pan/zoom
+        // manualmente per centrare il punto di interesse.
         const baseScale = Math.min(scaleW_eff, scaleH_eff);
         const scale = baseScale * (t.zoom || 1);
         const drawW = img.width * scale;
@@ -3231,6 +3631,9 @@
         ctx.rect(linePx, linePx, innerW, innerH);
         ctx.clip();
         ctx.drawImage(img, drawX, drawY, drawW, drawH);
+        if (showAnnotations && overlayImg) {
+          ctx.drawImage(overlayImg, drawX, drawY, drawW, drawH);
+        }
         ctx.restore();
 
         drawPatientInfoOnCanvas(ctx, targetWpx, targetHpx);
@@ -3795,3 +4198,5 @@
     </script>
   </body>
 </html>
+
+

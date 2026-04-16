@@ -119,10 +119,21 @@ function ViewerViewportGrid(props: withAppTypes) {
 
       let updatedViewports = [];
       try {
+        // Use HP cascading (isHangingProtocolLayout = true) only when a
+        // specialized hanging protocol is active — MPR, PT/CT fusion, etc.
+        // These protocols display the same series in multiple orientations
+        // (axial/coronal/sagittal) and updating one viewport must cascade
+        // to all siblings that share the same displaySetSelector so the
+        // multi-planar view stays consistent.
+        // For the default layout (no special protocol), pass false to avoid
+        // unwanted cascading across unrelated viewports.
+        const useHpCascading =
+          document.body.classList.contains('hp-mpr-active') ||
+          document.body.classList.contains('hp-ptct-active');
         updatedViewports = hangingProtocolService.getViewportsRequireUpdate(
           viewportId,
           displaySetInstanceUID,
-          isHangingProtocolLayout
+          useHpCascading
         );
       } catch (error) {
         console.warn(error);
@@ -137,7 +148,7 @@ function ViewerViewportGrid(props: withAppTypes) {
 
       return updatedViewports;
     },
-    [hangingProtocolService, uiNotificationService, isHangingProtocolLayout]
+    [hangingProtocolService, uiNotificationService]
   );
 
   // Using Hanging protocol engine to match the displaySets
@@ -153,6 +164,62 @@ function ViewerViewportGrid(props: withAppTypes) {
       unsubscribe();
     };
   }, []);
+
+  // Drag-and-drop compatibility: when a thumbnail drag starts (custom event
+  // from Thumbnail.tsx), validate each viewport pane against the HP rules
+  // and tag compatible ones with data-drop-compatible="true". CSS uses this
+  // for green/red visual feedback. Runs only in PT/CT mode.
+  useEffect(() => {
+    const onDragStart = (e: any) => {
+      if (!document.body.classList.contains('hp-ptct-active')) return;
+      const dsUID = e?.detail?.displaySetInstanceUID;
+      if (!dsUID) return;
+      document.querySelectorAll<HTMLElement>('.viewport-parent-div[data-viewport-modalities]')
+        .forEach(el => {
+          // Find the viewport id from the pane's key structure. Each pane
+          // wraps children with data-cy="viewport-pane". The pane itself
+          // doesn't expose viewportId directly, but we can iterate our
+          // viewports map and match by modalities + position.
+          // Simpler approach: try getViewportsRequireUpdate for each viewport.
+        });
+      // Iterate all known viewport ids and validate.
+      const state = viewportGridService.getState();
+      const allViewports = state?.viewports ? Array.from((state.viewports as Map<string, any>).entries()) : [];
+      const compatibleIds = new Set<string>();
+      allViewports.forEach(([vpId]) => {
+        try {
+          const result = hangingProtocolService.getViewportsRequireUpdate(
+            vpId, dsUID, true
+          );
+          if (result && result.length > 0) {
+            compatibleIds.add(vpId);
+          }
+        } catch (_) {
+          // HP rejected → not compatible
+        }
+      });
+      // Tag DOM elements: find viewport-parent-div panes and mark them.
+      // ViewportPane doesn't expose viewportId as data attribute, so we
+      // add one now based on position in the grid.
+      allViewports.forEach(([vpId], idx) => {
+        const panes = document.querySelectorAll<HTMLElement>('.viewport-parent-div[data-viewport-modalities]');
+        const el = panes[idx];
+        if (!el) return;
+        el.dataset.dropCompatible = compatibleIds.has(vpId) ? 'true' : 'false';
+      });
+    };
+    const onDragEnd = () => {
+      document.querySelectorAll<HTMLElement>('[data-drop-compatible]').forEach(el => {
+        delete el.dataset.dropCompatible;
+      });
+    };
+    document.addEventListener('nolex-drag-start', onDragStart);
+    document.addEventListener('nolex-drag-end', onDragEnd);
+    return () => {
+      document.removeEventListener('nolex-drag-start', onDragStart);
+      document.removeEventListener('nolex-drag-end', onDragEnd);
+    };
+  }, [hangingProtocolService, viewportGridService]);
 
   // Check viewport readiness in useEffect
   useEffect(() => {
@@ -307,6 +374,22 @@ function ViewerViewportGrid(props: withAppTypes) {
         return style;
       };
 
+      // Collect the modalities of display sets currently shown in this
+      // viewport so CSS can highlight/dim during drag-and-drop based on
+      // compatibility (e.g. PT viewport accepts only PT series).
+      const viewportModalitiesArr = displaySets
+        .map(ds => ds?.Modality)
+        .filter(Boolean);
+      const viewportModalities = viewportModalitiesArr.join(',');
+      // Fusion viewports show 2+ different modalities overlaid (CT+PT) —
+      // dropping a single series there doesn't make sense. MIP viewport
+      // is also read-only (shows the PT MIP projection). Mark these as
+      // not droppable so CSS always dims them during drag.
+      const uniqueModalities = new Set(viewportModalitiesArr);
+      const toolGroupId = viewportOptions?.toolGroupId || '';
+      const isNoDrop =
+        uniqueModalities.size > 1 || toolGroupId === 'mipToolGroup';
+
       viewportPanes[i] = (
         <ViewportPane
           // Note: It is highly important that the key is the viewportId here,
@@ -322,6 +405,8 @@ function ViewerViewportGrid(props: withAppTypes) {
           acceptDropsFor="displayset"
           onDrop={onDropHandler.bind(null, viewportId)}
           onInteraction={onInteractionHandler}
+          data-viewport-modalities={viewportModalities}
+          data-viewport-nodrop={isNoDrop ? 'true' : undefined}
           customStyle={{
             position: 'absolute',
             top: viewportY * 100 + '%',

@@ -17,3 +17,37 @@ index 1d586a7e1b..f6f0a42f8c 100644
                  this.calibration?.scale > 0 ||
                  this.calibration?.rowPixelSpacing > 0;
          this.calibration ||= imagePlaneModule.calibration;
+diff --git a/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/BaseVolumeViewport.js b/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/BaseVolumeViewport.js
+index aaaaaaaaaa..bbbbbbbbbb 100644
+--- a/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/BaseVolumeViewport.js
++++ b/node_modules/@cornerstonejs/core/dist/esm/RenderingEngine/BaseVolumeViewport.js
+@@ -522,10 +522,19 @@ class BaseVolumeViewport extends Viewport {
+         });
+         this.render();
+     }
+-    setViewReference(viewRef) {
++    setViewReference(viewRef, _nolexDepth = 0) {
+         if (!viewRef) {
+             return;
+         }
++        // [nolex patch] Recursion guard: when the dataset has an oblique
++        // acquisition the view-plane normal cannot be aligned exactly to the
++        // viewport normal (float precision), so isSameNormal stays false on
++        // the recursive call below and the function explodes with
++        // "Maximum call stack size exceeded". Bail out gracefully after one
++        // re-orientation attempt.
++        if (_nolexDepth > 1) {
++            return;
++        }
+         const volumeId = this.getVolumeId();
+         const { viewPlaneNormal: refViewPlaneNormal, FrameOfReferenceUID: refFrameOfReference, cameraFocalPoint, referencedImageId, viewUp, } = viewRef;
+         let { sliceIndex } = viewRef;
+@@ -547,7 +556,7 @@ class BaseVolumeViewport extends Viewport {
+         else if (refFrameOfReference === this.getFrameOfReferenceUID()) {
+             if (refViewPlaneNormal && !isNegativeNormal && !isSameNormal) {
+                 this.setOrientation({ viewPlaneNormal: refViewPlaneNormal, viewUp });
+-                this.setViewReference(viewRef);
++                this.setViewReference(viewRef, _nolexDepth + 1);
+                 return;
+             }
+             if (cameraFocalPoint) {

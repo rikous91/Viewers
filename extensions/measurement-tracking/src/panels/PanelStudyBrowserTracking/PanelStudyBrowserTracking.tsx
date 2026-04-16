@@ -31,7 +31,6 @@ const thumbnailNoImageModalities = [
   'RTSTRUCT',
   'RTPLAN',
   'RTDOSE',
-  'DOC',
   'PMAP',
 ];
 
@@ -1088,7 +1087,7 @@ function _mapDisplaySets(
         dragData: {
           type: 'displayset',
           displaySetInstanceUID,
-          // .. Any other data to pass
+          modality: ds.Modality,
         },
         isTracked: trackedSeriesInstanceUIDs.includes(ds.SeriesInstanceUID),
         isHydratedForDerivedDisplaySet: ds.isHydrated,

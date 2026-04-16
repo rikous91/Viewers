@@ -64,10 +64,19 @@ export default function ToolButtonListWrapper({
       <div id="SplitButton" data-cy={`${groupId}-split-button-secondary`}>
         <ToolButtonListDropDown>
           {items.map(item => {
+            // Pass only props that ToolButtonListItem consumes. Spreading the
+            // full button componentProps would leak non-DOM props (evaluate,
+            // commands, isActive, options, etc.) onto the underlying div and
+            // trigger React warnings.
             return (
               <ToolButtonListItem
                 key={item.id}
-                {...item}
+                id={item.id}
+                icon={item.icon}
+                disabled={item.disabled}
+                disabledText={item.disabledText}
+                tooltip={item.tooltip}
+                className={item.className}
                 data-cy={item.id}
                 data-tool={item.id}
                 data-active={item.isActive}

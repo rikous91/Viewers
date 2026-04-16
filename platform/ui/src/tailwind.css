@@ -1627,9 +1627,93 @@ input[type='range']::-webkit-slider-thumb {
   }
 }
 
+.hp-ptct-active {
+  /* Same visual pattern as MPR: grey out series that are not usable in the
+     PET/CT fusion layout so the user can see them but cannot drag/drop them
+     into a viewport. */
+  .no-ptct-thumbnail {
+    opacity: 0.1;
+    pointer-events: none;
+    cursor: default;
+  }
+}
+
 .caricamento-layout-mpr {
   .cornerstone-viewport-element {
     visibility: hidden;
+  }
+}
+
+/* During mode-to-mode transitions (MPR → PET/CT or PET/CT → MPR) replace
+   the viewport grid with a shimmer skeleton so the user doesn't see the
+   intermediate layout flicker. The wrapper stays visible (so the pseudo
+   elements render) while its children are hidden. Toggled by body class
+   `nolex-layout-transitioning`. */
+/* Hide ALL descendants of the grid wrapper (not just direct children),
+   !important to beat any rule that re-shows specific elements (e.g. the
+   active viewport's action corners which use their own stacking context). */
+body.nolex-layout-transitioning .nolex-viewport-grid-wrapper *,
+body.nolex-layout-transitioning .nolex-viewport-grid-wrapper > * {
+  visibility: hidden !important;
+}
+body.nolex-layout-transitioning .nolex-viewport-grid-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 8px;
+  background: #1a1a1a;
+  z-index: 9998;
+  pointer-events: none;
+}
+body.nolex-layout-transitioning .nolex-viewport-grid-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 8px;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.06) 48%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 52%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: nolex-skeleton-shimmer 1.2s linear infinite;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Drag-and-drop compatibility feedback on PT/CT layout.
+   During drag, body gets data-drag-modality="CT" (or "PT" etc).
+   Each viewport pane has data-viewport-modalities="CT" or "PT" or "CT,PT".
+   Compatible = modality found in the viewport's list → green glow.
+   Incompatible = not found → dim + red border.
+   Active only when hp-ptct-active is on body. */
+/* Drag compatibility feedback in PT/CT mode. The validation is done via
+   the actual hanging protocol rules (getViewportsRequireUpdate) and stored
+   as data-drop-compatible="true|false" on each viewport pane by the
+   nolex-drag-start event handler in ViewportGrid. */
+body.hp-ptct-active[data-drag-modality] .viewport-parent-div[data-drop-compatible="false"] {
+  opacity: 0.3;
+  border: 2px solid rgba(220, 40, 40, 0.5) !important;
+  transition: opacity 150ms, border-color 150ms;
+}
+body.hp-ptct-active[data-drag-modality] .viewport-parent-div[data-drop-compatible="true"] {
+  opacity: 1;
+  border: 2px solid rgba(40, 200, 80, 0.7) !important;
+  transition: opacity 150ms, border-color 150ms;
+}
+
+@keyframes nolex-skeleton-shimmer {
+  0% {
+    background-position: 150% 0;
+  }
+  100% {
+    background-position: -50% 0;
   }
 }
 

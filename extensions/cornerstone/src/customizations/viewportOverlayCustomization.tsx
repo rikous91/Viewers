@@ -352,6 +352,11 @@ const storicoLabelItem = {
   contentF: ({ referenceInstance }) => 'STORICO',
 };
 
+const linkedSeriesBadgeItem = {
+  id: 'LinkedSeriesBadge',
+  inheritsFrom: 'ohif.overlayItem.linkedSeries',
+};
+
 const buildViewportOverlayCustomizations = overlayConfig => {
   const tagConfig = getTagConfig(overlayConfig);
 
@@ -368,6 +373,7 @@ const buildViewportOverlayCustomizations = overlayConfig => {
 
   const topLeftItems = dedupeItems(
     [
+      linkedSeriesBadgeItem,
       ...(hasCornerConfig(tagConfig, 'topLeft') ? configuredTopLeftItems : baseTopLeftItems),
       storicoLabelItem,
     ].filter(Boolean)

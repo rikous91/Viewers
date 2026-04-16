@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { metaData, Enums, utilities } from '@cornerstonejs/core';
 import type { ImageSliceData } from '@cornerstonejs/core/types';
 import { ViewportOverlay } from '@ohif/ui';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@ohif/ui-next';
 import type { InstanceMetadata } from '@ohif/core/src/types';
 import { formatDICOMDate, formatDICOMTime, formatNumberPrecision } from './utils';
 import { utils } from '@ohif/core';
@@ -45,6 +46,12 @@ const OverlayItemComponents = {
   'ohif.overlayItem.windowLevel': VOIOverlayItem,
   'ohif.overlayItem.zoomLevel': ZoomOverlayItem,
   'ohif.overlayItem.instanceNumber': InstanceNumberOverlayItem,
+  'ohif.overlayItem.linkedSeries': LinkedSeriesBadgeOverlayItem,
+};
+
+const linkedSeriesBadgeItem = {
+  id: 'LinkedSeriesBadge',
+  inheritsFrom: 'ohif.overlayItem.linkedSeries',
 };
 
 const storicoLabelItem = {
@@ -137,7 +144,13 @@ const seriesDescriptionItem = {
 
 const topLeftItems = {
   id: 'cornerstoneOverlayTopLeft',
-  items: [studyDateItem, seriesNumberItem, seriesDescriptionItem, storicoLabelItem],
+  items: [
+    linkedSeriesBadgeItem,
+    studyDateItem,
+    seriesNumberItem,
+    seriesDescriptionItem,
+    storicoLabelItem,
+  ],
 };
 
 const topRightItems = {
@@ -613,6 +626,239 @@ CustomizableViewportOverlay.propTypes = {
   imageIndex: PropTypes.number,
   viewportId: PropTypes.string,
 };
+
+/**
+ * Palette of high-contrast colors used to tint the linked-series badges.
+ * A sync group ID is hashed into an index so every viewport that belongs to
+ * the same group renders with the same color, while different groups get
+ * visually distinct hues.
+ */
+const LINKED_SERIES_PALETTE = [
+  '#4FC3F7', // light blue
+  '#81C784', // green
+  '#FFB74D', // orange
+  '#BA68C8', // purple
+  '#EF5350', // red (default slot the IMAGE_SLICE_SYNC id hashes into)
+  '#4DD0E1', // cyan
+  '#9CCC65', // lime
+  '#FF8A65', // coral
+];
+
+function hashSyncIdToColor(syncId: string): string {
+  let hash = 0;
+  for (let i = 0; i < syncId.length; i++) {
+    hash = (hash * 31 + syncId.charCodeAt(i)) | 0;
+  }
+  const index = Math.abs(hash) % LINKED_SERIES_PALETTE.length;
+  return LINKED_SERIES_PALETTE[index];
+}
+
+/**
+ * Renders a small colored dot indicating this viewport is part of one or more
+ * series-sync groups, with a hover tooltip listing the linked series.
+ * Re-evaluates on sync-group changes, viewport data changes and layout changes
+ * so it stays in step with grid rearrangements and series substitutions.
+ */
+function LinkedSeriesBadgeOverlayItem(props: OverlayItemProps) {
+  const { viewportId, servicesManager } = props;
+  const { syncGroupService, viewportGridService, displaySetService, cornerstoneViewportService } =
+    servicesManager.services as AppTypes.Services;
+  const [, setVersion] = useState(0);
+
+  // Hide the badge in modes/viewport layouts where a series-link indicator is
+  // not meaningful: MPR orthographic viewports (they receive only reference
+  // lines, not slice scrolling) and PET/CT fusion mode (tmtv route).
+  const route =
+    typeof window !== 'undefined' ? window.location?.pathname?.split('/')[1] : '';
+  const isPetCtMode = route === 'tmtv';
+  const viewportInfo = cornerstoneViewportService?.getViewportInfo?.(viewportId);
+  const viewportType =
+    viewportInfo?.getViewportData?.()?.viewportType ||
+    viewportInfo?.viewportOptions?.viewportType;
+  const isOrthographic =
+    typeof viewportType === 'string' && viewportType.toLowerCase() === 'orthographic';
+  const hideBadge = isPetCtMode || isOrthographic;
+
+  useEffect(() => {
+    const bump = () => setVersion(v => v + 1);
+    const subs = [];
+    if (syncGroupService?.EVENTS?.SYNC_GROUP_CHANGED) {
+      subs.push(syncGroupService.subscribe(syncGroupService.EVENTS.SYNC_GROUP_CHANGED, bump));
+    }
+    if (viewportGridService?.EVENTS?.LAYOUT_CHANGED) {
+      subs.push(viewportGridService.subscribe(viewportGridService.EVENTS.LAYOUT_CHANGED, bump));
+    }
+    if (viewportGridService?.EVENTS?.GRID_STATE_CHANGED) {
+      subs.push(
+        viewportGridService.subscribe(viewportGridService.EVENTS.GRID_STATE_CHANGED, bump)
+      );
+    }
+    return () => {
+      subs.forEach(s => s?.unsubscribe?.());
+    };
+  }, [syncGroupService, viewportGridService]);
+
+  if (hideBadge) {
+    return null;
+  }
+
+  const gridState = viewportGridService?.getState?.();
+  const gridViewports = gridState?.viewports;
+
+  const getViewportDisplaySet = (vpId: string) => {
+    if (!gridViewports) return null;
+    const vp = gridViewports.get ? gridViewports.get(vpId) : gridViewports[vpId];
+    const uids: string[] = vp?.displaySetInstanceUIDs || [];
+    for (const uid of uids) {
+      const ds = displaySetService?.getDisplaySetByUID?.(uid);
+      if (ds) return ds;
+    }
+    return null;
+  };
+
+  const thisDs = getViewportDisplaySet(viewportId);
+  const thisDsUID = thisDs?.displaySetInstanceUID;
+
+  // Snapshot of this viewport's cornerstone-level state: camera normal and
+  // frame-of-reference. These are the two signals Cornerstone's own
+  // imageSliceSyncCallback uses to decide whether a scroll event on this
+  // viewport will actually move the target viewport (see
+  // @cornerstonejs/tools/.../imageSliceSyncCallback.js +
+  // areViewportsCoplanar.js). We mirror that logic to decide which peers
+  // belong on the badge.
+  const getViewportSpatialInfo = (vpId: string) => {
+    const csVp = cornerstoneViewportService?.getCornerstoneViewport?.(vpId);
+    if (!csVp) return null;
+    const camera = csVp.getCamera?.();
+    const normal = camera?.viewPlaneNormal;
+    const frameOfReferenceUID = csVp.getFrameOfReferenceUID?.();
+    return { normal, frameOfReferenceUID };
+  };
+
+  const thisSpatial = getViewportSpatialInfo(viewportId);
+
+  const isCoplanar = (n1?: number[], n2?: number[]) => {
+    if (!n1 || !n2 || n1.length < 3 || n2.length < 3) return false;
+    const dot = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
+    return Math.abs(dot) > 0.9;
+  };
+
+  const synchronizers = syncGroupService?.getSynchronizersForViewport?.(viewportId) || [];
+  const groups = synchronizers
+    .filter(sync => {
+      // Skip synchronizers the user has turned off via the "collega serie"
+      // toggle: the group may still hold viewports but is no longer active,
+      // so the badge must disappear (and reappear when the toggle is re-enabled).
+      if ((sync as any)?._enabled === false) {
+        return false;
+      }
+      // Only surface viewport-scroll links ("collega serie"). Other sync
+      // types (reference lines, camera position, VOI, zoom/pan) must not
+      // trigger the badge because they don't actually scroll the series.
+      if (syncGroupService?.isImageSliceSyncronizer?.(sync)) {
+        return true;
+      }
+      const type = syncGroupService?.getSynchronizerType?.(sync);
+      return typeof type === 'string' && type.toLowerCase() === 'imageslice';
+    })
+    .map(sync => {
+      const sourceVps = sync.getSourceViewports?.() || [];
+      const targetVps = sync.getTargetViewports?.() || [];
+      const allIds = new Set<string>();
+      sourceVps.forEach(vp => allIds.add(vp.viewportId));
+      targetVps.forEach(vp => allIds.add(vp.viewportId));
+      // Mirror Cornerstone's own imageSliceSyncCallback logic. A scroll event
+      // on this viewport will actually move a peer viewport iff:
+      //   1. the two viewports are coplanar (|dot(normal1, normal2)| > 0.9),
+      //      AND
+      //   2. they share the same FrameOfReferenceUID (Cornerstone uses an
+      //      identity registration) OR a spatialRegistrationModule has been
+      //      computed between them (Cornerstone cached it after the first
+      //      sync event across non-coregistered series).
+      // Every other case — different orientation (MPR), unrelated frames of
+      // reference — yields only reference-line movement, not real scrolling,
+      // and must not display a link badge.
+      const provider = (utilities as any)?.spatialRegistrationMetadataProvider;
+      const peers = Array.from(allIds).filter(vpId => {
+        if (vpId === viewportId) return false;
+        const peerSpatial = getViewportSpatialInfo(vpId);
+        if (!thisSpatial || !peerSpatial) return false;
+        if (!isCoplanar(thisSpatial.normal, peerSpatial.normal)) return false;
+        if (
+          thisSpatial.frameOfReferenceUID &&
+          peerSpatial.frameOfReferenceUID &&
+          thisSpatial.frameOfReferenceUID === peerSpatial.frameOfReferenceUID
+        ) {
+          return true;
+        }
+        const forward = provider?.get?.('spatialRegistrationModule', viewportId, vpId);
+        const reverse = provider?.get?.('spatialRegistrationModule', vpId, viewportId);
+        if (forward || reverse) return true;
+        // Fallback: when metadata is still incomplete (first frames loading)
+        // trust the series identity to avoid a flicker/gap on the badge.
+        const ds = getViewportDisplaySet(vpId);
+        return !!(thisDsUID && ds?.displaySetInstanceUID === thisDsUID);
+      });
+      return { id: sync.id as string, peers };
+    })
+    .filter(g => g.peers.length > 0);
+
+  if (!groups.length) {
+    return null;
+  }
+
+  const describeViewport = (vpId: string): string => {
+    const ds = getViewportDisplaySet(vpId);
+    if (!ds) return vpId;
+    return (
+      ds.SeriesDescription ||
+      (ds.SeriesNumber != null ? `Serie ${ds.SeriesNumber}` : null) ||
+      ds.Modality ||
+      vpId
+    );
+  };
+
+  const linkInfo = groups.map(g => ({
+    id: g.id,
+    color: hashSyncIdToColor(g.id),
+    others: g.peers.map(vpId => describeViewport(vpId)),
+  }));
+
+  return (
+    <div className="linked-series-badge-wrapper flex flex-row items-center">
+      {linkInfo.map(group => (
+        <Tooltip key={group.id} delayDuration={150}>
+          <TooltipTrigger asChild>
+            <span
+              className="linked-series-badge"
+              style={{ backgroundColor: group.color, boxShadow: `0 0 4px ${group.color}` }}
+              aria-label="Serie collegata"
+              tabIndex={0}
+            />
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            sideOffset={6}
+            className="z-[9999]"
+          >
+            <div className="text-xs">
+              <div className="mb-1 font-medium">Collegata con:</div>
+              {group.others.length ? (
+                <ul className="list-none space-y-0.5 pl-0">
+                  {group.others.map((label, i) => (
+                    <li key={i}>· {label}</li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="opacity-70">Nessun'altra serie nel gruppo</div>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
+  );
+}
 
 export default CustomizableViewportOverlay;
 

@@ -7,6 +7,8 @@ import {
   Types as CoreTypes,
   cache,
   BaseVolumeViewport,
+  eventTarget as csEventTarget,
+  Enums as CoreEnums,
 } from '@cornerstonejs/core';
 import {
   ToolGroupManager,
@@ -103,6 +105,222 @@ function commandsModule({
     const viewportGridState = viewportGridService.getState();
     const { setToggleOneUpViewportGridStore } = useToggleOneUpViewportGridStore.getState();
     setToggleOneUpViewportGridStore(viewportGridState);
+  };
+
+  // Injects a non-invasive rotation bar on the MIP viewport of the PT/CT
+  // hanging protocol. Rotation via mouse wheel / left-drag isn't discoverable,
+  // so we show small ◀ / ▶ buttons with the current angle in degrees.
+  // Idempotent and safe to call multiple times.
+  const injectMipRotationOverlay = () => {
+    try {
+      const tgSvc = toolGroupService!;
+      const csSvc = cornerstoneViewportService!;
+      const mipToolGroup = tgSvc.getToolGroup('mipToolGroup') as any;
+      if (!mipToolGroup) {
+        return;
+      }
+      const viewportsInfo = mipToolGroup.viewportsInfo || [];
+      viewportsInfo.forEach(({ viewportId }: { viewportId: string }) => {
+        const viewport: any = csSvc.getCornerstoneViewport(viewportId);
+        const element: HTMLElement | undefined = viewport?.element;
+        if (!element) {
+          return;
+        }
+        if (element.querySelector('.nolex-mip-rotate-overlay')) {
+          return;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'nolex-mip-rotate-overlay';
+        overlay.innerHTML = `
+          <button class="nolex-mip-rotate-btn" data-dir="-1" type="button" title="Ruota a sinistra">◀</button>
+          <span class="nolex-mip-rotate-angle">0°</span>
+          <button class="nolex-mip-rotate-btn" data-dir="1" type="button" title="Ruota a destra">▶</button>
+        `;
+        overlay.style.cssText = [
+          'position:absolute',
+          'bottom:10px',
+          'left:50%',
+          'transform:translateX(-50%)',
+          'display:flex',
+          'align-items:center',
+          'gap:6px',
+          'background:rgba(20,20,20,0.65)',
+          'color:#fff',
+          'padding:4px 10px',
+          'border-radius:14px',
+          'font-size:12px',
+          'z-index:20',
+          'pointer-events:auto',
+          'user-select:none',
+          'backdrop-filter:blur(2px)',
+          'border:1px solid rgba(255,255,255,0.15)',
+        ].join(';');
+
+        const btnStyle = [
+          'background:transparent',
+          'border:0',
+          'color:#fff',
+          'cursor:pointer',
+          'font-size:14px',
+          'line-height:1',
+          'padding:2px 6px',
+          'border-radius:4px',
+        ].join(';');
+        overlay
+          .querySelectorAll<HTMLButtonElement>('.nolex-mip-rotate-btn')
+          .forEach(btn => {
+            btn.setAttribute('style', btnStyle);
+            btn.addEventListener('mouseenter', () => {
+              btn.style.background = 'rgba(255,255,255,0.15)';
+            });
+            btn.addEventListener('mouseleave', () => {
+              btn.style.background = 'transparent';
+            });
+          });
+
+        const angleLabel = overlay.querySelector(
+          '.nolex-mip-rotate-angle'
+        ) as HTMLSpanElement;
+
+        // Rotation around Z axis leaves viewUp unchanged (when viewUp itself is
+        // along Z), so viewport.getRotation() stays at 0. Compute the azimuth
+        // of the camera position projected onto the XY plane instead, and show
+        // it as delta from the first observed state.
+        let initialAzimuthDeg: number | null = null;
+        const computeAzimuthDeg = (vp: any): number | null => {
+          if (!vp || typeof vp.getCamera !== 'function') {
+            return null;
+          }
+          const { position, focalPoint } = vp.getCamera();
+          if (!position || !focalPoint) {
+            return null;
+          }
+          const dx = position[0] - focalPoint[0];
+          const dy = position[1] - focalPoint[1];
+          return (Math.atan2(dy, dx) * 180) / Math.PI;
+        };
+        const refreshAngleLabel = () => {
+          const vp: any = csSvc.getCornerstoneViewport(viewportId);
+          const az = computeAzimuthDeg(vp);
+          if (az === null) {
+            return;
+          }
+          if (initialAzimuthDeg === null) {
+            initialAzimuthDeg = az;
+          }
+          let delta = az - initialAzimuthDeg;
+          delta = ((delta % 360) + 360) % 360;
+          if (angleLabel) {
+            angleLabel.textContent = `${Math.round(delta)}°`;
+          }
+        };
+        // Keep the label in sync whenever the camera changes (wheel rotation,
+        // left-drag rotation, protocol reapply, etc.).
+        const onCameraModified = () => refreshAngleLabel();
+        element.addEventListener('CORNERSTONE_CAMERA_MODIFIED', onCameraModified);
+        refreshAngleLabel();
+
+        const rotateBy = (deltaDeg: number) => {
+          const vp: any = csSvc.getCornerstoneViewport(viewportId);
+          if (!vp || typeof vp.getCamera !== 'function') {
+            return;
+          }
+          const camera = vp.getCamera();
+          const { viewUp, position, focalPoint } = camera;
+          const angle = (deltaDeg * Math.PI) / 180;
+          const [cx, cy, cz] = focalPoint;
+          // Rotate around the Z axis (same default axis used by VolumeRotateTool).
+          const axis = [0, 0, 1] as [number, number, number];
+          const transform = mat4.identity(new Float32Array(16));
+          mat4.translate(transform, transform, [cx, cy, cz]);
+          mat4.rotate(transform, transform, angle, axis);
+          mat4.translate(transform, transform, [-cx, -cy, -cz]);
+          const newPosition = vec3.transformMat4(vec3.create(), position, transform);
+          const newFocalPoint = vec3.transformMat4(vec3.create(), focalPoint, transform);
+          mat4.identity(transform);
+          mat4.rotate(transform, transform, angle, axis);
+          const newViewUp = vec3.transformMat4(vec3.create(), viewUp, transform);
+          vp.setCamera({
+            position: newPosition,
+            viewUp: newViewUp,
+            focalPoint: newFocalPoint,
+          });
+          vp.render();
+          // setCamera fires CAMERA_MODIFIED which refreshes the label.
+        };
+
+        overlay.addEventListener('click', (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          if (!target.classList.contains('nolex-mip-rotate-btn')) {
+            return;
+          }
+          e.stopPropagation();
+          const dir = Number(target.getAttribute('data-dir')) || 0;
+          if (dir !== 0) {
+            rotateBy(dir * 15);
+          }
+        });
+
+        // Prevent the viewport from receiving any of these events when they
+        // happen on the overlay. Without this, a fast double-click on the
+        // arrows is interpreted as a viewport double-click (toggleOneUp /
+        // maximize) and the layout change destroys the overlay.
+        const swallow = (e: Event) => {
+          e.stopPropagation();
+          if (typeof (e as MouseEvent).preventDefault === 'function') {
+            (e as MouseEvent).preventDefault();
+          }
+        };
+        ['pointerdown', 'mousedown', 'mouseup', 'dblclick'].forEach(evtName => {
+          overlay.addEventListener(evtName, swallow);
+        });
+
+        element.appendChild(overlay);
+
+        // Enable left-click drag to rotate the MIP horizontally. Similar
+        // to TrackballRotate in the 3D volume viewport, but locked to the
+        // horizontal axis (Z-axis rotation). VolumeRotateTool only handles
+        // mouseWheel, not mouseDrag, so we wire this manually.
+        if (!(element as any).__nolexMipDragRotate) {
+          let isDragging = false;
+          let lastX = 0;
+          const sensitivity = 0.4; // degrees per pixel of horizontal movement
+
+          // Default cursor for MIP viewport: grab hand to hint "you can
+          // drag to rotate". Switches to grabbing while dragging, then
+          // back to grab on release.
+          element.style.cursor = 'grab';
+
+          const onMouseDown = (e: MouseEvent) => {
+            if (e.button !== 0) return;
+            if ((e.target as HTMLElement)?.closest?.('.nolex-mip-rotate-overlay')) return;
+            isDragging = true;
+            lastX = e.clientX;
+            element.style.cursor = 'grabbing';
+          };
+          const onMouseMove = (e: MouseEvent) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - lastX;
+            if (Math.abs(deltaX) < 1) return;
+            lastX = e.clientX;
+            rotateBy(deltaX * sensitivity);
+          };
+          const onMouseUp = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            element.style.cursor = 'grab';
+          };
+
+          element.addEventListener('mousedown', onMouseDown);
+          window.addEventListener('mousemove', onMouseMove);
+          window.addEventListener('mouseup', onMouseUp);
+          (element as any).__nolexMipDragRotate = true;
+        }
+      });
+    } catch (err) {
+      console.warn('MIP rotation overlay injection failed:', err);
+    }
   };
 
   const restoreState = () => {
@@ -642,7 +860,14 @@ function commandsModule({
       const { viewports } = viewportGridService.getState();
       const { isCineEnabled } = cineService.getState();
       cineService.setIsCineEnabled(!isCineEnabled);
-      viewports.forEach((_, index) => cineService.setCine({ id: index, isPlaying: false }));
+      viewports.forEach((vp: any, index: any) => {
+        // Skip the MIP viewport of the PT/CT fusion HP — it's a static volume
+        // and cine doesn't apply.
+        if (vp?.viewportOptions?.viewportId === 'mipSagittal') {
+          return;
+        }
+        cineService.setCine({ id: index, isPlaying: false });
+      });
     },
 
     setViewportWindowLevel({ viewportId, window, level }) {
@@ -859,6 +1084,35 @@ function commandsModule({
           },
         ],
       });
+
+      // Workaround: SplineROI / LivewireContour do not call hideElementCursor
+      // themselves, but cornerstone's internal cursor WeakMap may still hold a
+      // `none` cursor (or broken state) from a previous tool (e.g. Length /
+      // Angle hide the cursor while drawing). When we re-activate one of these
+      // contour tools, on the next draw resetElementCursor may read the stale
+      // `none` backup and blank the cursor mid-measurement. Force a visible
+      // crosshair on the viewport elements as a safety net, also on the next
+      // tick to override any late cornerstone cursor update.
+      const CONTOUR_TOOLS = new Set(['SplineROI', 'LivewireContour']);
+      if (CONTOUR_TOOLS.has(toolName)) {
+        const forceCrosshair = () => {
+          try {
+            const viewportsInfo = (toolGroup as any).viewportsInfo || [];
+            viewportsInfo.forEach(({ viewportId: vpId }: { viewportId: string }) => {
+              const cornerstoneViewport =
+                cornerstoneViewportService!.getCornerstoneViewport(vpId);
+              const element: HTMLElement | undefined = (cornerstoneViewport as any)?.element;
+              if (element) {
+                element.style.cursor = 'crosshair';
+              }
+            });
+          } catch (_) {
+            // non-fatal
+          }
+        };
+        forceCrosshair();
+        setTimeout(forceCrosshair, 0);
+      }
     },
     // capture viewport
     showDownloadViewportModal: () => {
@@ -918,6 +1172,44 @@ function commandsModule({
           return;
         }
 
+        // Hide the viewport grid ONLY on mode-to-mode transitions (MPR ↔
+        // PET/CT). Simple on/off of a single mode is fast and doesn't need
+        // hiding. The two cases to cover here:
+        //   1) entering MPR while PT/CT is active  (PT/CT → MPR)
+        //   2) leaving MPR while PT/CT will be restored  (MPR → PT/CT)
+        const ptctActive = document.body.classList.contains('hp-ptct-active');
+        const inMpr = document.body.classList.contains('hp-mpr-active');
+        const willTransitionAcrossModes =
+          ptctActive || (inMpr && (window as any).ptctWasActiveBeforeMpr);
+        if (willTransitionAcrossModes) {
+          document.body.classList.add('nolex-layout-transitioning');
+          if ((window as any).__nolex_transitionTimer) {
+            clearTimeout((window as any).__nolex_transitionTimer);
+          }
+          (window as any).__nolex_transitionTimer = setTimeout(() => {
+            document.body.classList.remove('nolex-layout-transitioning');
+          }, 600);
+        }
+
+        // Mutually exclusive with PT/CT. If that layout is currently active,
+        // tear it down first so this single click can switch directly from
+        // PT/CT to MPR instead of requiring two clicks. Remember it was on so
+        // we can re-flag it when the user toggles MPR back off (restoreState
+        // brings the PT/CT layout back visually).
+        if (document.body.classList.contains('hp-ptct-active')) {
+          document.body.classList.remove('hp-ptct-active');
+          (window as any).ptctIsActive = false;
+          (window as any).ptctWasActiveBeforeMpr = true;
+          document
+            .querySelectorAll('.nolex-mip-rotate-overlay')
+            .forEach(el => el.remove());
+          try {
+            hangingProtocolService!.setProtocol('default');
+          } catch (_) {
+            // non-fatal
+          }
+        }
+
         const { activeViewportId, viewports } = viewportGridService.getState();
         const activeViewport = viewports.get(activeViewportId);
         const activeDisplaySetInstanceUID = activeViewport.displaySetInstanceUIDs[0];
@@ -952,6 +1244,30 @@ function commandsModule({
           //Se sono nell'iframe dello storico mando un messaggio al genitore dicendo che l'mpr è stato appena disabilitato
           if (window.location.href.includes('storico=same-tab')) {
             window.parent.postMessage('uscita-da-secondo-mpr', '*');
+          }
+
+          // If MPR was entered from PT/CT, restoreState brings the PT/CT
+          // layout back visually — re-flag the body class so the LayoutPTCT
+          // toolbar button reports as active and re-inject the MIP rotation
+          // overlay (the layout rebuild discards it). Also remember that the
+          // stored grid state has been overwritten by MPR's storeState, so
+          // the next PT/CT toggle-off must fall back to setProtocol('default')
+          // instead of restoreState (which would just re-apply the same
+          // state and do nothing visually).
+          if ((window as any).ptctWasActiveBeforeMpr) {
+            document.body.classList.add('hp-ptct-active');
+            (window as any).ptctIsActive = true;
+            (window as any).ptctWasActiveBeforeMpr = false;
+            (window as any).ptctStoredStateIsStale = true;
+            const tries = [200, 600, 1500];
+            tries.forEach(d => setTimeout(injectMipRotationOverlay, d));
+            try {
+              const vpId = viewportGridService.getActiveViewportId?.();
+              const tbSvc = (servicesManager as any).services.toolbarService;
+              tbSvc?.refreshToolbarState?.({ viewportId: vpId });
+            } catch (_) {
+              // non-fatal
+            }
           }
 
           // setTimeout(() => {
@@ -1048,11 +1364,446 @@ function commandsModule({
               hangingProtocolService.setProtocol(protocolToApply);
               window.mprIsActive = true;
               document.body.classList.add('hp-mpr-active');
+
+              // Volume3D first-render fix. Root cause: CornerstoneViewportService
+              // calls setProperties({preset:'CT-Bone'}) right after setVolumes();
+              // at that moment the volume actor is scaffolded but the voxels
+              // aren't mapped yet, so setPreset() silently returns and the
+              // transfer function is never bound — the 3D renders as degenerate
+              // stripes. We wait for IMAGE_VOLUME_LOADING_COMPLETED (fires when
+              // voxels are fully in memory) and re-apply the preset at that
+              // point. A single listener + single safety timeout → very light
+              // (earlier versions piled up multiple polls and multiple listeners
+              // per MPR click, which is what was making things heavy).
+              try {
+                // Cancel any pending init from a previous MPR click so we
+                // don't leak listeners when the user toggles MPR rapidly.
+                if ((window as any).__nolex_volume3dCancel) {
+                  (window as any).__nolex_volume3dCancel();
+                }
+                let cancelled = false;
+                const cleanup = () => {
+                  cancelled = true;
+                  try {
+                    csEventTarget.removeEventListener(
+                      CoreEnums.Events.IMAGE_VOLUME_LOADING_COMPLETED,
+                      onVolumeLoaded
+                    );
+                  } catch (_) {}
+                  if (safetyTimeoutId) clearTimeout(safetyTimeoutId);
+                };
+                (window as any).__nolex_volume3dCancel = cleanup;
+
+                const reapply3D = (source: string) => {
+                  if (cancelled) return;
+                  try {
+                    const vp3dTg: any = toolGroupService.getToolGroup('volume3d');
+                    const infos = vp3dTg?.viewportsInfo || [];
+                    console.log('[nolex][volume3d] reapply start', {
+                      source,
+                      viewportCount: infos.length,
+                    });
+                    if (!infos.length) return;
+                    let allApplied = true;
+                    infos.forEach(({ viewportId }: { viewportId: string }) => {
+                      const vp: any =
+                        cornerstoneViewportService!.getCornerstoneViewport(viewportId);
+                      const actors = typeof vp?.getActors === 'function' ? vp.getActors() : [];
+                      const hasActors = (actors || []).length > 0;
+                      if (!vp || !hasActors) {
+                        allApplied = false;
+                        return;
+                      }
+                      const presetName =
+                        vp?.viewportProperties?.preset?.name ||
+                        vp?.viewportProperties?.preset ||
+                        'CT-Bone';
+                      try {
+                        // Light reapply: only rebind the preset on the existing
+                        // actor and reset the camera. Do NOT call
+                        // setVolumesForViewport — that recreates the entire VTK
+                        // mapper + shader pipeline, which can overflow GPU
+                        // resources and crash the WebGL context (all viewports
+                        // go black with a GLSL shader dump in console).
+                        const volumeId = vp?.getVolumeId?.();
+                        if (typeof vp.setPreset === 'function') {
+                          vp.setPreset(presetName, volumeId);
+                        }
+                        vp.resetCamera?.({
+                          resetPan: true,
+                          resetZoom: true,
+                          resetToCenter: true,
+                        });
+                        vp.render?.();
+                      } catch (e) {
+                        console.warn('[nolex][volume3d] reapply failed', e);
+                        allApplied = false;
+                      }
+                    });
+                    if (allApplied) {
+                      console.log('[nolex][volume3d] preset + camera reapplied', { source });
+                      cleanup();
+                    }
+                  } catch (_) {}
+                };
+
+                const onVolumeLoaded = () => reapply3D('volume-loaded');
+                csEventTarget.addEventListener(
+                  CoreEnums.Events.IMAGE_VOLUME_LOADING_COMPLETED,
+                  onVolumeLoaded
+                );
+
+                // On the very first MPR activation, the 'volume3d' tool group
+                // has no viewports bound yet at the time the volume-loaded
+                // event fires — cornerstone binds the viewport later in the
+                // protocol application cycle. Subscribe to VIEWPORT_ADDED so
+                // the reapply runs as soon as a viewport joins the group.
+                let tgSubscription: any = null;
+                try {
+                  tgSubscription = toolGroupService.subscribe(
+                    toolGroupService.EVENTS.VIEWPORT_ADDED,
+                    () => {
+                      const tg: any = toolGroupService.getToolGroup('volume3d');
+                      if ((tg?.viewportsInfo || []).length > 0) {
+                        // Wait one tick for cornerstone to finish binding and
+                        // for the actor to be attached, then reapply.
+                        setTimeout(() => reapply3D('viewport-added'), 100);
+                      }
+                    }
+                  );
+                } catch (_) {}
+
+                const origCleanup = cleanup;
+                (window as any).__nolex_volume3dCancel = () => {
+                  try {
+                    tgSubscription?.unsubscribe?.();
+                  } catch (_) {}
+                  origCleanup();
+                };
+                // Single safety timeout: if VIEWPORT_ADDED fires before
+                // actors are ready, reapply polls retry reasonably.
+                const safetyTimeoutId = setTimeout(() => reapply3D('safety'), 2500);
+              } catch (_) {
+                // non-fatal
+              }
               setTimeout(() => {
                 if (ActiveThumbnail) {
                   ActiveThumbnail.click();
                 }
                 isMprClicked = false;
+                // Auto-activate the Crosshairs tool once the MPR viewports
+                // are bound to the 'mpr' tool group. On the FIRST activation
+                // the viewports take longer than 150ms to be created, so a
+                // plain timeout misses the window — subscribe to
+                // VIEWPORT_ADDED and activate as soon as >=3 viewports are
+                // bound. A safety timeout is kept as fallback. Respects the
+                // user preference on window.mprCrosshairsDisabled.
+                console.log('[nolex][mpr][crosshair] activation flow start', {
+                  mprCrosshairsDisabled: (window as any).mprCrosshairsDisabled,
+                });
+                const tryActivateMprCrosshairs = (source: string) => {
+                  if ((window as any).mprCrosshairsDisabled) {
+                    console.log('[nolex][mpr][crosshair] skipped (user disabled)', { source });
+                    return;
+                  }
+                  try {
+                    const tg: any = toolGroupService.getToolGroup('mpr');
+                    console.log('[nolex][mpr][crosshair] attempting setToolActive', {
+                      source,
+                      hasToolGroup: !!tg,
+                      viewportsBound: tg?.viewportsInfo?.length,
+                      hasTool: tg?.hasTool?.('Crosshairs'),
+                      currentPrimary: tg?.getActivePrimaryMouseButtonTool?.(),
+                    });
+                    (actions.setToolActiveToolbar as any)({
+                      toolName: 'Crosshairs',
+                      toolGroupIds: ['mpr'],
+                    });
+                    console.log('[nolex][mpr][crosshair] after setToolActive', {
+                      newPrimary: tg?.getActivePrimaryMouseButtonTool?.(),
+                    });
+                    // The CrosshairsTool's initializeViewport uses the canvas
+                    // clientWidth/Height to project the tool center into world
+                    // coordinates. On the FIRST MPR activation the canvas is
+                    // still 0x0 when cornerstone fires onSetToolActive, so the
+                    // annotation is created with bogus points and the lines
+                    // never become visible. Wait until the viewports have
+                    // actually rendered (IMAGE_RENDERED), then recompute.
+                    try {
+                      const tg2: any = toolGroupService.getToolGroup('mpr');
+                      const mprViewportIds = new Set(
+                        (tg2?.viewportsInfo || []).map((v: any) => v.viewportId)
+                      );
+
+                      // On PT/CT studies the MPR hanging protocol's per-
+                      // viewport orientation sometimes doesn't apply on first
+                      // activation — the three viewports all keep the default
+                      // [0,0,-1] normal and the crosshair center computation
+                      // stays NaN. Force the orientations explicitly by
+                      // viewport id (idempotent on subsequent activations).
+                      const forceDistinctOrientations = () => {
+                        const map: Record<string, string> = {
+                          'mpr-axial': 'axial',
+                          'mpr-sagittal': 'sagittal',
+                          'mpr-coronal': 'coronal',
+                        };
+                        Object.entries(map).forEach(([vpId, orient]) => {
+                          try {
+                            const vp: any =
+                              cornerstoneViewportService!.getCornerstoneViewport(vpId);
+                            if (vp && typeof vp.setOrientation === 'function') {
+                              const cam = vp.getCamera?.();
+                              // Apply only if current normal is the default
+                              // [0,0,-1] or missing (avoid disturbing a view
+                              // the user may have rotated).
+                              const n = cam?.viewPlaneNormal;
+                              const isDefault =
+                                !n ||
+                                (Math.abs(n[0]) < 1e-3 &&
+                                  Math.abs(n[1]) < 1e-3 &&
+                                  Math.abs(Math.abs(n[2]) - 1) < 1e-3);
+                              if (isDefault) {
+                                console.log(
+                                  '[nolex][mpr][crosshair] forcing orientation',
+                                  vpId,
+                                  orient
+                                );
+                                vp.setOrientation(orient);
+                              }
+                            }
+                          } catch (e) {
+                            console.warn(
+                              '[nolex][mpr][crosshair] setOrientation failed',
+                              vpId,
+                              e
+                            );
+                          }
+                        });
+                      };
+                      // Run a couple of times so we catch both the case where
+                      // actors aren't ready yet and the normal case.
+                      setTimeout(forceDistinctOrientations, 120);
+                      setTimeout(forceDistinctOrientations, 600);
+                      let done = false;
+                      const recompute = (source: string) => {
+                        if (done) return;
+                        if ((window as any).mprCrosshairsDisabled) return;
+                        try {
+                          const tg3: any = toolGroupService.getToolGroup('mpr');
+                          if (!tg3) return;
+                          if (tg3.getActivePrimaryMouseButtonTool?.() !== 'Crosshairs') {
+                            return;
+                          }
+                          // Guard 1: canvas must be sized. Guard 2: viewport
+                          // must already know its FrameOfReferenceUID (volume
+                          // actor attached). Guard 3: the three MPR viewports
+                          // must each have their own distinct orientation
+                          // (axial / sagittal / coronal) — on PT/CT studies
+                          // the MPR protocol's orientation setup is slightly
+                          // delayed and initially every viewport keeps the
+                          // default camera normal [0,0,-1]. Computing the
+                          // tool center with three parallel planes produces
+                          // NaN and no crosshair is drawn.
+                          const notReadyReason: string[] = [];
+                          const viewports = tg3.viewportsInfo || [];
+                          const normals: number[][] = [];
+                          for (const { viewportId } of viewports) {
+                            const vp: any =
+                              cornerstoneViewportService!.getCornerstoneViewport(viewportId);
+                            const w = vp?.canvas?.clientWidth || 0;
+                            const for_ =
+                              vp?.getFrameOfReferenceUID?.() ||
+                              vp?.FrameOfReferenceUID ||
+                              null;
+                            const hasActors =
+                              typeof vp?.getActors === 'function'
+                                ? (vp.getActors() || []).length > 0
+                                : false;
+                            if (!w) notReadyReason.push(`${viewportId}:canvas0`);
+                            if (!for_) notReadyReason.push(`${viewportId}:noFoR`);
+                            if (!hasActors) notReadyReason.push(`${viewportId}:noActors`);
+                            const cam = vp?.getCamera?.();
+                            if (cam?.viewPlaneNormal) {
+                              normals.push(cam.viewPlaneNormal as number[]);
+                            }
+                          }
+                          const areAllNormalsDistinct =
+                            normals.length >= 3 &&
+                            (() => {
+                              const eq = (a: number[], b: number[]) =>
+                                Math.abs(a[0] - b[0]) < 1e-3 &&
+                                Math.abs(a[1] - b[1]) < 1e-3 &&
+                                Math.abs(a[2] - b[2]) < 1e-3;
+                              // Also treat opposite normals (a == -b) as
+                              // parallel, since the planes overlap.
+                              const neg = (a: number[]) => [-a[0], -a[1], -a[2]];
+                              const par = (a: number[], b: number[]) =>
+                                eq(a, b) || eq(a, neg(b));
+                              return (
+                                !par(normals[0], normals[1]) &&
+                                !par(normals[0], normals[2]) &&
+                                !par(normals[1], normals[2])
+                              );
+                            })();
+                          if (!areAllNormalsDistinct) {
+                            notReadyReason.push('orientations-parallel');
+                          }
+                          if (notReadyReason.length) {
+                            console.log('[nolex][mpr][crosshair] not ready', {
+                              source,
+                              notReadyReason,
+                            });
+                            return;
+                          }
+                          const crosshairs: any = tg3.getToolInstance?.('Crosshairs');
+                          if (crosshairs?.computeToolCenter) {
+                            // Log camera state for each MPR viewport to see
+                            // what cornerstone has to work with — PT/CT MPR
+                            // shows a "View plane normal is not parallel..."
+                            // warning indicating unusual orientation on these
+                            // studies. If viewUp / viewPlaneNormal are not
+                            // set properly yet, _computeToolCenter produces a
+                            // degenerate toolCenter.
+                            const cameras = viewports.map(
+                              ({ viewportId }: { viewportId: string }) => {
+                                const vp: any =
+                                  cornerstoneViewportService!.getCornerstoneViewport(viewportId);
+                                try {
+                                  return {
+                                    viewportId,
+                                    canvas: [
+                                      vp?.canvas?.clientWidth,
+                                      vp?.canvas?.clientHeight,
+                                    ],
+                                    camera: vp?.getCamera?.(),
+                                  };
+                                } catch (e) {
+                                  return { viewportId, error: String(e) };
+                                }
+                              }
+                            );
+                            console.log('[nolex][mpr][crosshair] cameras before compute', cameras);
+                            crosshairs.computeToolCenter();
+                            console.log('[nolex][mpr][crosshair] computeToolCenter', {
+                              source,
+                              toolCenter: crosshairs.toolCenter,
+                              toolCenterValid:
+                                Array.isArray(crosshairs.toolCenter) &&
+                                crosshairs.toolCenter.every(
+                                  (n: any) => Number.isFinite(n)
+                                ),
+                            });
+                            done = true;
+                            viewports.forEach(
+                              ({ viewportId }: { viewportId: string }) => {
+                                try {
+                                  cornerstoneViewportService!
+                                    .getCornerstoneViewport(viewportId)
+                                    ?.render?.();
+                                } catch (_) {}
+                              }
+                            );
+                            // Ask cornerstone to redraw the annotation SVG
+                            // layer for all MPR viewports — vp.render() only
+                            // repaints the image plane, annotations live on a
+                            // separate layer and need this explicit trigger.
+                            try {
+                              const ids = viewports.map(
+                                (v: any) => v.viewportId
+                              );
+                              (cstUtils as any).triggerAnnotationRenderForViewportIds?.(ids);
+                            } catch (e) {
+                              console.warn(
+                                '[nolex][mpr][crosshair] triggerAnnotationRender failed',
+                                e
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          console.warn('[nolex][mpr][crosshair] recompute err', e);
+                        }
+                      };
+                      const onImageRendered = (evt: any) => {
+                        const vpId = evt?.detail?.viewportId;
+                        if (mprViewportIds.has(vpId)) {
+                          recompute('image-rendered');
+                        }
+                      };
+                      const onCameraModified = (evt: any) => {
+                        const vpId = evt?.detail?.viewportId;
+                        if (mprViewportIds.has(vpId)) {
+                          recompute('camera-modified');
+                        }
+                      };
+                      csEventTarget.addEventListener(
+                        CoreEnums.Events.IMAGE_RENDERED,
+                        onImageRendered
+                      );
+                      csEventTarget.addEventListener(
+                        CoreEnums.Events.CAMERA_MODIFIED,
+                        onCameraModified
+                      );
+                      const cleanupListeners = () => {
+                        csEventTarget.removeEventListener(
+                          CoreEnums.Events.IMAGE_RENDERED,
+                          onImageRendered
+                        );
+                        csEventTarget.removeEventListener(
+                          CoreEnums.Events.CAMERA_MODIFIED,
+                          onCameraModified
+                        );
+                      };
+                      setTimeout(cleanupListeners, 15000);
+                      // Also try a few delayed polls as safety nets.
+                      [300, 800, 1600, 3000, 5000, 8000, 12000].forEach(d =>
+                        setTimeout(() => recompute('poll-' + d), d)
+                      );
+                    } catch (e) {
+                      console.warn('[nolex][mpr][crosshair] event wiring failed', e);
+                    }
+                  } catch (e) {
+                    console.warn('[nolex][mpr][crosshair] activation failed:', e);
+                  }
+                };
+                try {
+                  const mprTg: any = toolGroupService.getToolGroup('mpr');
+                  const initialCount = mprTg?.viewportsInfo?.length || 0;
+                  console.log('[nolex][mpr][crosshair] initial state', {
+                    hasToolGroup: !!mprTg,
+                    viewportsBound: initialCount,
+                  });
+                  const alreadyHasViewports = initialCount >= 3;
+                  if (alreadyHasViewports) {
+                    setTimeout(() => tryActivateMprCrosshairs('already-ready'), 150);
+                  } else {
+                    let done = false;
+                    const sub = toolGroupService.subscribe(
+                      toolGroupService.EVENTS.VIEWPORT_ADDED,
+                      () => {
+                        if (done) return;
+                        const tg: any = toolGroupService.getToolGroup('mpr');
+                        const count = tg?.viewportsInfo?.length || 0;
+                        console.log('[nolex][mpr][crosshair] VIEWPORT_ADDED fired', { count });
+                        if (count >= 3) {
+                          done = true;
+                          setTimeout(() => tryActivateMprCrosshairs('viewport-added'), 100);
+                          try { sub.unsubscribe?.(); } catch (_) {}
+                        }
+                      }
+                    );
+                    // Safety fallback in case the event timing misses.
+                    setTimeout(() => {
+                      if (done) return;
+                      done = true;
+                      console.log('[nolex][mpr][crosshair] safety fallback fired');
+                      tryActivateMprCrosshairs('fallback');
+                      try { sub.unsubscribe?.(); } catch (_) {}
+                    }, 1500);
+                  }
+                } catch (e) {
+                  console.warn('[nolex][mpr][crosshair] setup error, using default timeout', e);
+                  setTimeout(() => tryActivateMprCrosshairs('error-fallback'), 150);
+                }
               }, 100);
             }, 0);
           })
@@ -1061,12 +1812,230 @@ function commandsModule({
         console.error('Errore attivazione MPR: ', err);
       }
     },
+    toggleCrosshairs: ({ toolGroupIds = ['mpr'] }: { toolGroupIds?: string[] } = {}) => {
+      // Toggle Crosshairs on the given tool groups. If currently active as the
+      // primary tool, switch back to WindowLevel (the default); otherwise
+      // activate Crosshairs. The user's explicit choice is persisted on
+      // window.mprCrosshairsDisabled so subsequent MPR entries respect it.
+      const groupIds = toolGroupIds?.length
+        ? toolGroupIds
+        : toolGroupService!.getToolGroupIds();
+
+      const isAnyActive = groupIds.some((id: string) => {
+        const tg = toolGroupService!.getToolGroup(id);
+        return tg?.getActivePrimaryMouseButtonTool?.() === 'Crosshairs';
+      });
+
+      const nextTool = isAnyActive ? 'WindowLevel' : 'Crosshairs';
+      (window as any).mprCrosshairsDisabled = isAnyActive;
+
+      (actions.setToolActiveToolbar as any)({
+        toolName: nextTool,
+        toolGroupIds: groupIds,
+      });
+    },
     mprDirectClickForStorico: () => {
       if (!document.getElementById('iframe-storico')) {
         return;
       }
       document.body.classList.add('secondo-mpr-attivo');
       document.getElementById('iframe-storico').contentWindow.postMessage('attiva-mpr');
+    },
+    ptctDirectClick: () => {
+      // Helper: restore a specific viewport grid state snapshot (captured
+      // earlier with viewportGridService.getState()). Mirrors restoreState
+      // but uses the passed snapshot instead of the shared zustand store —
+      // lets us keep the "original layout before PT/CT" intact even when
+      // MPR's storeState has since overwritten the zustand state.
+      const applyGridSnapshot = (snapshot: any): boolean => {
+        try {
+          if (!snapshot || !snapshot.layout) {
+            return false;
+          }
+          const viewportIdToUpdate = snapshot.activeViewportId;
+          const layoutOptions = viewportGridService.getLayoutOptionsFromState(snapshot);
+          const findOrCreateViewport = (_pos: number, positionId: string) => {
+            return Array.from(snapshot.viewports.values()).find(
+              (vp: any) => vp.positionId === positionId
+            );
+          };
+          viewportGridService.setLayout({
+            numRows: snapshot.layout.numRows,
+            numCols: snapshot.layout.numCols,
+            activeViewportId: viewportIdToUpdate,
+            layoutOptions,
+            findOrCreateViewport,
+            isHangingProtocolLayout: false,
+          });
+          return true;
+        } catch (e) {
+          console.warn('[nolex][ptct] applyGridSnapshot failed', e);
+          return false;
+        }
+      };
+
+      try {
+        const hpSvc = hangingProtocolService!;
+        const dssSvc = displaySetService!;
+        const uiNotif = uiNotificationService!;
+
+        // Hide the viewport grid ONLY on mode-to-mode transitions. Simple
+        // on/off of PT/CT (from normal layout) doesn't need hiding.
+        // The single case here is: entering PT/CT while MPR is active
+        // (MPR → PT/CT), where the brief restoreState + setProtocol chain
+        // flashes the previous layout.
+        const inMpr = document.body.classList.contains('hp-mpr-active');
+        if (inMpr) {
+          document.body.classList.add('nolex-layout-transitioning');
+          if ((window as any).__nolex_transitionTimer) {
+            clearTimeout((window as any).__nolex_transitionTimer);
+          }
+          (window as any).__nolex_transitionTimer = setTimeout(() => {
+            document.body.classList.remove('nolex-layout-transitioning');
+          }, 600);
+        }
+
+        // Toggle off: try to restore the grid state that was active before
+        // entering PT/CT (mirrors MPR behavior). Falls back to the default
+        // hanging protocol if no stored state is available or if MPR's
+        // storeState has since overwritten our snapshot (the flag
+        // ptctStoredStateIsStale is set by the MPR toggle-off branch).
+        if (document.body.classList.contains('hp-ptct-active')) {
+          // Save the PT/CT grid WITH user modifications (series swaps etc)
+          // so re-activating PT/CT later can restore them instead of
+          // re-applying the hanging protocol from scratch.
+          try {
+            (window as any).ptctModifiedGridState =
+              viewportGridService.getState?.();
+          } catch (_) {}
+
+          document.body.classList.remove('hp-ptct-active');
+          (window as any).ptctIsActive = false;
+          // Clean up any MIP rotation overlay we injected previously.
+          document
+            .querySelectorAll('.nolex-mip-rotate-overlay')
+            .forEach(el => el.remove());
+          let restored = false;
+          const preEnter = (window as any).ptctPreEnterLayoutSnapshot;
+          if (preEnter) {
+            restored = applyGridSnapshot(preEnter);
+            (window as any).ptctPreEnterLayoutSnapshot = null;
+          }
+          if (!restored) {
+            hpSvc.setProtocol('default');
+          }
+          (window as any).ptctStoredStateIsStale = false;
+          return;
+        }
+
+        // Require both PT and CT series in the current study to activate PT/CT.
+        const displaySets = dssSvc.getActiveDisplaySets();
+        const modalities = new Set((displaySets || []).map((ds: any) => ds.Modality));
+        if (!modalities.has('PT') || !modalities.has('CT')) {
+          uiNotif.show({
+            title: 'PET/CT non disponibile',
+            message: 'Lo studio deve contenere serie PT e CT per attivare questa vista.',
+            type: 'warning',
+            duration: 4000,
+          });
+          return;
+        }
+
+        // Mutually exclusive with MPR. If MPR is active, restore the pre-MPR
+        // grid state first so the PT/CT hanging protocol can be applied cleanly
+        // in a single click (otherwise the MPR layout lingers and the protocol
+        // switch only takes effect on the second click).
+        const wasMprActive = document.body.classList.contains('hp-mpr-active');
+        if (wasMprActive) {
+          document.body.classList.remove('hp-mpr-active');
+          (window as any).mprIsActive = false;
+          try {
+            restoreState();
+          } catch (_) {
+            // non-fatal
+          }
+        }
+
+        // Capture a dedicated snapshot of the user's layout before PT/CT so
+        // we can return to it at toggle-off even if the user goes on a
+        // PT/CT ↔ MPR round trip. The capture source depends on context:
+        //  - From a normal layout: use viewportGridService.getState() (the
+        //    current grid IS the pre-PT/CT grid).
+        //  - From MPR: the current grid is the MPR layout itself, which we
+        //    don't want to return to. MPR's own storeState (already ran in
+        //    mprDirectClick) saved the pre-MPR grid into the toggleOneUp-
+        //    ViewportGridStore. Read it back from there — it holds the real
+        //    "before everything" grid the user started from (e.g. 2x2).
+        // Only capture on the FIRST entry; subsequent re-entries via MPR
+        // keep the original snapshot intact.
+        if (!(window as any).ptctPreEnterLayoutSnapshot) {
+          try {
+            if (wasMprActive) {
+              const { toggleOneUpViewportGridStore } =
+                useToggleOneUpViewportGridStore.getState();
+              if (toggleOneUpViewportGridStore) {
+                (window as any).ptctPreEnterLayoutSnapshot =
+                  toggleOneUpViewportGridStore;
+                console.log(
+                  '[nolex][ptct] ptctPreEnterLayoutSnapshot captured from MPR snapshot (zustand)'
+                );
+              }
+            } else {
+              (window as any).ptctPreEnterLayoutSnapshot =
+                viewportGridService.getState?.();
+              console.log(
+                '[nolex][ptct] ptctPreEnterLayoutSnapshot captured from current grid'
+              );
+            }
+          } catch (e) {
+            console.warn('[nolex][ptct] snapshot capture failed', e);
+          }
+        }
+
+        // Keep the legacy storeState() path working (other flows may rely on
+        // the shared zustand slot). Skip when coming out of MPR so the fresh
+        // storeState doesn't capture the transient default layout.
+        if (!wasMprActive) {
+          try {
+            storeState();
+          } catch (e) {
+            console.warn('[nolex][ptct] storeState error', e);
+          }
+        }
+
+        const applyPtct = () => {
+          // If the user previously modified the PT/CT layout (swapped
+          // series etc.) and then toggled off, re-apply their modified
+          // state instead of re-running the hanging protocol from scratch.
+          const modifiedState = (window as any).ptctModifiedGridState;
+          if (modifiedState) {
+            const applied = applyGridSnapshot(modifiedState);
+            if (applied) {
+              document.body.classList.add('hp-ptct-active');
+              (window as any).ptctIsActive = true;
+              const tries = [200, 600, 1500, 3000];
+              tries.forEach(delay => setTimeout(injectMipRotationOverlay, delay));
+              return;
+            }
+          }
+          // First activation or snapshot unavailable: apply fresh HP.
+          hpSvc.setProtocol('@ohif/extension-tmtv.hangingProtocolModule.ptCT');
+          document.body.classList.add('hp-ptct-active');
+          (window as any).ptctIsActive = true;
+          const tries = [200, 600, 1500, 3000];
+          tries.forEach(delay => setTimeout(injectMipRotationOverlay, delay));
+        };
+
+        // Give restoreState a tick to flush its layout changes before applying
+        // the ptCT protocol, otherwise the two layout updates race.
+        if (wasMprActive) {
+          setTimeout(applyPtct, 0);
+        } else {
+          applyPtct();
+        }
+      } catch (err) {
+        console.error('Errore attivazione PET/CT: ', err);
+      }
     },
     rotateViewport: ({ rotation }) => {
       //Passo il comando anche all'eventuale iframe storico
@@ -1366,7 +2335,23 @@ function commandsModule({
     toggleSynchronizer: ({ type, viewports, syncId, toggledState }) => {
       const fn = toggleSyncFunctions[type];
 
+      // Track the user's explicit preference per sync type. Keyed on `type`
+      // (not syncId) because the toolbar button click passes only `type`
+      // while programmatic re-enable calls pass `syncId` — both must share
+      // the same preference slot.
+      const userPrefKey = `nolexSyncPref_${type}`;
+      const defaultSyncIdByType: Record<string, string> = {
+        imageSlice: 'IMAGE_SLICE_SYNC',
+        voi: 'VOI_SYNC',
+      };
+      const effectiveSyncId = syncId || defaultSyncIdByType[type];
+
       if (toggledState !== undefined) {
+        // Programmatic call. If the user has already opted out, ignore
+        // attempts to re-enable the synchronizer automatically.
+        if (toggledState === true && (window as any)[userPrefKey] === 'off') {
+          return;
+        }
         if (fn) {
           fn({
             servicesManager,
@@ -1374,15 +2359,29 @@ function commandsModule({
             syncId,
             toggledState,
           });
+          (window as any)[userPrefKey] = toggledState ? 'on' : 'off';
         }
         return;
       }
 
-      const synchronizer = syncGroupService.getSynchronizer(syncId);
+      // Interactive call (no toggledState): the user is flipping the state.
+      // Record the post-toggle state as their preference, using the real
+      // syncId so we inspect the correct synchronizer.
+      const synchronizer = syncGroupService.getSynchronizer(effectiveSyncId);
 
       if (synchronizer) {
         const isEnabled = synchronizer?._enabled !== false;
-        synchronizer.setEnabled(!isEnabled);
+        const nextEnabled = !isEnabled;
+        synchronizer.setEnabled(nextEnabled);
+        (window as any)[userPrefKey] = nextEnabled ? 'on' : 'off';
+        // setEnabled on the cornerstone Synchronizer does not bubble through
+        // SyncGroupService, so UI subscribers (e.g. the linked-series badge
+        // overlay) would not hear about the flip. Broadcast the change here
+        // so viewport overlays can refresh immediately.
+        (syncGroupService as any)._broadcastEvent?.(
+          syncGroupService.EVENTS?.SYNC_GROUP_CHANGED,
+          { syncId: effectiveSyncId, enabled: nextEnabled }
+        );
         return;
       }
 
@@ -1392,6 +2391,14 @@ function commandsModule({
           viewports,
           syncId,
         });
+        // After fn runs, inspect the actual state: toggleImageSliceSync /
+        // toggleVOISliceSync flip enabled ↔ disabled based on the current
+        // state of the sync group. Read it back and persist as user pref.
+        const after = syncGroupService.getSynchronizer(effectiveSyncId);
+        const afterEnabled = after ? after._enabled !== false : false;
+        // If no sync exists after fn, the user just disabled it (removed
+        // viewports) → mark 'off'. Otherwise mark 'on'.
+        (window as any)[userPrefKey] = after && afterEnabled ? 'on' : 'off';
       }
     },
     setSourceViewportForReferenceLinesTool: ({ viewportId }) => {
@@ -2009,6 +3016,12 @@ function commandsModule({
     },
     mprDirectClickForStorico: {
       commandFn: actions.mprDirectClickForStorico,
+    },
+    ptctDirectClick: {
+      commandFn: actions.ptctDirectClick,
+    },
+    toggleCrosshairs: {
+      commandFn: actions.toggleCrosshairs,
     },
 
     setHPPreferiti: {

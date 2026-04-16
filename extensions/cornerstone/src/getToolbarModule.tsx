@@ -33,6 +33,22 @@ export default function getToolbarModule({ commandsManager, servicesManager }: w
       },
     },
     {
+      // Returns `{ className: 'hidden' }` when the loaded study does not contain
+      // at least one PT and one CT display set. Used to fully hide controls that
+      // only make sense for PET/CT fusion workflows. When both modalities are
+      // present, also reports `isActive` based on whether the PT/CT layout is
+      // currently applied (body class `hp-ptct-active`).
+      name: 'evaluate.hasPTAndCT',
+      evaluate: () => {
+        const displaySets = displaySetService!.getActiveDisplaySets() || [];
+        const modalities = new Set(displaySets.map((ds: any) => ds?.Modality));
+        if (modalities.has('PT') && modalities.has('CT')) {
+          return { isActive: document.body.classList.contains('hp-ptct-active') };
+        }
+        return { className: 'hidden', disabled: true };
+      },
+    },
+    {
       name: 'evaluate.modality.supported',
       evaluate: ({ viewportId, unsupportedModalities, supportedModalities, disabledText }) => {
         const displaySetUIDs = viewportGridService.getDisplaySetsUIDsForViewport(viewportId);

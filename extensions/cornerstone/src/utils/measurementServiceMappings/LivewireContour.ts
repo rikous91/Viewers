@@ -4,6 +4,7 @@ import { getDisplayUnit } from './utils';
 import { utils } from '@ohif/core';
 import { getIsLocked } from './utils/getIsLocked';
 import { getIsVisible } from './utils/getIsVisible';
+import { getStatisticDisplayString } from './utils/getValueDisplayString';
 /**
  * Represents a mapping utility for Livewire measurements.
  */
@@ -55,6 +56,9 @@ const LivewireContour = {
       displaySet = DisplaySetService.getDisplaySetsForSeries(SeriesInstanceUID);
     }
 
+    const mappedAnnotations = getMappedAnnotations(annotation, DisplaySetService);
+    const displayText = getDisplayText(mappedAnnotations, displaySet);
+
     return {
       uid: annotationUID,
       SOPInstanceUID,
@@ -70,13 +74,63 @@ const LivewireContour = {
       label: data.label,
       isLocked,
       isVisible,
-      displayText: getDisplayText(annotation, displaySet),
+      displayText,
       data: data.cachedStats,
       type: getValueTypeFromToolType(toolName),
       getReport: () => getColumnValueReport(annotation, customizationService),
     };
   },
 };
+
+/**
+ * Maps annotations to a structured format with relevant attributes.
+ * Mirrors PlanarFreehandROI so SUV stats (max/mean) appear for PT series.
+ */
+function getMappedAnnotations(annotation, displaySetService) {
+  const { metadata, data } = annotation;
+  const { cachedStats } = data || {};
+  const { referencedImageId } = metadata;
+
+  if (!cachedStats) {
+    return [];
+  }
+
+  const targets = Object.keys(cachedStats);
+  if (!targets.length) {
+    return [];
+  }
+
+  const annotations = [];
+  targets.forEach(targetId => {
+    const targetStats = cachedStats[targetId];
+
+    const { SOPInstanceUID, SeriesInstanceUID, frameNumber } = getSOPInstanceAttributes(
+      referencedImageId,
+      displaySetService,
+      annotation
+    );
+
+    const displaySet = displaySetService.getDisplaySetsForSeries(SeriesInstanceUID)[0];
+    const { SeriesNumber } = displaySet || {};
+    const { mean, stdDev, max, area, Modality, areaUnit, modalityUnit } = targetStats;
+
+    annotations.push({
+      SeriesInstanceUID,
+      SOPInstanceUID,
+      SeriesNumber,
+      frameNumber,
+      Modality,
+      unit: modalityUnit,
+      mean,
+      stdDev,
+      max,
+      area,
+      areaUnit,
+    });
+  });
+
+  return annotations;
+}
 
 /**
  * This function is used to convert the measurement data to a
@@ -119,52 +173,42 @@ function getColumnValueReport(annotation, customizationService) {
 
 /**
  * Retrieves the display text for an annotation in a display set.
- *
- * @param {Object} annotation - The annotation object.
- * @param {Object} displaySet - The display set object.
- * @returns {string[]} - An array of display text.
+ * Mirrors PlanarFreehandROI: area + SUV max/mean (when available).
  */
-function getDisplayText(annotation, displaySet) {
-  const { metadata, data } = annotation;
+function getDisplayText(mappedAnnotations, displaySet) {
+  const displayText = {
+    primary: [],
+    secondary: [],
+  };
 
-  if (!data.cachedStats || !data.cachedStats[`imageId:${metadata.referencedImageId}`]) {
-    return [];
+  if (!mappedAnnotations || !mappedAnnotations.length) {
+    return displayText;
   }
 
-  const { area, areaUnit } = data.cachedStats[`imageId:${metadata.referencedImageId}`];
+  const { area, SOPInstanceUID, frameNumber, areaUnit } = mappedAnnotations[0];
 
-  const { SOPInstanceUID, frameNumber } = getSOPInstanceAttributes(metadata.referencedImageId);
-
-  const displayText = [];
-
-  const instance = displaySet.instances.find(image => image.SOPInstanceUID === SOPInstanceUID);
-  let InstanceNumber;
-  if (instance) {
-    InstanceNumber = instance.InstanceNumber;
-  }
-
+  const instance = displaySet?.instances?.find?.(
+    image => image.SOPInstanceUID === SOPInstanceUID
+  );
+  const InstanceNumber = instance?.InstanceNumber;
   const instanceText = InstanceNumber ? ` I: ${InstanceNumber}` : '';
-  const frameText = displaySet.isMultiFrame ? ` F: ${frameNumber}` : '';
+  const frameText = displaySet?.isMultiFrame ? ` F: ${frameNumber}` : '';
 
-  const { SeriesNumber } = displaySet;
-  let seriesText = null;
-  if (SeriesNumber !== undefined) {
-    seriesText = `S: ${SeriesNumber}${instanceText}${frameText}`;
-  }
-
-  const texts = [];
-  if (area) {
+  if (area !== undefined && area !== null) {
     const roundedArea = utils.roundNumber(area || 0, 2);
-    texts.push(`${roundedArea} ${getDisplayUnit(areaUnit)}`);
+    displayText.primary.push(`${roundedArea} ${getDisplayUnit(areaUnit)}`);
   }
 
-  if (seriesText) {
-    texts.push(seriesText);
-  }
+  mappedAnnotations.forEach(mappedAnnotation => {
+    const { unit, max, mean, SeriesNumber } = mappedAnnotation;
 
-  displayText.push({
-    text: texts,
-    series: seriesText,
+    if (max !== undefined && max !== null) {
+      displayText.primary.push(getStatisticDisplayString(max, unit, 'max'));
+    }
+    if (mean !== undefined && mean !== null) {
+      displayText.primary.push(getStatisticDisplayString(mean, unit, 'mean'));
+    }
+    displayText.secondary.push(`S: ${SeriesNumber}${instanceText}${frameText}`);
   });
 
   return displayText;

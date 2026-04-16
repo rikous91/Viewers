@@ -6,6 +6,7 @@ import createHydrateSegmentationSynchronizer from './createHydrateSegmentationSy
 
 const EVENTS = {
   TOOL_GROUP_CREATED: 'event::cornerstone::syncgroupservice:toolgroupcreated',
+  SYNC_GROUP_CHANGED: 'event::cornerstone::syncgroupservice:syncgroupchanged',
 };
 
 /**
@@ -158,13 +159,14 @@ export default class SyncGroupService {
       const viewportInfo = { viewportId, renderingEngineId };
       if (target && source) {
         synchronizer.add(viewportInfo);
-        return;
       } else if (source) {
         synchronizer.addSource(viewportInfo);
       } else if (target) {
         synchronizer.addTarget(viewportInfo);
       }
     });
+
+    this._broadcastEvent(EVENTS.SYNC_GROUP_CHANGED, { viewportId, renderingEngineId });
   }
 
   public destroy(): void {
@@ -219,6 +221,8 @@ export default class SyncGroupService {
         SynchronizerManager.destroySynchronizer(synchronizer.id);
       }
     });
+
+    this._broadcastEvent(EVENTS.SYNC_GROUP_CHANGED, { viewportId, renderingEngineId });
   }
   /**
    * Clean up the spatial registration metadata created by synchronizer

@@ -16,7 +16,9 @@ function ViewportPane({
   onDoubleClick,
   onInteraction = () => { },
   acceptDropsFor,
-}) {
+  'data-viewport-modalities': dataViewportModalities,
+  'data-viewport-nodrop': dataViewportNodrop,
+}: any) {
   let dropElement = null;
 
   const [{ isHovered, isHighlighted }, drop] = useDrop({
@@ -66,6 +68,8 @@ function ViewportPane({
         className
       )}
       style={customStyle}
+      data-viewport-modalities={dataViewportModalities || undefined}
+      data-viewport-nodrop={dataViewportNodrop || undefined}
     >
       <div className={classNames('relative h-full w-full', className)}>{children}</div>
 

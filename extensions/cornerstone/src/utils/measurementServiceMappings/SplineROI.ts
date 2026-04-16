@@ -211,15 +211,19 @@ function getDisplayText(mappedAnnotations, displaySet) {
   const roundedArea = utils.roundNumber(area || 0, 2);
   displayText.primary.push(`${roundedArea} ${getDisplayUnit(areaUnit)}`);
 
-  // we don't have max yet for splines rois
-  // mappedAnnotations.forEach(mappedAnnotation => {
-  //   const { unit, max, SeriesNumber } = mappedAnnotation;
+  // Include SUV / intensity stats when cornerstone has populated them
+  // (e.g. PT series). Matches the PlanarFreehandROI behavior.
+  mappedAnnotations.forEach(mappedAnnotation => {
+    const { unit, max, mean, SeriesNumber } = mappedAnnotation;
 
-  //   const maxStr = getStatisticDisplayString(max, unit, 'max');
-
-  //   displayText.primary.push(maxStr);
-  //   displayText.secondary.push(`S: ${SeriesNumber}${instanceText}${frameText}`);
-  // });
+    if (max !== undefined && max !== null) {
+      displayText.primary.push(getStatisticDisplayString(max, unit, 'max'));
+    }
+    if (mean !== undefined && mean !== null) {
+      displayText.primary.push(getStatisticDisplayString(mean, unit, 'mean'));
+    }
+    displayText.secondary.push(`S: ${SeriesNumber}${instanceText}${frameText}`);
+  });
 
   return displayText;
 }

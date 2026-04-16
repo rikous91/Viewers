@@ -229,7 +229,12 @@ function ViewerLayout({
 
   const viewportComponents = viewports.map(getViewportComponentData);
 
-  const viewerHeightOffset = VIEWER_HEADER_HEIGHT_PX +
+  // Hide the top toolbar while the initial loading indicator is visible: the
+  // user shouldn't interact with tools before the study is ready. The height
+  // offset is zeroed out in that state so the loading splash takes the whole
+  // viewport cleanly.
+  const viewerHeightOffset =
+    (showLoadingIndicator ? 0 : VIEWER_HEADER_HEIGHT_PX) +
     (isTopWindow && showExtensionBanner ? NOLEX_EXTENSION_BANNER_HEIGHT_PX : 0);
 
   return (
@@ -240,12 +245,18 @@ function ViewerLayout({
           onVisibilityChange={setShowExtensionBanner}
         />
       ) : null}
-      <ViewerHeader
-        hotkeysManager={hotkeysManager}
-        extensionManager={extensionManager}
-        servicesManager={servicesManager}
-        appConfig={appConfig}
-      />
+      {/* Keep ViewerHeader mounted at all times so its hooks (e.g.
+          usePatientInfo that populates window.nolexPatientInfo /
+          window.nolexStudyInfo) can run as soon as metadata is available.
+          Hide it via CSS while the initial loading splash is visible. */}
+      <div style={{ display: showLoadingIndicator ? 'none' : undefined }}>
+        <ViewerHeader
+          hotkeysManager={hotkeysManager}
+          extensionManager={extensionManager}
+          servicesManager={servicesManager}
+          appConfig={appConfig}
+        />
+      </div>
       <div
         className="nolex-main-area relative flex w-full flex-row flex-nowrap items-stretch overflow-hidden bg-black"
         style={{ height: `calc(100vh - ${viewerHeightOffset}px)` }}
@@ -275,7 +286,7 @@ function ViewerLayout({
             {/* TOOLBAR + GRID */}
             <ResizablePanel {...resizableViewportGridPanelProps}>
               <div className="flex h-full flex-1 flex-col">
-                <div className="relative flex h-full flex-1 items-center justify-center overflow-hidden bg-black">
+                <div className="nolex-viewport-grid-wrapper relative flex h-full flex-1 items-center justify-center overflow-hidden bg-black">
                   <ViewportGridComp
                     servicesManager={servicesManager}
                     viewportComponents={viewportComponents}

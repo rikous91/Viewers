@@ -624,6 +624,216 @@ const toolbarButtons: Button[] = [
     },
   },
   {
+    id: 'LayoutPTCT',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-pet-segment',
+      label: 'PET/CT',
+      tooltip: 'Attiva layout PET/CT',
+      commands: 'ptctDirectClick',
+      evaluate: 'evaluate.hasPTAndCT',
+    },
+  },
+  {
+    id: 'SegmentationTools',
+    uiType: 'ohif.toolBoxButton',
+    props: {
+      groupId: 'SegmentationTools',
+      buttonSection: 'segmentationToolboxToolsSection',
+    },
+  },
+  {
+    id: 'BrushTools',
+    uiType: 'ohif.toolBoxButtonGroup',
+    props: {
+      buttonSection: 'brushToolsSection',
+      groupId: 'BrushTools',
+    },
+  },
+  {
+    id: 'RectangleROIStartEndThreshold',
+    uiType: 'ohif.toolBoxButton',
+    props: {
+      icon: 'tool-create-threshold',
+      label: 'Rectangle ROI Threshold',
+      commands: {
+        commandName: 'setToolActiveToolbar',
+        commandOptions: {
+          toolGroupIds: ['ctToolGroup', 'ptToolGroup', 'fusionToolGroup'],
+        },
+      },
+      evaluate: [
+        'evaluate.cornerstone.segmentation',
+        {
+          name: 'evaluate.cornerstoneTool',
+          disabledText: 'Seleziona la vista PT Assiale per abilitare questo strumento',
+        },
+      ],
+      options: 'tmtv.RectangleROIThresholdOptions',
+    },
+  },
+  {
+    id: 'Brush',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-brush',
+      label: 'Brush',
+      evaluate: {
+        name: 'evaluate.cornerstone.segmentation',
+        toolNames: ['CircularBrush', 'SphereBrush'],
+        disabledText: 'Crea una nuova segmentazione per abilitare questo strumento.',
+      },
+      options: [
+        {
+          name: 'Radius (mm)',
+          id: 'brush-radius',
+          type: 'range',
+          min: 0.5,
+          max: 99.5,
+          step: 0.5,
+          value: 25,
+          commands: {
+            commandName: 'setBrushSize',
+            commandOptions: { toolNames: ['CircularBrush', 'SphereBrush'] },
+          },
+        },
+        {
+          name: 'Shape',
+          type: 'radio',
+          id: 'brush-mode',
+          value: 'CircularBrush',
+          values: [
+            { value: 'CircularBrush', label: 'Circle' },
+            { value: 'SphereBrush', label: 'Sphere' },
+          ],
+          commands: 'setToolActiveToolbar',
+        },
+      ],
+    },
+  },
+  {
+    id: 'Eraser',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-eraser',
+      label: 'Eraser',
+      evaluate: {
+        name: 'evaluate.cornerstone.segmentation',
+        toolNames: ['CircularEraser', 'SphereEraser'],
+      },
+      options: [
+        {
+          name: 'Radius (mm)',
+          id: 'eraser-radius',
+          type: 'range',
+          min: 0.5,
+          max: 99.5,
+          step: 0.5,
+          value: 25,
+          commands: {
+            commandName: 'setBrushSize',
+            commandOptions: { toolNames: ['CircularEraser', 'SphereEraser'] },
+          },
+        },
+        {
+          name: 'Shape',
+          type: 'radio',
+          id: 'eraser-mode',
+          value: 'CircularEraser',
+          values: [
+            { value: 'CircularEraser', label: 'Circle' },
+            { value: 'SphereEraser', label: 'Sphere' },
+          ],
+          commands: 'setToolActiveToolbar',
+        },
+      ],
+    },
+  },
+  {
+    id: 'Threshold',
+    uiType: 'ohif.toolButton',
+    props: {
+      icon: 'icon-tool-threshold',
+      label: 'Threshold Tool',
+      evaluate: {
+        name: 'evaluate.cornerstone.segmentation',
+        toolNames: ['ThresholdCircularBrush', 'ThresholdSphereBrush'],
+      },
+      options: [
+        {
+          name: 'Radius (mm)',
+          id: 'threshold-radius',
+          type: 'range',
+          min: 0.5,
+          max: 99.5,
+          step: 0.5,
+          value: 25,
+          commands: {
+            commandName: 'setBrushSize',
+            commandOptions: {
+              toolNames: [
+                'ThresholdCircularBrush',
+                'ThresholdSphereBrush',
+                'ThresholdCircularBrushDynamic',
+              ],
+            },
+          },
+        },
+        {
+          name: 'Threshold',
+          type: 'radio',
+          id: 'dynamic-mode',
+          value: 'ThresholdRange',
+          values: [
+            { value: 'ThresholdDynamic', label: 'Dynamic' },
+            { value: 'ThresholdRange', label: 'Range' },
+          ],
+          commands: ({ value, commandsManager }: { value: string; commandsManager: any }) => {
+            if (value === 'ThresholdDynamic') {
+              commandsManager.run('setToolActive', {
+                toolName: 'ThresholdCircularBrushDynamic',
+              });
+            } else {
+              commandsManager.run('setToolActive', {
+                toolName: 'ThresholdCircularBrush',
+              });
+            }
+          },
+        },
+        {
+          name: 'Shape',
+          type: 'radio',
+          id: 'eraser-mode',
+          value: 'ThresholdCircularBrush',
+          values: [
+            { value: 'ThresholdCircularBrush', label: 'Circle' },
+            { value: 'ThresholdSphereBrush', label: 'Sphere' },
+          ],
+          condition: ({ options }: { options: any[] }) =>
+            options.find((option: any) => option.id === 'dynamic-mode').value === 'ThresholdRange',
+          commands: 'setToolActiveToolbar',
+        },
+        {
+          name: 'ThresholdRange',
+          type: 'double-range',
+          id: 'threshold-range',
+          min: 0,
+          max: 50,
+          step: 0.5,
+          value: [2.5, 50],
+          condition: ({ options }: { options: any[] }) =>
+            options.find((option: any) => option.id === 'dynamic-mode').value === 'ThresholdRange',
+          commands: {
+            commandName: 'setThresholdRange',
+            commandOptions: {
+              toolNames: ['ThresholdCircularBrush', 'ThresholdSphereBrush'],
+            },
+          },
+        },
+      ],
+    },
+  },
+  {
     id: 'Reset',
     uiType: 'ohif.radioGroup',
     props: {
@@ -718,7 +928,7 @@ const toolbarButtons: Button[] = [
       icon: 'tool-crosshair',
       label: 'Crosshair',
       commands: {
-        commandName: 'setToolActiveToolbar',
+        commandName: 'toggleCrosshairs',
         commandOptions: {
           toolGroupIds: ['mpr'],
         },

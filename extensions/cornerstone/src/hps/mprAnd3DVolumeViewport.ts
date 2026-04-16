@@ -71,7 +71,18 @@ export const mprAnd3DVolumeViewport = {
             customViewportProps: {
               hideOverlays: true,
             },
-            syncGroups: [VOI_SYNC_GROUP, HYDRATE_SEG_SYNC_GROUP],
+            // nolex: deliberately NOT in VOI_SYNC_GROUP. The 3D volume
+            // rendering is controlled by a volumetric preset (e.g. CT-Bone)
+            // with its own opacity/colour transfer function, not a 2D
+            // window-level VOI. If we sync VOI:
+            //   - The preset's wide bone VOI propagates to the MPR slices
+            //     and washes them out grey on close+reopen MPR (the timing
+            //     window shifts and the bone VOI ends up "winning").
+            //   - The user adjusting WL on an MPR viewport bounces a new
+            //     VOI back into the 3D and overwrites the preset's TF →
+            //     the 3D snaps back to the degenerate "flat" artifact.
+            // Hydrate-seg sync is still useful for segmentation overlays.
+            syncGroups: [HYDRATE_SEG_SYNC_GROUP],
           },
           displaySets: [
             {

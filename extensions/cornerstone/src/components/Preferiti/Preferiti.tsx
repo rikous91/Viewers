@@ -1,16 +1,32 @@
 import React, { ReactElement, useCallback, useEffect, useState } from 'react';
 import { SwitchButton } from '@ohif/ui';
-import { Enums, metaData, utilities as csUtils } from '@cornerstonejs/core';
+import {
+  Enums,
+  metaData,
+  utilities as csUtils,
+  eventTarget as csEventTarget,
+  getEnabledElementByIds as csGetEnabledElementByIds,
+  getEnabledElements as csGetEnabledElements,
+} from '@cornerstonejs/core';
+import { Enums as csToolsEnums } from '@cornerstonejs/tools';
 import { ColorbarProps } from '../../types/Colorbar';
 
-function captureScreenshot() {
-  const element = document.querySelector('.nolex-selected .viewport-element');
+const DEBUG_STORAGE_KEY = 'nolex-debug-print';
 
-  return html2canvas(element).then(canvas => {
-    // Converti il canvas in un'immagine (ad esempio PNG)
-    const imgData = canvas.toDataURL('image/png');
-    return imgData;
-  });
+function isPreferitiDebugEnabled(): boolean {
+  try {
+    const win = window as Window & { __NOLEX_PRINT_DEBUG__?: boolean };
+    return win.__NOLEX_PRINT_DEBUG__ === true || localStorage.getItem(DEBUG_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function logPreferitiDebug(...args: unknown[]): void {
+  if (!isPreferitiDebugEnabled()) {
+    return;
+  }
+  console.log('[PreferitiCapture]', ...args);
 }
 
 async function captureImageFromImageId(imageId, viewport) {
@@ -50,107 +66,712 @@ async function captureImageFromImageId(imageId, viewport) {
   return canvas.toDataURL('image/png');
 }
 
-// Cattura il viewport COMPLETO con le annotazioni (misurazioni length/area/...).
-// Cornerstone3D rende il pixel data nel <canvas> e le annotazioni in un <svg>
-// layer separato sopra. Questa funzione compone i due: prima disegna il
-// canvas, poi serializza l'SVG, lo carica come <img> e lo dipinge sopra.
-// Best-effort: ritorna null se qualcosa fallisce, e il chiamante ricade
-// sulla cattura "pulita" come fallback.
+// Cattura il viewport completo con le annotazioni.
+// Base: render del canvas Cornerstone (stessa geometria del viewport).
+// Overlay: layer SVG annotation con computed style inline.
+//
+// IMPORTANTE - param `viewport`:
+// Se passato, usiamo viewport.worldToCanvas + getImageData() per calcolare
+// il bounding box DELL'IMMAGINE NATIVA dentro il canvas viewport, e
+// croppiamo l'output a quel rect. Senza questo crop, l'output contiene
+// l'intero canvas viewport (che ha bordi neri attorno se l'aspect ratio
+// dell'immagine non corrisponde a quello del viewport), e nel print builder
+// `composeImageOnBlack` fitterebbe TUTTO il PNG (compresi i bordi neri)
+// nella cella, facendo apparire l'immagine più piccola del dovuto.
+type CaptureAnnotatedOptions = {
+  targetWidth?: number;
+  targetHeight?: number;
+  drawBase?: boolean;
+  drawAnnotations?: boolean;
+  viewport?: unknown; // Cornerstone3D viewport (opzionale, abilita auto-crop)
+};
+
+type RectInCanvas = { x: number; y: number; w: number; h: number };
+
+// Estrae le dimensioni dell'immagine nativa (in voxel) dal viewport.
+function getNativeImageSize(viewport: unknown): [number, number] | null {
+  if (!viewport || typeof viewport !== 'object') return null;
+  const vp = viewport as {
+    getImageData?: () => { dimensions?: number[] } | null;
+  };
+  if (typeof vp.getImageData !== 'function') return null;
+  try {
+    const imgData = vp.getImageData();
+    if (!imgData || !Array.isArray(imgData.dimensions) || imgData.dimensions.length < 2) {
+      return null;
+    }
+    const w = imgData.dimensions[0];
+    const h = imgData.dimensions[1];
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
+    return [w, h];
+  } catch {
+    return null;
+  }
+}
+
+// Strategia A: usa vtkImageData.getBounds() per i 4 corner del rect immagine
+// in world coordinates, poi proietta a canvas via worldToCanvas.
+function computeImageRectViaBounds(
+  viewport: unknown,
+  cornerstoneCanvas: HTMLCanvasElement
+): RectInCanvas | null {
+  if (!viewport || typeof viewport !== 'object') return null;
+  const vp = viewport as {
+    worldToCanvas?: (worldPos: number[]) => [number, number];
+    getImageData?: () => {
+      imageData?: { getBounds?: () => number[] };
+    } | null;
+  };
+  if (typeof vp.worldToCanvas !== 'function' || typeof vp.getImageData !== 'function') {
+    return null;
+  }
+  try {
+    const imgData = vp.getImageData();
+    if (!imgData || !imgData.imageData || typeof imgData.imageData.getBounds !== 'function') {
+      return null;
+    }
+    const bounds = imgData.imageData.getBounds();
+    if (!Array.isArray(bounds) || bounds.length < 6) return null;
+    const [xMin, xMax, yMin, yMax, zMin] = bounds;
+    if (
+      !Number.isFinite(xMin) ||
+      !Number.isFinite(xMax) ||
+      !Number.isFinite(yMin) ||
+      !Number.isFinite(yMax)
+    ) {
+      return null;
+    }
+    const corners: number[][] = [
+      [xMin, yMin, zMin],
+      [xMax, yMin, zMin],
+      [xMin, yMax, zMin],
+      [xMax, yMax, zMin],
+    ];
+    const canvasPts: Array<[number, number]> = [];
+    for (const w of corners) {
+      const cp = vp.worldToCanvas!(w);
+      if (!Array.isArray(cp) || cp.length < 2) return null;
+      if (!Number.isFinite(cp[0]) || !Number.isFinite(cp[1])) return null;
+      canvasPts.push([cp[0], cp[1]]);
+    }
+    const cssW = cornerstoneCanvas.clientWidth || cornerstoneCanvas.width || 1;
+    const cssH = cornerstoneCanvas.clientHeight || cornerstoneCanvas.height || 1;
+    const sx = cornerstoneCanvas.width / cssW;
+    const sy = cornerstoneCanvas.height / cssH;
+    const xs = canvasPts.map(p => p[0] * sx);
+    const ys = canvasPts.map(p => p[1] * sy);
+    const minX = Math.max(0, Math.floor(Math.min(...xs)));
+    const minY = Math.max(0, Math.floor(Math.min(...ys)));
+    const maxX = Math.min(cornerstoneCanvas.width, Math.ceil(Math.max(...xs)));
+    const maxY = Math.min(cornerstoneCanvas.height, Math.ceil(Math.max(...ys)));
+    const w = maxX - minX;
+    const h = maxY - minY;
+    if (w <= 1 || h <= 1) return null;
+    return { x: minX, y: minY, w, h };
+  } catch {
+    return null;
+  }
+}
+
+// Strategia B (fallback): aspect-fit centrato dell'immagine nativa nel canvas.
+function computeImageRectViaAspectFit(
+  viewport: unknown,
+  cornerstoneCanvas: HTMLCanvasElement
+): RectInCanvas | null {
+  const native = getNativeImageSize(viewport);
+  if (!native) return null;
+  const [nW, nH] = native;
+  const cW = cornerstoneCanvas.width;
+  const cH = cornerstoneCanvas.height;
+  if (!cW || !cH) return null;
+  const aspectImg = nW / nH;
+  const aspectCanvas = cW / cH;
+  let rectW: number;
+  let rectH: number;
+  if (aspectImg > aspectCanvas) {
+    rectW = cW;
+    rectH = cW / aspectImg;
+  } else {
+    rectH = cH;
+    rectW = cH * aspectImg;
+  }
+  const rectX = Math.round((cW - rectW) / 2);
+  const rectY = Math.round((cH - rectH) / 2);
+  return {
+    x: Math.max(0, rectX),
+    y: Math.max(0, rectY),
+    w: Math.max(1, Math.round(rectW)),
+    h: Math.max(1, Math.round(rectH)),
+  };
+}
+
+function isRectReasonable(rect: RectInCanvas | null, canvas: HTMLCanvasElement): boolean {
+  if (!rect) return false;
+  if (rect.w < 8 || rect.h < 8) return false;
+  if (rect.x < 0 || rect.y < 0) return false;
+  if (rect.x + rect.w > canvas.width + 2) return false;
+  if (rect.y + rect.h > canvas.height + 2) return false;
+  return true;
+}
+
+function computeImageRectInCanvas(
+  viewport: unknown,
+  cornerstoneCanvas: HTMLCanvasElement
+): RectInCanvas | null {
+  const viaBounds = computeImageRectViaBounds(viewport, cornerstoneCanvas);
+  if (isRectReasonable(viaBounds, cornerstoneCanvas)) {
+    logPreferitiDebug('rect via bounds', viaBounds);
+    return viaBounds;
+  }
+  const viaAspect = computeImageRectViaAspectFit(viewport, cornerstoneCanvas);
+  if (isRectReasonable(viaAspect, cornerstoneCanvas)) {
+    logPreferitiDebug('rect via aspect-fit', viaAspect);
+    return viaAspect;
+  }
+  logPreferitiDebug('no rect computed', { viaBounds, viaAspect });
+  return null;
+}
+
+function isPositiveFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+const SVG_PRESENTATION_STYLE_PROPERTIES = [
+  'opacity',
+  'display',
+  'visibility',
+  'stroke',
+  'stroke-width',
+  'stroke-opacity',
+  'stroke-dasharray',
+  'stroke-dashoffset',
+  'stroke-linecap',
+  'stroke-linejoin',
+  'fill',
+  'fill-opacity',
+  'font',
+  'font-family',
+  'font-size',
+  'font-style',
+  'font-weight',
+  'letter-spacing',
+  'word-spacing',
+  'text-anchor',
+  'dominant-baseline',
+  'paint-order',
+  'filter',
+  'vector-effect',
+  'transform',
+] as const;
+
+function inlineComputedStylesIntoClone(sourceNode: Node, cloneNode: Node): void {
+  if (sourceNode.nodeType === Node.ELEMENT_NODE && cloneNode.nodeType === Node.ELEMENT_NODE) {
+    const sourceElement = sourceNode as Element;
+    const cloneElement = cloneNode as Element;
+    const computedStyle = window.getComputedStyle(sourceElement);
+
+    const styleTarget = (cloneElement as HTMLElement).style;
+    for (const propertyName of SVG_PRESENTATION_STYLE_PROPERTIES) {
+      const propertyValue = computedStyle.getPropertyValue(propertyName);
+      if (!propertyValue) {
+        continue;
+      }
+      const priority = computedStyle.getPropertyPriority(propertyName);
+      styleTarget.setProperty(propertyName, propertyValue, priority);
+    }
+
+    // Copia anche eventuali CSS custom properties (--foo) usate dai tool.
+    for (let i = 0; i < computedStyle.length; i++) {
+      const propertyName = computedStyle.item(i);
+      if (!propertyName || !propertyName.startsWith('--')) {
+        continue;
+      }
+      const propertyValue = computedStyle.getPropertyValue(propertyName);
+      if (!propertyValue) {
+        continue;
+      }
+      const priority = computedStyle.getPropertyPriority(propertyName);
+      styleTarget.setProperty(propertyName, propertyValue, priority);
+    }
+  }
+
+  const sourceChildren = sourceNode.childNodes;
+  const cloneChildren = cloneNode.childNodes;
+  const childCount = Math.min(sourceChildren.length, cloneChildren.length);
+  for (let i = 0; i < childCount; i++) {
+    inlineComputedStylesIntoClone(sourceChildren[i], cloneChildren[i]);
+  }
+}
+
+function getCandidateAnnotationSvgs(viewportElement: HTMLElement): SVGSVGElement[] {
+  const allSvgs = Array.from(viewportElement.querySelectorAll('svg')) as SVGSVGElement[];
+  if (!allSvgs.length) {
+    return [];
+  }
+
+  const svgLayers = allSvgs.filter(
+    svg => svg.classList.contains('svg-layer') || !!svg.closest('.svg-layer')
+  );
+
+  return svgLayers.length ? svgLayers : allSvgs;
+}
+
+function isElementVisible(element: Element): boolean {
+  const style = window.getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden') {
+    return false;
+  }
+  const opacity = Number(style.opacity);
+  return Number.isNaN(opacity) || opacity > 0;
+}
+
+async function loadImageElement(src: string): Promise<HTMLImageElement | null> {
+  if (!src) {
+    return null;
+  }
+
+  return new Promise(resolve => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
+
 async function captureImageWithAnnotationsFromElement(
-  viewportElement: HTMLElement | null | undefined
+  viewportElement: HTMLElement | null | undefined,
+  options: CaptureAnnotatedOptions = {}
 ): Promise<string | null> {
   if (!viewportElement) {
     return null;
   }
+
+  const traceId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+  const drawBase = options.drawBase !== false;
+  const drawAnnotations = options.drawAnnotations !== false;
+
   try {
-    // Cerchiamo il canvas dell'immagine. In OHIF/CS3D è ".cornerstone-canvas",
-    // ma teniamo un fallback generico per robustezza.
     const cornerstoneCanvas =
       (viewportElement.querySelector('canvas.cornerstone-canvas') as HTMLCanvasElement | null) ||
       (viewportElement.querySelector('canvas') as HTMLCanvasElement | null);
     if (!cornerstoneCanvas) {
+      logPreferitiDebug('trace', traceId, 'abort: canvas not found');
       return null;
     }
 
-    // Tutti gli SVG dentro il viewport: in CS3D le annotazioni sono in
-    // un layer SVG (tipicamente l'unico). Se ne trovassimo più di uno,
-    // proviamo a dipingerli tutti in ordine.
-    const svgs = Array.from(
-      viewportElement.querySelectorAll('svg')
-    ) as SVGSVGElement[];
+    const canvasRect = cornerstoneCanvas.getBoundingClientRect();
+    const displayW = Math.max(
+      1,
+      Math.round(canvasRect.width || cornerstoneCanvas.clientWidth || cornerstoneCanvas.width || 1)
+    );
+    const displayH = Math.max(
+      1,
+      Math.round(
+        canvasRect.height || cornerstoneCanvas.clientHeight || cornerstoneCanvas.height || 1
+      )
+    );
 
-    // Output canvas alla risoluzione INTRINSECA del cornerstone canvas
-    // (massima qualità, indipendente dal devicePixelRatio).
     const out = document.createElement('canvas');
-    out.width = cornerstoneCanvas.width;
-    out.height = cornerstoneCanvas.height;
+    out.width = isPositiveFiniteNumber(options.targetWidth)
+      ? Math.round(options.targetWidth)
+      : Math.max(1, cornerstoneCanvas.width || displayW);
+    out.height = isPositiveFiniteNumber(options.targetHeight)
+      ? Math.round(options.targetHeight)
+      : Math.max(1, cornerstoneCanvas.height || displayH);
+
+    logPreferitiDebug('trace', traceId, 'capture-start', {
+      displayW,
+      displayH,
+      targetW: out.width,
+      targetH: out.height,
+      drawBase,
+      drawAnnotations,
+    });
+
     const ctx = out.getContext('2d');
     if (!ctx) {
+      logPreferitiDebug('trace', traceId, 'abort: no canvas context');
       return null;
     }
 
-    // Sfondo nero (copre eventuale trasparenza del cornerstone canvas)
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, out.width, out.height);
+    if (drawBase) {
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, out.width, out.height);
+      // Base annotata = render reale del viewport canvas.
+      ctx.drawImage(cornerstoneCanvas, 0, 0, out.width, out.height);
+    } else {
+      ctx.clearRect(0, 0, out.width, out.height);
+    }
 
-    // Disegna l'immagine 1:1
-    ctx.drawImage(cornerstoneCanvas, 0, 0);
+    // Helper locale: cropa `out` al rect fisico dell'immagine se viewport
+    // è disponibile, altrimenti ritorna l'output intero. Usato sia dal
+    // path "no annotations" sia dal path completo, così TUTTI i PNG salvati
+    // (printBase, overlay, annotated) hanno le stesse dimensioni 1:1.
+    const finalize = (): string => {
+      const rect = options.viewport
+        ? computeImageRectInCanvas(options.viewport, cornerstoneCanvas)
+        : null;
+      if (rect) {
+        const scaleX = out.width / cornerstoneCanvas.width;
+        const scaleY = out.height / cornerstoneCanvas.height;
+        const rx = Math.round(rect.x * scaleX);
+        const ry = Math.round(rect.y * scaleY);
+        const rw = Math.max(1, Math.round(rect.w * scaleX));
+        const rh = Math.max(1, Math.round(rect.h * scaleY));
+        const cropped = document.createElement('canvas');
+        cropped.width = rw;
+        cropped.height = rh;
+        const cctx = cropped.getContext('2d');
+        if (cctx) {
+          cctx.drawImage(out, rx, ry, rw, rh, 0, 0, rw, rh);
+          logPreferitiDebug('trace', traceId, 'cropped-to-image-rect', {
+            rx,
+            ry,
+            rw,
+            rh,
+            outW: out.width,
+            outH: out.height,
+          });
+          return cropped.toDataURL('image/png');
+        }
+      }
+      return out.toDataURL('image/png');
+    };
 
-    // Disegna ogni SVG sopra, scalandolo alle dimensioni del canvas
-    for (const svg of svgs) {
-      // Skippa SVG vuoti o nascosti
-      if (!svg.children || svg.children.length === 0) continue;
+    if (!drawAnnotations) {
+      logPreferitiDebug('trace', traceId, 'capture-end-no-annotations', {
+        outputW: out.width,
+        outputH: out.height,
+      });
+      // Anche il path "no annotations" deve passare per finalize() così
+      // DataUrlPrintBase è croppato esattamente come overlay e annotated.
+      // Senza questo, printBase salvato sarebbe il viewport intero (es.
+      // 1753×322) mentre overlay/annotated sarebbero croppati al rect
+      // (es. 392×293) → aspect ratio diverso → builder fitterebbe male.
+      return finalize();
+    }
+
+    const candidateSvgs = getCandidateAnnotationSvgs(viewportElement);
+    const visibleSvgs = candidateSvgs.filter(isElementVisible);
+    const svgs = visibleSvgs.length ? visibleSvgs : candidateSvgs;
+    logPreferitiDebug('trace', traceId, 'svg-layers', {
+      candidates: candidateSvgs.length,
+      visible: visibleSvgs.length,
+      selected: svgs.length,
+    });
+    if (!svgs.length) {
+      logPreferitiDebug('trace', traceId, 'no-svg-layers');
+      return drawBase ? out.toDataURL('image/png') : null;
+    }
+
+    const scaleX = out.width / displayW;
+    const scaleY = out.height / displayH;
+    let drawnSvgCount = 0;
+    let failedSvgCount = 0;
+    let drawableSvgCount = 0;
+
+    for (let svgIndex = 0; svgIndex < svgs.length; svgIndex++) {
+      const svg = svgs[svgIndex];
+      const hasDrawableNodes = !!svg.querySelector(
+        'path,line,polyline,polygon,circle,ellipse,rect,text,use'
+      );
+      if (!hasDrawableNodes) {
+        logPreferitiDebug('trace', traceId, 'svg-skip-no-drawable', {
+          svgIndex,
+          id: svg.id,
+          className: svg.className?.baseVal || svg.getAttribute('class') || '',
+          childCount: svg.children?.length ?? 0,
+        });
+        continue;
+      }
+      drawableSvgCount++;
+
       try {
         const svgClone = svg.cloneNode(true) as SVGSVGElement;
-        // CS3D usa le dimensioni di display del viewport per le coordinate
-        // delle annotazioni. Le dimensioni di display sono clientWidth/Height
-        // del canvas. Forziamo lo SVG ad avere queste dimensioni esplicite
-        // (serve per la conversione a image, che richiede width/height).
-        const dispW = svg.clientWidth || cornerstoneCanvas.clientWidth || out.width;
-        const dispH = svg.clientHeight || cornerstoneCanvas.clientHeight || out.height;
-        svgClone.setAttribute('width', String(dispW));
-        svgClone.setAttribute('height', String(dispH));
+        inlineComputedStylesIntoClone(svg, svgClone);
+
+        const svgRect = svg.getBoundingClientRect();
+        const svgDisplayW = Math.max(1, Math.round(svgRect.width || svg.clientWidth || displayW));
+        const svgDisplayH = Math.max(1, Math.round(svgRect.height || svg.clientHeight || displayH));
+
+        svgClone.setAttribute('width', String(svgDisplayW));
+        svgClone.setAttribute('height', String(svgDisplayH));
         if (!svgClone.getAttribute('viewBox')) {
-          svgClone.setAttribute('viewBox', `0 0 ${dispW} ${dispH}`);
+          svgClone.setAttribute('viewBox', `0 0 ${svgDisplayW} ${svgDisplayH}`);
         }
-        // Inietta xmlns se mancante (necessario per il blob SVG)
         if (!svgClone.getAttribute('xmlns')) {
           svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        }
+        if (!svgClone.getAttribute('xmlns:xlink')) {
+          svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
         }
 
         const svgString = new XMLSerializer().serializeToString(svgClone);
         const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
         const svgUrl = URL.createObjectURL(svgBlob);
+        const svgImage = await loadImageElement(svgUrl);
+        URL.revokeObjectURL(svgUrl);
+        if (!svgImage) {
+          failedSvgCount++;
+          logPreferitiDebug('trace', traceId, 'svg-load-failed', {
+            svgIndex,
+            serializedLength: svgString.length,
+          });
+          continue;
+        }
 
-        await new Promise<void>(resolve => {
-          const im = new Image();
-          im.onload = () => {
-            try {
-              // Disegna l'SVG scalato alle dimensioni intrinseche del canvas
-              ctx.drawImage(im, 0, 0, out.width, out.height);
-            } catch (e) {
-              console.warn('Preferiti: drawImage(SVG) failed', e);
-            }
-            URL.revokeObjectURL(svgUrl);
-            resolve();
-          };
-          im.onerror = () => {
-            URL.revokeObjectURL(svgUrl);
-            resolve();
-          };
-          im.src = svgUrl;
+        const relativeX = (svgRect.left - canvasRect.left) * scaleX;
+        const relativeY = (svgRect.top - canvasRect.top) * scaleY;
+        const drawW = svgDisplayW * scaleX;
+        const drawH = svgDisplayH * scaleY;
+
+        ctx.drawImage(svgImage, relativeX, relativeY, drawW, drawH);
+        drawnSvgCount++;
+        logPreferitiDebug('trace', traceId, 'svg-drawn', {
+          svgIndex,
+          id: svg.id,
+          className: svg.className?.baseVal || svg.getAttribute('class') || '',
+          drawW,
+          drawH,
+          relativeX,
+          relativeY,
         });
-      } catch (e) {
-        console.warn('Preferiti: failed to compose one SVG layer', e);
+      } catch (error) {
+        failedSvgCount++;
+        logPreferitiDebug('trace', traceId, 'svg-compose-error', { svgIndex, error });
+        console.warn('Preferiti: failed to compose one SVG layer', error);
       }
     }
 
-    return out.toDataURL('image/png');
-  } catch (e) {
-    console.warn('Preferiti: failed to capture annotated image', e);
+    if (!drawnSvgCount) {
+      logPreferitiDebug('trace', traceId, 'no-svg-drawn', {
+        totalSvgs: svgs.length,
+        drawableSvgCount,
+        failedSvgCount,
+      });
+    }
+
+    logPreferitiDebug('trace', traceId, 'capture-end', {
+      drawnSvgCount,
+      failedSvgCount,
+      drawableSvgCount,
+      outputW: out.width,
+      outputH: out.height,
+    });
+
+    // Stesso crop usato dal path no-annotations: TUTTI gli output passano
+    // per finalize() → tutti i PNG hanno dimensioni 1:1 e sono allineabili.
+    return finalize();
+  } catch (error) {
+    logPreferitiDebug('trace', traceId, 'capture-error', error);
+    console.warn('Preferiti: failed to capture annotated image', error);
     return null;
   }
 }
+
+// Ri-cattura le 4 versioni (clean / printBase / overlay / annotated) di un
+// preferito dato un viewport+element già risolti. Lavora a basso livello
+// (niente cornerstoneViewportService) così è chiamabile sia dal componente
+// React sia dal listener globale.
+//
+// Best-effort: se la cattura fallisce, lascia il preferito invariato.
+async function recapturePreferitoForViewport(
+  viewport: unknown,
+  viewportElement: HTMLElement | null
+): Promise<boolean> {
+  if (!viewport) return false;
+  const list = (window as Window & { preferiti?: Array<Record<string, unknown>> }).preferiti;
+  if (!Array.isArray(list) || !list.length) return false;
+
+  try {
+    const vp = viewport as {
+      getImageIds?: () => string[];
+      getCurrentImageIdIndex?: () => number;
+    };
+    if (typeof vp.getImageIds !== 'function' || typeof vp.getCurrentImageIdIndex !== 'function') {
+      return false;
+    }
+    const imageIds = vp.getImageIds() || [];
+    const idx = vp.getCurrentImageIdIndex();
+    const currentImageId = imageIds[idx];
+    if (!currentImageId) return false;
+    const currentSop = (metaData.get('sopCommonModule', currentImageId) as
+      | { sopInstanceUID?: string }
+      | undefined)?.sopInstanceUID;
+    if (!currentSop) return false;
+
+    // Trova il preferito corrispondente all'istanza attualmente mostrata
+    const target = list.find(
+      p => p && (p as { SOPInstanceUID?: string }).SOPInstanceUID === currentSop
+    );
+    if (!target) {
+      // L'istanza visibile non è un preferito: niente recapture.
+      return false;
+    }
+
+    // Cattura clean alla risoluzione DICOM nativa (per backward compat)
+    const cleanUrl = await captureImageFromImageId(currentImageId, viewport);
+    if (!cleanUrl) return false;
+
+    const printBase =
+      (await captureImageWithAnnotationsFromElement(viewportElement, {
+        drawBase: true,
+        drawAnnotations: false,
+        viewport,
+      })) || cleanUrl;
+    const overlay = await captureImageWithAnnotationsFromElement(viewportElement, {
+      drawBase: false,
+      drawAnnotations: true,
+      viewport,
+    });
+    const annotated =
+      (await captureImageWithAnnotationsFromElement(viewportElement, {
+        drawBase: true,
+        drawAnnotations: true,
+        viewport,
+      })) || printBase;
+
+    (target as Record<string, unknown>).DataUrl = cleanUrl;
+    (target as Record<string, unknown>).DataUrlPrintBase = printBase;
+    (target as Record<string, unknown>).DataUrlAnnotationOverlay = overlay || null;
+    (target as Record<string, unknown>).DataUrlAnnotated = annotated;
+    logPreferitiDebug('preferito-recaptured', {
+      sopUID: currentSop,
+      cleanLength: cleanUrl.length,
+      printBaseLength: printBase.length,
+      annotatedLength: annotated.length,
+      overlayLength: overlay?.length ?? 0,
+    });
+    return true;
+  } catch (e) {
+    console.warn('Preferiti: failed to recapture preferito', e);
+    return false;
+  }
+}
+
+// ============================================================
+// LISTENER GLOBALE annotazioni → ricattura preferito attivo
+// ------------------------------------------------------------
+// Installato a module-load (NON dentro al componente React) così è SEMPRE
+// attivo, anche quando l'utente non ha mai aperto il pannello WW/WL e
+// quindi nessun componente <Preferiti /> è stato mai montato.
+//
+// Quando arriva un evento ANNOTATION_ADDED/MODIFIED/REMOVED:
+//  1. Risolve il viewport dall'evento (renderingEngineId + viewportId)
+//  2. Estrae l'element del viewport
+//  3. Debounce 250ms (anti-burst per i drag)
+//  4. Chiama recapturePreferitoForViewport()
+//  5. Se la ricattura va a buon fine, dispatcha nolex-preferiti-updated
+//     che il bridge in preferiti.js inoltra all'iframe del builder.
+// ============================================================
+let _annotationRecaptureTimer: ReturnType<typeof setTimeout> | null = null;
+let _annotationRecaptureInFlight = false;
+let _annotationListenerInstalled = false;
+
+// Risolve la lista di viewport candidati per la ricattura a partire da un
+// evento annotation. ANNOTATION_ADDED/MODIFIED includono viewportId+
+// renderingEngineId nel detail, ma ANNOTATION_REMOVED arriva con
+// solo `{ annotation, annotationManagerUID }` (vedi annotationState.js
+// di @cornerstonejs/tools/removeAnnotation). In quel caso facciamo
+// fallback su TUTTI gli enabled elements e ricatturiamo quelli che
+// stanno mostrando un'istanza preferita.
+function resolveViewportsForAnnotationEvent(detail: {
+  viewportId?: string;
+  renderingEngineId?: string;
+}): Array<{ viewport: unknown; element: HTMLElement | null }> {
+  // Path 1: il detail ci dice già qual è il viewport
+  if (detail?.viewportId && detail?.renderingEngineId) {
+    try {
+      const enabled = csGetEnabledElementByIds(
+        detail.viewportId,
+        detail.renderingEngineId
+      ) as { viewport?: unknown } | null;
+      const vp = enabled?.viewport as { element?: HTMLElement | null } | null | undefined;
+      if (vp) {
+        return [{ viewport: vp, element: (vp.element as HTMLElement | null) ?? null }];
+      }
+    } catch {
+      /* fallback al path 2 */
+    }
+  }
+
+  // Path 2: nessun viewportId nel detail (caso ANNOTATION_REMOVED).
+  // Ritorniamo TUTTI gli enabled elements; recapturePreferitoForViewport
+  // fa già lo skip se l'istanza corrente non è un preferito.
+  try {
+    const all = (csGetEnabledElements?.() as Array<{ viewport?: unknown }>) || [];
+    const result: Array<{ viewport: unknown; element: HTMLElement | null }> = [];
+    for (const e of all) {
+      const vp = e?.viewport as { element?: HTMLElement | null } | null | undefined;
+      if (!vp) continue;
+      result.push({
+        viewport: vp,
+        element: (vp.element as HTMLElement | null) ?? null,
+      });
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
+function installGlobalAnnotationRecaptureListener(): void {
+  if (_annotationListenerInstalled) return;
+  if (!csEventTarget || typeof csEventTarget.addEventListener !== 'function') {
+    return;
+  }
+  _annotationListenerInstalled = true;
+
+  const onAnnotationEvent = (event: Event) => {
+    const detail =
+      (event as CustomEvent<{ viewportId?: string; renderingEngineId?: string }>).detail || {};
+
+    if (_annotationRecaptureTimer) clearTimeout(_annotationRecaptureTimer);
+    _annotationRecaptureTimer = setTimeout(async () => {
+      if (_annotationRecaptureInFlight) return;
+      _annotationRecaptureInFlight = true;
+      try {
+        const candidates = resolveViewportsForAnnotationEvent(detail);
+        if (!candidates.length) return;
+        let anyOk = false;
+        for (const cand of candidates) {
+          const ok = await recapturePreferitoForViewport(cand.viewport, cand.element);
+          if (ok) anyOk = true;
+        }
+        if (anyOk) {
+          window.dispatchEvent(new Event('nolex-preferiti-updated'));
+        }
+      } finally {
+        _annotationRecaptureInFlight = false;
+      }
+    }, 250);
+  };
+
+  csEventTarget.addEventListener(csToolsEnums.Events.ANNOTATION_ADDED, onAnnotationEvent);
+  csEventTarget.addEventListener(csToolsEnums.Events.ANNOTATION_MODIFIED, onAnnotationEvent);
+  csEventTarget.addEventListener(csToolsEnums.Events.ANNOTATION_REMOVED, onAnnotationEvent);
+
+  // FALLBACK MOUSEUP: lo spostamento del solo label/textBox di una
+  // misurazione (es. il "1.38 cm US Region") NON triggera
+  // ANNOTATION_MODIFIED in Cornerstone3D (vedi LengthTool._dragCallback:
+  // per movingTextBox non setta annotation.invalidated, quindi
+  // triggerAnnotationModified non viene mai chiamato). Per intercettare
+  // anche questi spostamenti, ascoltiamo i mouseup A LIVELLO DOCUMENT e
+  // schediamo una recapture. Il dispatcher è lo stesso (debounce 250ms +
+  // recapturePreferitoForViewport che skip se l'istanza visibile non è
+  // un preferito), quindi il costo è trascurabile per i mouseup "vuoti".
+  document.addEventListener(
+    'mouseup',
+    () => onAnnotationEvent(new CustomEvent('nolex-mouseup-recapture', { detail: {} })),
+    true
+  );
+
+  logPreferitiDebug('global-annotation-listener-installed');
+}
+
+// Installa subito a module-load. Cornerstone core esporta `eventTarget`
+// come singleton creato eagerly, quindi è già pronto qui.
+installGlobalAnnotationRecaptureListener();
 
 export function Preferiti({
   viewportId,
@@ -236,8 +857,7 @@ export function Preferiti({
       }
       return window.preferiti.some(
         preferito =>
-          preferito.SeriesInstanceUID === SeriesInstanceUID &&
-          preferito.SOPInstanceUID === sopUID
+          preferito.SeriesInstanceUID === SeriesInstanceUID && preferito.SOPInstanceUID === sopUID
       );
     },
     [SeriesInstanceUID, getSopUIDAtIndex]
@@ -289,6 +909,11 @@ export function Preferiti({
     setIsPreferito(currentIsPreferito);
   }, [activeElementIndex, isPreferitoForIndex]);
 
+  // NB: il listener annotazioni è installato a module-load (vedi
+  // installGlobalAnnotationRecaptureListener sopra), NON dentro questo
+  // componente, così è sempre attivo anche quando il pannello WW/WL non
+  // è mai stato aperto e il componente <Preferiti /> non è stato montato.
+
   const onSetPreferito = useCallback(
     async e => {
       const { uiNotificationService } = servicesManager.services;
@@ -309,8 +934,7 @@ export function Preferiti({
         // Filtra l'array preferiti rimuovendo l'elemento che corrisponde ai criteri
         window.preferiti = window.preferiti.filter(preferito => {
           return !(
-            preferito.SeriesInstanceUID === SeriesInstanceUID &&
-            preferito.SOPInstanceUID === sopUID
+            preferito.SeriesInstanceUID === SeriesInstanceUID && preferito.SOPInstanceUID === sopUID
           );
         });
         setIsPreferito(false);
@@ -394,17 +1018,54 @@ export function Preferiti({
         // length/area/...) componendo il canvas + il layer SVG. Best-effort:
         // se fallisce ricadiamo sul DataUrl pulito così il print builder
         // continua a funzionare anche senza annotazioni.
+        //
+        // NB: passiamo `viewport` a captureImageWithAnnotationsFromElement
+        // così quest'ultima può calcolare il rect dell'immagine nativa e
+        // croppare l'output escludendo i bordi neri del viewport (senza
+        // crop, il print builder fitterebbe anche i bordi nella cella e
+        // l'immagine apparirebbe rimpicciolita).
         const viewportInfoForCapture = cornerstoneViewportService.getViewportInfo(viewportId);
         const viewportElementForCapture =
           (viewportInfoForCapture?.getElement?.() as HTMLElement | null) ?? null;
+        const imgDataPrintBase =
+          (await captureImageWithAnnotationsFromElement(viewportElementForCapture, {
+            drawBase: true,
+            drawAnnotations: false,
+            viewport,
+          })) || imgData;
+        const annotationOverlayDataUrl = await captureImageWithAnnotationsFromElement(
+          viewportElementForCapture,
+          {
+            drawBase: false,
+            drawAnnotations: true,
+            viewport,
+          }
+        );
         const imgDataAnnotated =
-          (await captureImageWithAnnotationsFromElement(viewportElementForCapture)) || imgData;
+          (await captureImageWithAnnotationsFromElement(viewportElementForCapture, {
+            drawBase: true,
+            drawAnnotations: true,
+            viewport,
+          })) || imgDataPrintBase;
+        logPreferitiDebug('preferito-save', {
+          sopUID: SOPInstanceUID,
+          cleanLength: imgData.length,
+          printBaseLength: imgDataPrintBase.length,
+          annotatedLength: imgDataAnnotated.length,
+          overlayLength: annotationOverlayDataUrl?.length ?? 0,
+          printBaseEqualsClean: imgDataPrintBase === imgData,
+          annotatedEqualsPrintBase: imgDataAnnotated === imgDataPrintBase,
+          hasAnnotationOverlay: !!annotationOverlayDataUrl,
+          hasViewportElement: !!viewportElementForCapture,
+        });
 
         window.preferiti.push({
           SeriesInstanceUID,
           SOPInstanceUID: SOPInstanceUID,
           DataUrl: imgData,
+          DataUrlPrintBase: imgDataPrintBase,
           DataUrlAnnotated: imgDataAnnotated,
+          DataUrlAnnotationOverlay: annotationOverlayDataUrl || null,
           NumeroSerie: NumeroSerie,
           DescrizioneSerie: DescrizioneSerie,
           NumeroIstanza: NumeroIstanza,

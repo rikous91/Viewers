@@ -1,7 +1,11 @@
 import i18n from 'i18next';
+import { classes } from '@ohif/core';
 import { id } from './id';
 import initToolGroups from './initToolGroups';
+import initTmtvToolGroups from './initTmtvToolGroups';
 import toolbarButtons from './toolbarButtons';
+
+const { MetadataProvider } = classes;
 
 // Allow this mode by excluding non-imaging modalities such as SR, SEG
 // Also, SM is not a simple imaging modalities, so exclude it.
@@ -57,6 +61,12 @@ const dicomRT = {
   sopClassHandler: '@ohif/extension-cornerstone-dicom-rt.sopClassHandlerModule.dicom-rt',
 };
 
+const tmtv = {
+  hangingProtocol: '@ohif/extension-tmtv.hangingProtocolModule.ptCT',
+  petSUV: '@ohif/extension-tmtv.panelModule.petSUV',
+  tmtv: '@ohif/extension-tmtv.panelModule.tmtv',
+};
+
 const extensionDependencies = {
   // Can derive the versions at least process.env.from npm_package_version
   '@ohif/extension-default': '^3.0.0',
@@ -68,6 +78,7 @@ const extensionDependencies = {
   '@ohif/extension-cornerstone-dicom-rt': '^3.0.0',
   '@ohif/extension-dicom-pdf': '^3.0.1',
   '@ohif/extension-dicom-video': '^3.0.1',
+  '@ohif/extension-tmtv': '^3.0.0',
 };
 
 function modeFactory({ modeConfiguration }) {
@@ -82,15 +93,93 @@ function modeFactory({ modeConfiguration }) {
      * Lifecycle hooks
      */
     onModeEnter: function ({ servicesManager, extensionManager, commandsManager }: withAppTypes) {
-      const { measurementService, toolbarService, toolGroupService, viewportGridService } =
-        servicesManager.services;
+      const services = (servicesManager as any).services;
+      const {
+        measurementService,
+        toolbarService,
+        toolGroupService,
+        viewportGridService,
+        hangingProtocolService,
+      } = services;
+      const extMgr = extensionManager as any;
+      const cmdMgr = commandsManager as any;
 
       measurementService.clearMeasurements();
 
       // Init Default and SR ToolGroups
-      initToolGroups(extensionManager, toolGroupService, commandsManager);
+      initToolGroups(extMgr, toolGroupService, cmdMgr);
+
+      // Init TMTV tool groups (CT/PT/Fusion/MIP) so the PT/CT fusion hanging
+      // protocol can be activated on-demand via the LayoutPTCT toggle without
+      // a route change. The 'default' tool group is skipped (already created).
+      const tmtvUtilityModule = extMgr.getModuleEntry(
+        '@ohif/extension-cornerstone.utilityModule.tools'
+      );
+      if (tmtvUtilityModule) {
+        const { toolNames, Enums } = tmtvUtilityModule.exports;
+        initTmtvToolGroups(toolNames, Enums, toolGroupService, cmdMgr);
+      }
+
+      // PT VOI range attribute consumed by the ptCT hanging protocol to choose
+      // the window level based on whether SUV correction metadata is present.
+      hangingProtocolService.addCustomAttribute(
+        'getPTVOIRange',
+        'get PT VOI based on corrected or not',
+        (props: any[]) => {
+          const ptDisplaySet = props.find((imageSet: any) => imageSet.Modality === 'PT');
+          if (!ptDisplaySet) {
+            return;
+          }
+          const { imageId } = ptDisplaySet.images[0];
+          const imageIdScalingFactor = MetadataProvider.get('scalingModule', imageId);
+          if (imageIdScalingFactor && imageIdScalingFactor.suvbw) {
+            return { windowWidth: 5, windowCenter: 2.5 };
+          }
+          return;
+        }
+      );
 
       toolbarService.addButtons(toolbarButtons);
+
+      // Pre-resolve evaluate expressions for toolbox sub-buttons (TMTV
+      // segmentation tools). They live inside ROIThresholdToolbox /
+      // segmentationToolboxToolsSection / brushToolsSection, which may not be
+      // rendered before the first refreshToolbarState() call — in that case
+      // props.evaluate is still a raw string/array and crashes the toolbar.
+      const preResolveIds = ['RectangleROIStartEndThreshold', 'Brush', 'Eraser', 'Threshold'];
+      preResolveIds.forEach(id => {
+        const btn = toolbarService.getButton(id);
+        if (btn?.props) {
+          toolbarService.handleEvaluate(btn.props);
+        }
+      });
+
+      // Dynamically register the TMTV side panels (PET SUV + TMTV segmentation)
+      // only when the study contains both PT and CT series. This keeps the
+      // right sidebar clean for non-PET studies. Also triggers a toolbar
+      // refresh so the LayoutPTCT button can re-evaluate its visibility via
+      // evaluate.hasPTAndCT.
+      const { displaySetService, panelService } = services;
+      let tmtvPanelsRegistered = false;
+      const refreshPtctUi = () => {
+        const sets = displaySetService.getActiveDisplaySets() || [];
+        const mods = new Set(sets.map((ds: any) => ds?.Modality));
+        const hasPTAndCT = mods.has('PT') && mods.has('CT');
+        if (hasPTAndCT && !tmtvPanelsRegistered) {
+          panelService.addPanel(panelService.PanelPosition.Right, tmtv.petSUV, {});
+          panelService.addPanel(panelService.PanelPosition.Right, tmtv.tmtv, {});
+          tmtvPanelsRegistered = true;
+        }
+        const vpId = viewportGridService.getActiveViewportId?.();
+        toolbarService.refreshToolbarState({ viewportId: vpId });
+      };
+      const tmtvSub = displaySetService.subscribe(
+        displaySetService.EVENTS.DISPLAY_SETS_ADDED,
+        refreshPtctUi
+      );
+      _activatePanelTriggersSubscriptions.push(tmtvSub);
+      // Also check immediately in case display sets are already present.
+      refreshPtctUi();
       toolbarService.createButtonSection('moreToolsSection', [
         'Reset',
         'ImageOverlayViewer',
@@ -99,6 +188,14 @@ function modeFactory({ modeConfiguration }) {
         'AdvancedMagnify',
         'WindowLevelRegion',
       ]);
+
+      // TMTV segmentation toolbox sections
+      toolbarService.createButtonSection('ROIThresholdToolbox', ['SegmentationTools']);
+      toolbarService.createButtonSection('segmentationToolboxToolsSection', [
+        'RectangleROIStartEndThreshold',
+        'BrushTools',
+      ]);
+      toolbarService.createButtonSection('brushToolsSection', ['Brush', 'Eraser', 'Threshold']);
 
       toolbarService.createButtonSection('measurementSection', [
         'Length',
@@ -205,6 +302,7 @@ function modeFactory({ modeConfiguration }) {
             'Layout',
             'LayoutMPR',
             'LayoutMPRStorico',
+            'LayoutPTCT',
             'Crosshairs',
             'TrackballRotate',
             // 'Reset3DRotate',

@@ -108,6 +108,14 @@ const handlePETImageMetadata = ({ SeriesInstanceUID, StudyInstanceUID }) => {
       );
     });
   } catch (error) {
+    // Expected for non-ATTN/DECY corrected PET series (e.g. NAC). Silently
+    // skip SUV scaling: that series will display raw pixel values instead.
+    if (
+      typeof (error as any)?.message === 'string' &&
+      (error as any).message.includes('CorrectedImage must contain')
+    ) {
+      return;
+    }
     console.log(error);
   }
 };

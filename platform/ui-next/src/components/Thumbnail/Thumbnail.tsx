@@ -75,7 +75,26 @@ const Thumbnail = ({
   // specified item.
   const [, drag] = useDrag({
     type: 'displayset',
-    item: { ...dragData },
+    item: () => {
+      const dd = dragData as Record<string, unknown>;
+      if (dd?.modality) {
+        document.body.dataset.dragModality = String(dd.modality);
+      }
+      // Dispatch a custom event so ViewportGrid (which has access to
+      // hangingProtocolService) can validate each viewport and mark
+      // compatible ones. Pure modality matching isn't enough — the HP
+      // has extra rules like isReconstructable.
+      document.dispatchEvent(
+        new CustomEvent('nolex-drag-start', {
+          detail: { displaySetInstanceUID: dd?.displaySetInstanceUID },
+        })
+      );
+      return { ...dd };
+    },
+    end: () => {
+      delete document.body.dataset.dragModality;
+      document.dispatchEvent(new CustomEvent('nolex-drag-end'));
+    },
     canDrag: function (monitor) {
       return Object.keys(dragData).length !== 0;
     },
@@ -94,12 +113,22 @@ const Thumbnail = ({
     setLastTap(currentTime);
   };
 
+  const [imgError, setImgError] = useState(false);
+  useEffect(() => {
+    setImgError(false);
+  }, [imageSrc]);
+
   const renderThumbnailPreset = () => {
     const noImageModalities = ['PR', 'SR', 'SEG', 'SM', 'RTSTRUCT', 'RTPLAN', 'RTDOSE'];
     const modalityUpper = modality?.toUpperCase?.() || '';
     const isNoImageSeries =
       thumbnailType === 'thumbnailNoImage' || noImageModalities.includes(modalityUpper);
-    const showSpinner = !isNoImageSeries && !imageSrc;
+    const isDocSeries = modalityUpper === 'DOC';
+    // Show a DOC placeholder when the modality is DOC or the thumbnail image
+    // failed to load (broken image). This is friendlier than the default
+    // broken-image icon for encapsulated PDFs and similar documents.
+    const useDocPlaceholder = isDocSeries || imgError;
+    const showSpinner = !isNoImageSeries && !imageSrc && !useDocPlaceholder;
     const presetContainerClass = isBottomDocked
       ? 'flex h-[96px] w-[86px] shrink-0 flex-col items-start justify-start gap-0 p-[2px]'
       : 'flex h-full w-full flex-col items-center justify-center gap-[2px] p-[4px]';
@@ -111,7 +140,7 @@ const Thumbnail = ({
       : 'flex min-h-[52px] w-[128px] flex-col';
     const presetDescriptionClass = isBottomDocked
       ? 'max-w-[82px] overflow-hidden truncate whitespace-nowrap text-[12px] leading-[13px] text-white'
-      : 'text-[12px] text-white';
+      : 'max-w-[128px] overflow-hidden truncate whitespace-nowrap text-[12px] text-white';
     const presetSeriesRowClass = isBottomDocked
       ? 'flex h-[12px] items-center gap-[4px] overflow-hidden whitespace-nowrap'
       : 'flex h-[12px] items-center gap-[7px] overflow-hidden';
@@ -119,7 +148,19 @@ const Thumbnail = ({
       <div className={classnames(presetContainerClass, isActive && 'bg-popover')}>
         <div className={presetImageWrapperClass}>
           <div className={presetRelativeClass}>
-            {imageSrc ? (
+            {useDocPlaceholder ? (
+              <div
+                className={classnames(
+                  'bg-background flex flex-col items-center justify-center rounded border border-white/10',
+                  presetImageSizeClass
+                )}
+              >
+                <div className="text-[28px] leading-none">📄</div>
+                <div className="mt-[2px] text-[10px] font-semibold tracking-wide text-white/80">
+                  DOC
+                </div>
+              </div>
+            ) : imageSrc ? (
               <img
                 src={imageSrc}
                 alt={imageAltText}
@@ -128,6 +169,7 @@ const Thumbnail = ({
                   isNoImageSeries && 'opacity-60'
                 )}
                 crossOrigin="anonymous"
+                onError={() => setImgError(true)}
               />
             ) : (
               <div
@@ -200,7 +242,41 @@ const Thumbnail = ({
           </div>
         </div>
         <div className={presetTextClass}>
-          <div className={presetDescriptionClass}>{description}</div>
+          {(() => {
+            const descText = (description as string) || '';
+            return (
+              <div
+                className={presetDescriptionClass}
+                title={descText}
+                onMouseEnter={e => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  if (el.scrollWidth <= el.clientWidth) return;
+                  el.removeAttribute('title');
+                  const tip = document.createElement('div');
+                  tip.className = 'nolex-custom-tooltip';
+                  tip.textContent = descText;
+                  tip.style.cssText =
+                    'position:fixed;z-index:10000;background:#222;color:#eee;padding:6px 10px;border-radius:6px;font-size:12px;max-width:360px;word-wrap:break-word;box-shadow:0 4px 12px rgba(0,0,0,0.4);pointer-events:none;';
+                  document.body.appendChild(tip);
+                  const rect = el.getBoundingClientRect();
+                  tip.style.left = rect.left + 'px';
+                  tip.style.top = rect.top - tip.offsetHeight - 6 + 'px';
+                  (el as any)._tooltip = tip;
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLDivElement;
+                  const tip = (el as any)._tooltip;
+                  if (tip) {
+                    tip.remove();
+                    (el as any)._tooltip = null;
+                  }
+                  if (descText) el.setAttribute('title', descText);
+                }}
+              >
+                {descText}
+              </div>
+            );
+          })()}
           <div className={presetSeriesRowClass}>
             <div
               className={classnames(
@@ -375,7 +451,7 @@ const Thumbnail = ({
     <div
       className={classnames(
         className,
-        `bg-muted hover:bg-primary/30 group flex cursor-pointer select-none flex-col outline-none ${isActive && 'series-is-active'} ${countIcon && countIcon === 'icon-mpr' ? 'mpr-thumbnail' : 'no-mpr-thumbnail'}`,
+        `bg-muted hover:bg-primary/30 group flex cursor-pointer select-none flex-col outline-none ${isActive && 'series-is-active'} ${countIcon && countIcon === 'icon-mpr' ? 'mpr-thumbnail' : 'no-mpr-thumbnail'} ${modality === 'PT' || modality === 'CT' ? 'ptct-thumbnail' : 'no-ptct-thumbnail'}`,
         viewPreset === 'thumbnails' &&
           (isBottomDocked ? 'h-full w-[86px] shrink-0' : 'h-[170px] w-[135px]'),
         viewPreset === 'list' && 'w-[275px]'

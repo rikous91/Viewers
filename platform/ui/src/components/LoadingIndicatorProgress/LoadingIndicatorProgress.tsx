@@ -3,6 +3,31 @@ import classNames from 'classnames';
 
 import ProgressLoadingBar from '../ProgressLoadingBar';
 import { Icons } from '@ohif/ui-next';
+
+// Step messages shown below the progress bar, mapped to the current progress
+// bucket so the user sees what the app is actually doing while the study loads.
+const LOADING_STEPS: Array<{ threshold: number; label: string }> = [
+  { threshold: 0, label: 'Inizializzazione viewer...' },
+  { threshold: 15, label: 'Connessione al server DICOM...' },
+  { threshold: 35, label: 'Download metadati studio...' },
+  { threshold: 55, label: 'Elaborazione serie e immagini...' },
+  { threshold: 75, label: 'Preparazione layout e strumenti...' },
+  { threshold: 92, label: 'Quasi pronto...' },
+];
+
+const getStepLabel = (progress: number | undefined): string => {
+  if (progress === undefined) {
+    return LOADING_STEPS[0].label;
+  }
+  let label = LOADING_STEPS[0].label;
+  for (const step of LOADING_STEPS) {
+    if (progress >= step.threshold) {
+      label = step.label;
+    }
+  }
+  return label;
+};
+
 /**
  *  A React component that renders a loading indicator.
  * if progress is not provided, it will render an infinite loading indicator
@@ -38,10 +63,13 @@ function LoadingIndicatorProgress({ className, textBlock, progress }) {
     // Non c'è bisogno di pulire setTimeout come si fa con setInterval
   }, []);
 
+  const effectiveProgress = window.portableVersion ? progress : _progress;
+  const stepLabel = getStepLabel(effectiveProgress);
+
   return (
     <div
       className={classNames(
-        'absolute top-0 left-0 z-50 flex flex-col items-center justify-center space-y-5',
+        'absolute top-0 left-0 z-50 flex flex-col items-center justify-center space-y-3',
         className
       )}
     >
@@ -50,9 +78,19 @@ function LoadingIndicatorProgress({ className, textBlock, progress }) {
         className="loading-indicator h-12 w-12 text-white"
       /> */}
       <div className="w-48">
-        <ProgressLoadingBar progress={window.portableVersion ? progress : _progress} />
+        <ProgressLoadingBar progress={effectiveProgress} />
       </div>
-      {textBlock}
+      {/* If the caller provides a custom textBlock, respect it. Otherwise show
+          a progress-driven step label so the splash screen isn't blank. */}
+      {textBlock || (
+        <div
+          key={stepLabel}
+          className="nolex-loading-step text-center text-[13px] text-white/80"
+          style={{ minHeight: 18, letterSpacing: 0.2 }}
+        >
+          {stepLabel}
+        </div>
+      )}
     </div>
   );
 }

@@ -64,7 +64,11 @@ export const fourUp = {
             customViewportProps: {
               hideOverlays: true,
             },
-            syncGroups: [VOI_SYNC_GROUP, HYDRATE_SEG_SYNC_GROUP],
+            // nolex: 3D viewport rendering is fully governed by its
+            // volumetric preset (CT-Bone / MR-Default). VOI sync would
+            // bounce 2D window/level changes into the preset's transfer
+            // function and break the 3D appearance.
+            syncGroups: [HYDRATE_SEG_SYNC_GROUP],
           },
           displaySets: [
             {

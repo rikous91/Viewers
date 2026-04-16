@@ -88,6 +88,7 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
   volumeIdleTimeoutByViewportId: Map<string, ReturnType<typeof setTimeout>> = new Map();
   lastVolumeInputArrayByViewportId: Map<string, any[]> = new Map();
   lastPresentationsByViewportId: Map<string, Presentations> = new Map();
+  volume3DReapplyCleanupByViewportId: Map<string, () => void> = new Map();
 
   // Some configs
   enableResizeDetector: true;
@@ -136,6 +137,10 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     if (idleTimeout) {
       clearTimeout(idleTimeout);
       this.volumeIdleTimeoutByViewportId.delete(viewportId);
+    }
+    const volume3DCleanup = this.volume3DReapplyCleanupByViewportId.get(viewportId);
+    if (volume3DCleanup) {
+      volume3DCleanup();
     }
 
     const lastVolumeInputs = this.lastVolumeInputArrayByViewportId.get(viewportId) || [];
@@ -893,6 +898,24 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     const volumeToLoad = [];
     const displaySetInstanceUIDs = [];
 
+    // Clean up any previous volume→viewport mapping for this viewport. If we
+    // don't, volumes that are still in-flight (e.g. the user just swapped the
+    // series before it finished loading) keep reporting loading progress
+    // against this viewport and put the spinner back on, even after the
+    // newly selected (already loaded) series is displayed.
+    this.volumeIdToViewportIds.forEach((vpIdsSet, volId) => {
+      if (vpIdsSet.has(viewport.id)) {
+        vpIdsSet.delete(viewport.id);
+        if (vpIdsSet.size === 0) {
+          this.volumeIdToViewportIds.delete(volId);
+        }
+      }
+    });
+    // Also drop any pending-volume bookkeeping tied to this viewport — the
+    // new setVolumesForViewport call below will repopulate it correctly
+    // based on the loadStatus of the incoming volumes.
+    this.viewportIdToPendingVolumeIds.delete(viewport.id);
+
     for (const [index, data] of viewportData.data.entries()) {
       const { volume, imageIds, displaySetInstanceUID } = data;
 
@@ -993,9 +1016,16 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
       if (element.querySelector('.tooltip-loading-dynamic')) {
         return;
       }
+      // The same tooltip is reused across workflows that need volume loading.
+      // When the PT/CT fusion layout is active the "Volume dinamico" label is
+      // misleading (it's not a 4D volume), so adapt the wording by context.
+      const isPtctContext = document.body.classList.contains('hp-ptct-active');
+      const label = isPtctContext
+        ? 'Caricamento serie PET/CT...'
+        : 'Volume dinamico in caricamento...';
       element.insertAdjacentHTML('afterbegin', `
         <div style="background: #952c2c;color: #fff;padding: 0 5px; font-size: 0.8rem; z-index: 9999; position:relative" class="tooltip-loading-dynamic">
-        <p>Volume dinamico in caricamento...</p>
+        <p>${label}</p>
         </div>
         `)
       const existingTimeout = this.tooltipTimeoutByElement.get(element);
@@ -1025,6 +1055,111 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     if (tooltip) {
       tooltip.remove();
     }
+  }
+
+  private _armVolume3DPresetReapply(
+    viewport: VolumeViewport3D,
+    volumesProperties: Array<{ properties: ViewportProperties; volumeId: string }>
+  ) {
+    const viewportId = viewport.id;
+    const prev = this.volume3DReapplyCleanupByViewportId.get(viewportId);
+    if (prev) {
+      prev();
+    }
+
+    const targets = volumesProperties.filter(
+      ({ properties }) => properties && (properties as any).preset
+    );
+    if (!targets.length) {
+      return;
+    }
+
+    const element = viewport.element as HTMLElement | undefined;
+    // Spinner: reuse the existing .viewport-loading CSS, which renders a
+    // centered rotating overlay. Removed once the preset has been bound for
+    // every target volume (or via cleanup on safety timeout / teardown).
+    if (element) {
+      element.classList.add('viewport-loading');
+    }
+
+    const remaining = new Set(targets.map(t => t.volumeId));
+
+    const reapply = (volumeId: string) => {
+      const target = targets.find(t => t.volumeId === volumeId);
+      if (!target) {
+        return;
+      }
+      try {
+        viewport.setProperties(
+          { preset: (target.properties as any).preset },
+          volumeId
+        );
+        viewport.render();
+      } catch (e) {
+        console.warn('[nolex][volume3d] preset re-apply failed', e);
+      }
+    };
+
+    let safetyTimeout: ReturnType<typeof setTimeout>;
+    let cachedHotPathTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      try {
+        eventTarget.removeEventListener(
+          csEnums.Events.IMAGE_VOLUME_LOADING_COMPLETED,
+          onLoaded
+        );
+      } catch (_) {}
+      clearTimeout(safetyTimeout);
+      if (cachedHotPathTimeout) {
+        clearTimeout(cachedHotPathTimeout);
+      }
+      if (element) {
+        element.classList.remove('viewport-loading');
+      }
+      this.volume3DReapplyCleanupByViewportId.delete(viewportId);
+    };
+
+    const onLoaded = (evt: any) => {
+      const volumeId = evt?.detail?.volumeId;
+      if (!volumeId || !remaining.has(volumeId)) {
+        return;
+      }
+      remaining.delete(volumeId);
+      reapply(volumeId);
+      if (!remaining.size) {
+        cleanup();
+      }
+    };
+
+    // Hot path: when the user revisits a series whose volume is already
+    // loaded in cache, IMAGE_VOLUME_LOADING_COMPLETED never fires again. The
+    // synchronous setProperties() in setVolumesForViewport still races with
+    // the actor swap, so the artifact briefly reappears. Reapply on the next
+    // tick to cover this case without waiting on the 3s safety timeout.
+    const allCached = targets.every(t => {
+      const vol: any = cache.getVolume?.(t.volumeId);
+      return vol?.loadStatus?.loaded === true;
+    });
+    if (allCached) {
+      cachedHotPathTimeout = setTimeout(() => {
+        const pending = Array.from(remaining);
+        remaining.clear();
+        pending.forEach(volumeId => reapply(volumeId));
+        cleanup();
+      }, 50);
+    }
+
+    safetyTimeout = setTimeout(() => {
+      remaining.forEach(volumeId => reapply(volumeId));
+      cleanup();
+    }, 3000);
+
+    eventTarget.addEventListener(
+      csEnums.Events.IMAGE_VOLUME_LOADING_COMPLETED,
+      onLoaded
+    );
+    this.volume3DReapplyCleanupByViewportId.set(viewportId, cleanup);
   }
 
   private _scheduleVolumeIdleClear(viewportId: string, element: HTMLElement) {
@@ -1166,6 +1301,17 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     volumesProperties.forEach(({ properties, volumeId }) => {
       viewport.setProperties(properties, volumeId);
     });
+
+    // nolex: Volume3D preset race-condition safety net.
+    // setProperties({preset}) may silently no-op when it runs right after
+    // setVolumes() because the voxel data isn't mapped yet — the transfer
+    // function never gets bound and the 3D renders as a degenerate slab
+    // (the "flat/2D-looking" artifact). Arm a listener to re-apply the
+    // preset once the volume finishes loading. Covers first MPR activation
+    // AND every series change inside MPR.
+    if (viewport instanceof VolumeViewport3D) {
+      this._armVolume3DPresetReapply(viewport, volumesProperties);
+    }
 
     this.setPresentations(viewport.id, presentations, viewportInfo);
     if (!window.nolexAllReady) {
@@ -1442,6 +1588,16 @@ class CornerstoneViewportService extends PubSubService implements IViewportServi
     lutPresentation: LutPresentation
   ): void {
     if (!lutPresentation) {
+      return;
+    }
+
+    // nolex: never restore a persisted LUT on a 3D volume viewport. Its
+    // rendering is fully controlled by the volumetric preset (CT-Bone /
+    // MR-Default / ...) applied via setVolumesForViewport. The persisted
+    // LUT only contains a 2D voiRange snapshot — restoring it overrides
+    // the preset's transfer function and produces the "wrong window"
+    // symptom on close+reopen MPR (visible until the user hits Reset).
+    if (viewport instanceof VolumeViewport3D) {
       return;
     }
 
